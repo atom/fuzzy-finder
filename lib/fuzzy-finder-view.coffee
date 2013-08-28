@@ -49,26 +49,26 @@ class FuzzyFinderView extends SelectList
         if repo?
           status = repo.statuses[filePath]
           if repo.isStatusNew(status)
-            @div class: 'status new'
+            @div class: 'status status-added icon icon-diff-added'
           else if repo.isStatusModified(status)
-            @div class: 'status modified'
+            @div class: 'status status-modified icon icon-diff-modified'
 
         ext = path.extname(filePath)
         if fsUtils.isReadmePath(filePath)
-          typeClass = 'readme-name'
+          typeClass = 'icon-book'
         else if fsUtils.isCompressedExtension(ext)
-          typeClass = 'compressed-name'
+          typeClass = 'icon-file-zip'
         else if fsUtils.isImageExtension(ext)
-          typeClass = 'image-name'
+          typeClass = 'icon-file-media'
         else if fsUtils.isPdfExtension(ext)
-          typeClass = 'pdf-name'
+          typeClass = 'icon-file-pdf'
         else if fsUtils.isBinaryExtension(ext)
-          typeClass = 'binary-name'
+          typeClass = 'icon-file-binary'
         else
-          typeClass = 'text-name'
+          typeClass = 'icon-file-text'
 
-        @div path.basename(filePath), class: "primary-line file #{typeClass}"
-        @div projectRelativePath, class: 'secondary-line path'
+        @div path.basename(filePath), class: "primary-line file icon #{typeClass}"
+        @div projectRelativePath, class: 'secondary-line path no-icon'
 
   openPath: (filePath, lineNumber) ->
     return unless filePath
