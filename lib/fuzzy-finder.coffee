@@ -41,8 +41,9 @@ module.exports =
       paths
 
   createView:  ->
-    unless @fuzzyFinderView
+    unless @fuzzyFinderView?
       @loadPathsTask?.terminate()
       FuzzyFinderView  = require './fuzzy-finder-view'
       @fuzzyFinderView = new FuzzyFinderView(@projectPaths)
+      @projectPaths = null
     @fuzzyFinderView
