@@ -259,8 +259,8 @@ describe 'FuzzyFinder', ->
 
       expect(finderView.find('.file').length).toBe 2
 
-      expect(finderView.find('.status.modified').length).toBe 1
-      expect(finderView.find('.status.new').length).toBe 1
+      expect(finderView.find('.status.status-modified').length).toBe 1
+      expect(finderView.find('.status.status-added').length).toBe 1
 
   describe "common behavior between file and buffer finder", ->
     describe "when the fuzzy finder is cancelled", ->
@@ -518,8 +518,8 @@ describe 'FuzzyFinder', ->
         project.getRepo().getPathStatus(editor.getPath())
 
         rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
-        expect(finderView.find('.status.modified').length).toBe 1
-        expect(finderView.find('.status.modified').closest('li').find('.file').text()).toBe 'sample.js'
+        expect(finderView.find('.status.status-modified').length).toBe 1
+        expect(finderView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'sample.js'
 
 
     describe "when a new file is shown in the list", ->
@@ -528,8 +528,8 @@ describe 'FuzzyFinder', ->
         project.getRepo().getPathStatus(editor.getPath())
 
         rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
-        expect(finderView.find('.status.new').length).toBe 1
-        expect(finderView.find('.status.new').closest('li').find('.file').text()).toBe 'newsample.js'
+        expect(finderView.find('.status.status-added').length).toBe 1
+        expect(finderView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
 
   describe "when the filter text contains a colon followed by a number", ->
     it "opens the selected path to that line number", ->
