@@ -1,9 +1,5 @@
-{View, $$} = require 'space-pen'
-SelectList = require 'select-list'
-_ = require 'underscore'
-$ = require 'jquery'
+{_, $, $$, fs, SelectList, View} = require 'atom-api'
 humanize = require 'humanize-plus'
-fsUtils = require 'fs-utils'
 path = require 'path'
 PathLoader = require './path-loader'
 {Point} = require 'telepath'
@@ -54,15 +50,15 @@ class FuzzyFinderView extends SelectList
             @div class: 'status status-modified icon icon-diff-modified'
 
         ext = path.extname(filePath)
-        if fsUtils.isReadmePath(filePath)
+        if fs.isReadmePath(filePath)
           typeClass = 'icon-book'
-        else if fsUtils.isCompressedExtension(ext)
+        else if fs.isCompressedExtension(ext)
           typeClass = 'icon-file-zip'
-        else if fsUtils.isImageExtension(ext)
+        else if fs.isImageExtension(ext)
           typeClass = 'icon-file-media'
-        else if fsUtils.isPdfExtension(ext)
+        else if fs.isPdfExtension(ext)
           typeClass = 'icon-file-pdf'
-        else if fsUtils.isBinaryExtension(ext)
+        else if fs.isBinaryExtension(ext)
           typeClass = 'icon-file-binary'
         else
           typeClass = 'icon-file-text'
@@ -99,7 +95,7 @@ class FuzzyFinderView extends SelectList
   confirmed : ({filePath}) ->
     return unless filePath
 
-    if fsUtils.isDirectorySync(filePath)
+    if fs.isDirectorySync(filePath)
       @setError('Selected path is a directory')
       setTimeout((=> @setError()), 2000)
     else
@@ -198,7 +194,7 @@ class FuzzyFinderView extends SelectList
 
   populateGitStatusPaths: ->
     paths = []
-    paths.push(filePath) for filePath, status of project.getRepo().statuses when fsUtils.isFileSync(filePath)
+    paths.push(filePath) for filePath, status of project.getRepo().statuses when fs.isFileSync(filePath)
 
     @setArray(paths)
 

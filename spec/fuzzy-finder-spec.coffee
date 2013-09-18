@@ -1,10 +1,6 @@
-RootView = require 'root-view'
+{_, $, $$, fs, RootView} = require 'atom-api'
 FuzzyFinder = require '../lib/fuzzy-finder-view'
 PathLoader = require '../lib/path-loader'
-_ = require 'underscore'
-$ = require 'jquery'
-{$$} = require 'space-pen'
-fsUtils = require 'fs-utils'
 path = require 'path'
 
 describe 'FuzzyFinder', ->
@@ -241,16 +237,16 @@ describe 'FuzzyFinder', ->
       editor = rootView.getActiveView()
       originalText = editor.getText()
       originalPath = editor.getPath()
-      fsUtils.writeSync(originalPath, 'making a change for the better')
+      fs.writeSync(originalPath, 'making a change for the better')
       project.getRepo().getPathStatus(originalPath)
 
       newPath = project.resolve('newsample.js')
-      fsUtils.writeSync(newPath, '')
+      fs.writeSync(newPath, '')
       project.getRepo().getPathStatus(newPath)
 
     afterEach ->
-      fsUtils.writeSync(originalPath, originalText)
-      fsUtils.remove(newPath) if fsUtils.exists(newPath)
+      fs.writeSync(originalPath, originalText)
+      fs.remove(newPath) if fs.exists(newPath)
 
     it "displays all new and modified paths", ->
       expect(rootView.find('.fuzzy-finder')).not.toExist()
@@ -371,11 +367,11 @@ describe 'FuzzyFinder', ->
 
       beforeEach ->
         ignoreFile = path.join(project.getPath(), '.gitignore')
-        fsUtils.writeSync(ignoreFile, 'sample.js')
+        fs.writeSync(ignoreFile, 'sample.js')
         config.set("core.excludeVcsIgnoredPaths", true)
 
       afterEach ->
-        fsUtils.remove(ignoreFile) if fsUtils.exists(ignoreFile)
+        fs.remove(ignoreFile) if fs.exists(ignoreFile)
 
       it "ignores paths that are git ignored", ->
         rootView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -505,11 +501,11 @@ describe 'FuzzyFinder', ->
       originalText = editor.getText()
       originalPath = editor.getPath()
       newPath = project.resolve('newsample.js')
-      fsUtils.writeSync(newPath, '')
+      fs.writeSync(newPath, '')
 
     afterEach ->
-      fsUtils.writeSync(originalPath, originalText)
-      fsUtils.remove(newPath) if fsUtils.exists(newPath)
+      fs.writeSync(originalPath, originalText)
+      fs.remove(newPath) if fs.exists(newPath)
 
     describe "when a modified file is shown in the list", ->
       it "displays the modified icon", ->
