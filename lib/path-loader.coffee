@@ -1,4 +1,4 @@
-{Task} = require 'atom-api'
+{Task} = require 'atom'
 
 module.exports =
   startTask: (callback) ->

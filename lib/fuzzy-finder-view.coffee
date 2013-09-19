@@ -1,4 +1,4 @@
-{_, $, $$, fs, Point, SelectList, View} = require 'atom-api'
+{_, $, $$, fs, Point, SelectList, View} = require 'atom'
 humanize = require 'humanize-plus'
 path = require 'path'
 PathLoader = require './path-loader'

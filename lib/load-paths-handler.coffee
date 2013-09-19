@@ -1,6 +1,6 @@
 fs = require 'fs'
 path = require 'path'
-{_, Git} = require 'atom-api'
+{_, Git} = require 'atom'
 
 asyncCallsInProgress = 0
 pathsChunkSize = 100

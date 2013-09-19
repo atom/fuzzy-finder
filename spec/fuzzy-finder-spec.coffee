@@ -1,4 +1,4 @@
-{_, $, $$, fs, RootView} = require 'atom-api'
+{_, $, $$, fs, RootView} = require 'atom'
 FuzzyFinder = require '../lib/fuzzy-finder-view'
 PathLoader = require '../lib/path-loader'
 path = require 'path'
