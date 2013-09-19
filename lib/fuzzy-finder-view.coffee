@@ -1,8 +1,7 @@
-{_, $, $$, fs, SelectList, View} = require 'atom-api'
+{_, $, $$, fs, Point, SelectList, View} = require 'atom-api'
 humanize = require 'humanize-plus'
 path = require 'path'
 PathLoader = require './path-loader'
-{Point} = require 'telepath'
 
 module.exports =
 class FuzzyFinderView extends SelectList
