@@ -1,6 +1,6 @@
 {
   "name": "fuzzy-finder",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "main": "./lib/fuzzy-finder",
   "description": "Open an editor to a file in the project with `cmd-t`.",
   "repository": {
