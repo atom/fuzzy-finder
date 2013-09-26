@@ -207,11 +207,11 @@ class FuzzyFinderView extends SelectList
           @projectPaths
       @setArray(listedItems)
       options.done(listedItems) if options.done?
-    else
-      @setLoading("Indexing project...")
-      @loadingBadge.text("")
 
     if @reloadProjectPaths
+      @setLoading("Indexing project...")
+      @loadingBadge.text("0")
+
       @loadPathsTask?.terminate()
       @loadPathsTask = PathLoader.startTask (paths) =>
         @projectPaths = paths
