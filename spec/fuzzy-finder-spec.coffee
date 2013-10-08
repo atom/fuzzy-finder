@@ -363,25 +363,54 @@ describe 'FuzzyFinder', ->
         expect(finderView.list.find("li:contains(tree-view.js)")).not.toExist()
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
-      ignoreFile = null
-
       beforeEach ->
-        ignoreFile = path.join(project.getPath(), '.gitignore')
-        fs.writeSync(ignoreFile, 'sample.js')
         config.set("core.excludeVcsIgnoredPaths", true)
 
-      afterEach ->
-        fs.remove(ignoreFile) if fs.exists(ignoreFile)
+      describe "when the project's path is the repository's working directory", ->
+        [dotGit, ignoredFile, projectPath] = []
 
-      it "ignores paths that are git ignored", ->
-        rootView.trigger 'fuzzy-finder:toggle-file-finder'
-        finderView.maxItems = Infinity
+        beforeEach ->
+          projectPath = path.resolve(project.getPath(), 'git', 'working-dir')
+          dotGit = path.join(projectPath, '.git')
+          fs.move(path.join(projectPath, 'git.git'), dotGit)
+          ignoredFile = path.join(projectPath, 'ignored.txt')
+          fs.writeSync(ignoredFile, 'ignored text')
+          project.setPath(projectPath)
+          config.set("core.excludeVcsIgnoredPaths", true)
 
-        waitsFor ->
-          finderView.list.children('li').length > 0
+        afterEach ->
+          fs.move(dotGit, path.join(projectPath, 'git.git'))
+          fs.remove(ignoredFile)
 
-        runs ->
-          expect(finderView.list.find("li:contains(sample.js)")).not.toExist()
+        it "excludes paths that are git ignored", ->
+          rootView.trigger 'fuzzy-finder:toggle-file-finder'
+          finderView.maxItems = Infinity
+
+          waitsFor ->
+            finderView.list.children('li').length > 0
+
+          runs ->
+            expect(finderView.list.find("li:contains(ignored.txt)")).not.toExist()
+
+      describe "when the project's path is a subfolder of the repository's working directory", ->
+        ignoreFile = null
+
+        beforeEach ->
+          ignoreFile = path.join(project.getPath(), '.gitignore')
+          fs.writeSync(ignoreFile, 'sample.js')
+
+        afterEach ->
+          fs.remove(ignoreFile) if fs.exists(ignoreFile)
+
+        it "does not exclude paths that are git ignored", ->
+          rootView.trigger 'fuzzy-finder:toggle-file-finder'
+          finderView.maxItems = Infinity
+
+          waitsFor ->
+            finderView.list.children('li').length > 0
+
+          runs ->
+            expect(finderView.list.find("li:contains(sample.js)")).toExist()
 
   describe "fuzzy find by content under cursor", ->
     editor = null
