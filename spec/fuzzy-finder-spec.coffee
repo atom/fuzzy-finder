@@ -3,7 +3,7 @@ FuzzyFinder = require '../lib/fuzzy-finder-view'
 PathLoader = require '../lib/path-loader'
 path = require 'path'
 
-fdescribe 'FuzzyFinder', ->
+describe 'FuzzyFinder', ->
   [finderView] = []
 
   beforeEach ->
