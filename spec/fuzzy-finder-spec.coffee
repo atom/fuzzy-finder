@@ -3,13 +3,14 @@ FuzzyFinder = require '../lib/fuzzy-finder-view'
 PathLoader = require '../lib/path-loader'
 path = require 'path'
 
-describe 'FuzzyFinder', ->
+fdescribe 'FuzzyFinder', ->
   [finderView] = []
 
   beforeEach ->
     window.rootView = new RootView
     rootView.open('sample.js')
     rootView.enableKeymap()
+
     finderView = atom.activatePackage("fuzzy-finder").mainModule.createView()
 
   describe "file-finder behavior", ->
