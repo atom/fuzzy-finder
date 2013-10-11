@@ -59,27 +59,36 @@ describe 'FuzzyFinder', ->
             expect(finderView.list.children().first()).toHaveClass 'selected'
             expect(finderView.find(".loading")).not.toBeVisible()
 
-        it "includes symlinked file paths", ->
-          rootView.attachToDom()
-          finderView.maxItems = Infinity
-          rootView.trigger 'fuzzy-finder:toggle-file-finder'
+        describe "symlinks", ->
+          beforeEach ->
+            fs.symlinkSync(project.resolve('sample.txt'), project.resolve('symlink-to-file'))
+            fs.symlinkSync(project.resolve('dir'), project.resolve('symlink-to-dir'))
 
-          waitsFor "all project paths to load", 5000, ->
-            not finderView.reloadProjectPaths
+          afterEach ->
+            fs.unlinkSync(path.join(project.getPath(), 'symlink-to-file'))
+            fs.unlinkSync(path.join(project.getPath(), 'symlink-to-dir'))
 
-          runs ->
-            expect(finderView.list.find("li:contains(symlink-to-file)")).toExist()
+          it "includes symlinked file paths", ->
+            rootView.attachToDom()
+            finderView.maxItems = Infinity
+            rootView.trigger 'fuzzy-finder:toggle-file-finder'
 
-        it "excludes symlinked folder paths", ->
-          rootView.attachToDom()
-          finderView.maxItems = Infinity
-          rootView.trigger 'fuzzy-finder:toggle-file-finder'
+            waitsFor "all project paths to load", 5000, ->
+              not finderView.reloadProjectPaths
 
-          waitsFor "all project paths to load", 5000, ->
-            not finderView.reloadProjectPaths
+            runs ->
+              expect(finderView.list.find("li:contains(symlink-to-file)")).toExist()
 
-          runs ->
-            expect(finderView.list.find("li:contains(symlink-to-dir)")).not.toExist()
+          it "excludes symlinked folder paths", ->
+            rootView.attachToDom()
+            finderView.maxItems = Infinity
+            rootView.trigger 'fuzzy-finder:toggle-file-finder'
+
+            waitsFor "all project paths to load", 5000, ->
+              not finderView.reloadProjectPaths
+
+            runs ->
+              expect(finderView.list.find("li:contains(symlink-to-dir)")).not.toExist()
 
       describe "when root view's project has no path", ->
         beforeEach ->
