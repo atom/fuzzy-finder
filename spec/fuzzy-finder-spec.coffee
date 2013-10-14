@@ -261,34 +261,6 @@ describe 'FuzzyFinder', ->
           expect(editor4.getPath()).toBe expectedPath
           expect(editor4.isFocused).toBeTruthy()
 
-  describe "git-status-finder behavior", ->
-    [originalText, originalPath, newPath] = []
-
-    beforeEach ->
-      editor = rootView.getActiveView()
-      originalText = editor.getText()
-      originalPath = editor.getPath()
-      fs.writeSync(originalPath, 'making a change for the better')
-      project.getRepo().getPathStatus(originalPath)
-
-      newPath = project.resolve('newsample.js')
-      fs.writeSync(newPath, '')
-      project.getRepo().getPathStatus(newPath)
-
-    afterEach ->
-      fs.writeSync(originalPath, originalText)
-      fs.remove(newPath) if fs.exists(newPath)
-
-    it "displays all new and modified paths", ->
-      expect(rootView.find('.fuzzy-finder')).not.toExist()
-      rootView.trigger 'fuzzy-finder:toggle-git-status-finder'
-      expect(rootView.find('.fuzzy-finder')).toExist()
-
-      expect(finderView.find('.file').length).toBe 2
-
-      expect(finderView.find('.status.status-modified').length).toBe 1
-      expect(finderView.find('.status.status-added').length).toBe 1
-
   describe "common behavior between file and buffer finder", ->
     describe "when the fuzzy finder is cancelled", ->
       describe "when an editor is open", ->
@@ -381,67 +353,16 @@ describe 'FuzzyFinder', ->
         rootView.trigger 'fuzzy-finder:toggle-file-finder'
         expect(PathLoader.startTask).toHaveBeenCalled()
 
-  describe "path ignoring", ->
-    it "ignores paths that match entries in config.fuzzyFinder.ignoredNames", ->
-      config.set("fuzzyFinder.ignoredNames", ["tree-view.js"])
-      rootView.trigger 'fuzzy-finder:toggle-file-finder'
-      finderView.maxItems = Infinity
+  it "ignores paths that match entries in config.fuzzyFinder.ignoredNames", ->
+    config.set("fuzzyFinder.ignoredNames", ["tree-view.js"])
+    rootView.trigger 'fuzzy-finder:toggle-file-finder'
+    finderView.maxItems = Infinity
 
-      waitsFor ->
-        finderView.list.children('li').length > 0
+    waitsFor ->
+      finderView.list.children('li').length > 0
 
-      runs ->
-        expect(finderView.list.find("li:contains(tree-view.js)")).not.toExist()
-
-    describe "when core.excludeVcsIgnoredPaths is set to true", ->
-      beforeEach ->
-        config.set("core.excludeVcsIgnoredPaths", true)
-
-      describe "when the project's path is the repository's working directory", ->
-        [dotGit, ignoredFile, projectPath] = []
-
-        beforeEach ->
-          projectPath = path.resolve(project.getPath(), 'git', 'working-dir')
-          dotGit = path.join(projectPath, '.git')
-          fs.move(path.join(projectPath, 'git.git'), dotGit)
-          ignoredFile = path.join(projectPath, 'ignored.txt')
-          fs.writeSync(ignoredFile, 'ignored text')
-          project.setPath(projectPath)
-          config.set("core.excludeVcsIgnoredPaths", true)
-
-        afterEach ->
-          fs.move(dotGit, path.join(projectPath, 'git.git'))
-          fs.remove(ignoredFile)
-
-        it "excludes paths that are git ignored", ->
-          rootView.trigger 'fuzzy-finder:toggle-file-finder'
-          finderView.maxItems = Infinity
-
-          waitsFor ->
-            finderView.list.children('li').length > 0
-
-          runs ->
-            expect(finderView.list.find("li:contains(ignored.txt)")).not.toExist()
-
-      describe "when the project's path is a subfolder of the repository's working directory", ->
-        ignoreFile = null
-
-        beforeEach ->
-          ignoreFile = path.join(project.getPath(), '.gitignore')
-          fs.writeSync(ignoreFile, 'sample.js')
-
-        afterEach ->
-          fs.remove(ignoreFile) if fs.exists(ignoreFile)
-
-        it "does not exclude paths that are git ignored", ->
-          rootView.trigger 'fuzzy-finder:toggle-file-finder'
-          finderView.maxItems = Infinity
-
-          waitsFor ->
-            finderView.list.children('li').length > 0
-
-          runs ->
-            expect(finderView.list.find("li:contains(sample.js)")).toExist()
+    runs ->
+      expect(finderView.list.find("li:contains(tree-view.js)")).not.toExist()
 
   describe "fuzzy find by content under cursor", ->
     editor = null
@@ -553,41 +474,6 @@ describe 'FuzzyFinder', ->
       expect(pane.splitDown).toHaveBeenCalled()
       expect(rootView.getActiveView().getPath()).toBe project.resolve(filePath)
 
-  describe "git status decorations", ->
-    [originalText, originalPath, editor, newPath] = []
-
-    beforeEach ->
-      rootView.attachToDom()
-      editor = rootView.getActiveView()
-      originalText = editor.getText()
-      originalPath = editor.getPath()
-      newPath = project.resolve('newsample.js')
-      fs.writeSync(newPath, '')
-
-    afterEach ->
-      fs.writeSync(originalPath, originalText)
-      fs.remove(newPath) if fs.exists(newPath)
-
-    describe "when a modified file is shown in the list", ->
-      it "displays the modified icon", ->
-        editor.setText('modified')
-        editor.activeEditSession.save()
-        project.getRepo().getPathStatus(editor.getPath())
-
-        rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
-        expect(finderView.find('.status.status-modified').length).toBe 1
-        expect(finderView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'sample.js'
-
-    describe "when a new file is shown in the list", ->
-      it "displays the new icon", ->
-        rootView.open('newsample.js')
-        editor = rootView.getActiveView()
-        project.getRepo().getPathStatus(editor.getPath())
-
-        rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
-        expect(finderView.find('.status.status-added').length).toBe 1
-        expect(finderView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
-
   describe "when the filter text contains a colon followed by a number", ->
     it "opens the selected path to that line number", ->
       rootView.attachToDom()
@@ -609,3 +495,117 @@ describe 'FuzzyFinder', ->
 
       expect(rootView.getActiveView()).not.toBe editor
       expect(rootView.getActiveView().getCursorBufferPosition()).toEqual [9, 2]
+
+  describe "Git integration", ->
+    describe "git-status-finder behavior", ->
+      [originalText, originalPath, newPath] = []
+
+      beforeEach ->
+        editor = rootView.getActiveView()
+        originalText = editor.getText()
+        originalPath = editor.getPath()
+        fs.writeSync(originalPath, 'making a change for the better')
+        project.getRepo().getPathStatus(originalPath)
+
+        newPath = project.resolve('newsample.js')
+        fs.writeSync(newPath, '')
+        project.getRepo().getPathStatus(newPath)
+
+      afterEach ->
+        fs.writeSync(originalPath, originalText)
+        fs.remove(newPath)
+
+      it "displays all new and modified paths", ->
+        expect(rootView.find('.fuzzy-finder')).not.toExist()
+        rootView.trigger 'fuzzy-finder:toggle-git-status-finder'
+        expect(rootView.find('.fuzzy-finder')).toExist()
+
+        expect(finderView.find('.file').length).toBe 2
+
+        expect(finderView.find('.status.status-modified').length).toBe 1
+        expect(finderView.find('.status.status-added').length).toBe 1
+
+    describe "status decorations", ->
+      [originalText, originalPath, editor, newPath] = []
+
+      beforeEach ->
+        rootView.attachToDom()
+        editor = rootView.getActiveView()
+        originalText = editor.getText()
+        originalPath = editor.getPath()
+        newPath = project.resolve('newsample.js')
+        fs.writeSync(newPath, '')
+
+      afterEach ->
+        fs.writeSync(originalPath, originalText)
+        fs.remove(newPath) if fs.exists(newPath)
+
+      describe "when a modified file is shown in the list", ->
+        it "displays the modified icon", ->
+          editor.setText('modified')
+          editor.activeEditSession.save()
+          project.getRepo().getPathStatus(editor.getPath())
+
+          rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          expect(finderView.find('.status.status-modified').length).toBe 1
+          expect(finderView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'sample.js'
+
+      describe "when a new file is shown in the list", ->
+        it "displays the new icon", ->
+          rootView.open('newsample.js')
+          editor = rootView.getActiveView()
+          project.getRepo().getPathStatus(editor.getPath())
+
+          rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          expect(finderView.find('.status.status-added').length).toBe 1
+          expect(finderView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
+
+    describe "when core.excludeVcsIgnoredPaths is set to true", ->
+      beforeEach ->
+        config.set("core.excludeVcsIgnoredPaths", true)
+
+      describe "when the project's path is the repository's working directory", ->
+        [dotGit, ignoredFile, projectPath] = []
+
+        beforeEach ->
+          projectPath = path.resolve(project.getPath(), 'git', 'working-dir')
+          dotGit = path.join(projectPath, '.git')
+          fs.move(path.join(projectPath, 'git.git'), dotGit)
+          ignoredFile = path.join(projectPath, 'ignored.txt')
+          fs.writeSync(ignoredFile, 'ignored text')
+          project.setPath(projectPath)
+          config.set("core.excludeVcsIgnoredPaths", true)
+
+        afterEach ->
+          fs.move(dotGit, path.join(projectPath, 'git.git'))
+          fs.remove(ignoredFile)
+
+        it "excludes paths that are git ignored", ->
+          rootView.trigger 'fuzzy-finder:toggle-file-finder'
+          finderView.maxItems = Infinity
+
+          waitsFor ->
+            finderView.list.children('li').length > 0
+
+          runs ->
+            expect(finderView.list.find("li:contains(ignored.txt)")).not.toExist()
+
+      describe "when the project's path is a subfolder of the repository's working directory", ->
+        ignoreFile = null
+
+        beforeEach ->
+          ignoreFile = path.join(project.getPath(), '.gitignore')
+          fs.writeSync(ignoreFile, 'sample.js')
+
+        afterEach ->
+          fs.remove(ignoreFile) if fs.exists(ignoreFile)
+
+        it "does not exclude paths that are git ignored", ->
+          rootView.trigger 'fuzzy-finder:toggle-file-finder'
+          finderView.maxItems = Infinity
+
+          waitsFor ->
+            finderView.list.children('li').length > 0
+
+          runs ->
+            expect(finderView.list.find("li:contains(sample.js)")).toExist()
