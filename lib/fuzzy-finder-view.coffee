@@ -68,8 +68,8 @@ class FuzzyFinderView extends SelectList
   openPath: (filePath, lineNumber) ->
     return unless filePath
 
-    rootView.open(filePath, {@allowActiveEditorChange})
-    @moveToLine(lineNumber)
+    rootView.open(filePath, {@allowActiveEditorChange}).done =>
+      @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
@@ -86,8 +86,9 @@ class FuzzyFinderView extends SelectList
 
     lineNumber = @getLineNumber()
     if pane = rootView.getActivePane()
-      fn(pane, project.open(filePath))
-      @moveToLine(lineNumber)
+      project.open(filePath).done (editSession) =>
+        fn(pane, editSession)
+        @moveToLine(lineNumber)
     else
       @openPath(filePath, lineNumber)
 
