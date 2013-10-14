@@ -497,10 +497,21 @@ describe 'FuzzyFinder', ->
       expect(rootView.getActiveView().getCursorBufferPosition()).toEqual [9, 2]
 
   describe "Git integration", ->
+    [projectPath] = []
+
+    beforeEach ->
+      projectPath = project.resolve('git/working-dir')
+      fs.move(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+      project.setPath(projectPath)
+
+    afterEach ->
+      fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
+
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
+        rootView.open('a.txt')
         editor = rootView.getActiveView()
         originalText = editor.getText()
         originalPath = editor.getPath()
@@ -530,6 +541,7 @@ describe 'FuzzyFinder', ->
 
       beforeEach ->
         rootView.attachToDom()
+        rootView.open('a.txt')
         editor = rootView.getActiveView()
         originalText = editor.getText()
         originalPath = editor.getPath()
@@ -548,7 +560,7 @@ describe 'FuzzyFinder', ->
 
           rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(finderView.find('.status.status-modified').length).toBe 1
-          expect(finderView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'sample.js'
+          expect(finderView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
 
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
@@ -565,20 +577,20 @@ describe 'FuzzyFinder', ->
         config.set("core.excludeVcsIgnoredPaths", true)
 
       describe "when the project's path is the repository's working directory", ->
-        [dotGit, ignoredFile, projectPath] = []
+        [ignoreFile, ignoredFile] = []
 
         beforeEach ->
-          projectPath = path.resolve(project.getPath(), 'git', 'working-dir')
-          dotGit = path.join(projectPath, '.git')
-          fs.move(path.join(projectPath, 'git.git'), dotGit)
+          ignoreFile = path.join(project.getPath(), '.gitignore')
+          fs.writeSync(ignoreFile, 'ignored.txt')
+
           ignoredFile = path.join(projectPath, 'ignored.txt')
           fs.writeSync(ignoredFile, 'ignored text')
-          project.setPath(projectPath)
+
           config.set("core.excludeVcsIgnoredPaths", true)
 
         afterEach ->
-          fs.move(dotGit, path.join(projectPath, 'git.git'))
           fs.remove(ignoredFile)
+          fs.remove(ignoreFile)
 
         it "excludes paths that are git ignored", ->
           rootView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -591,14 +603,15 @@ describe 'FuzzyFinder', ->
             expect(finderView.list.find("li:contains(ignored.txt)")).not.toExist()
 
       describe "when the project's path is a subfolder of the repository's working directory", ->
-        ignoreFile = null
+        [ignoreFile] = []
 
         beforeEach ->
+          project.setPath(project.resolve('dir'))
           ignoreFile = path.join(project.getPath(), '.gitignore')
-          fs.writeSync(ignoreFile, 'sample.js')
+          fs.writeSync(ignoreFile, 'b.txt')
 
         afterEach ->
-          fs.remove(ignoreFile) if fs.exists(ignoreFile)
+          fs.remove(ignoreFile)
 
         it "does not exclude paths that are git ignored", ->
           rootView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -608,4 +621,4 @@ describe 'FuzzyFinder', ->
             finderView.list.children('li').length > 0
 
           runs ->
-            expect(finderView.list.find("li:contains(sample.js)")).toExist()
+            expect(finderView.list.find("li:contains(b.txt)")).toExist()
