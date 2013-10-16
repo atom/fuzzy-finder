@@ -359,7 +359,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         PathLoader.startTask.reset()
-        $(window).trigger 'focus'
+        $(window).triggerHandler 'focus'
         rootView.trigger 'fuzzy-finder:toggle-file-finder'
         rootView.trigger 'fuzzy-finder:toggle-file-finder'
         expect(PathLoader.startTask).toHaveBeenCalled()
