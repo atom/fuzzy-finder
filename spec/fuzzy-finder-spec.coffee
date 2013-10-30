@@ -210,7 +210,7 @@ describe 'FuzzyFinder', ->
       describe "when multiple sessions are opened on the same path", ->
         it "does not display duplicates for that path in the list", ->
           rootView.openSync 'sample.js'
-          rootView.getActivePane().splitRight()
+          rootView.getActiveView().splitRight()
           rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(_.pluck(finderView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
 
