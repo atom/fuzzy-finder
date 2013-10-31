@@ -25,7 +25,7 @@ class FuzzyFinderView extends SelectList
     @subscribe $(window), 'focus', => @reloadProjectPaths = true
     @observeConfig 'fuzzy-finder.ignoredNames', => @reloadProjectPaths = true
     rootView.eachPane (pane) ->
-      pane.activeItem.lastOpened = (new Date) - 1
+      pane.activeItem?.lastOpened = (new Date) - 1
       pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = (new Date) - 1
 
     @miniEditor.command 'pane:split-left', =>
