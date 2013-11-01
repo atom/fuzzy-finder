@@ -146,29 +146,6 @@ class FuzzyFinderView extends SelectList
     else
       super
 
-  findUnderCursor: ->
-    if @hasParent()
-      @cancel()
-    else
-      return unless project.getPath()?
-      @allowActiveEditorChange = false
-      editor = rootView.getActiveView()
-      currentWord = editor.getWordUnderCursor(wordRegex: @filenameRegex)
-
-      if currentWord.length == 0
-        @attach()
-        @setError("The cursor is not over a filename")
-      else
-        @populateProjectPaths filter: currentWord, done: (paths) =>
-          if paths.length == 0
-            @attach()
-            @setError("No files match '#{currentWord}'")
-          else if paths.length == 1
-            rootView.open(paths[0])
-          else
-            @attach()
-            @miniEditor.setText(currentWord)
-
   getFilterQuery: ->
     query = super
     colon = query.indexOf(':')
