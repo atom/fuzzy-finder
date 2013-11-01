@@ -375,63 +375,6 @@ describe 'FuzzyFinder', ->
     runs ->
       expect(finderView.list.find("li:contains(tree-view.js)")).not.toExist()
 
-  describe "fuzzy find by content under cursor", ->
-    editor = null
-
-    beforeEach ->
-      editor = rootView.getActiveView()
-      rootView.attachToDom()
-
-    it "opens the fuzzy finder window when there are multiple matches", ->
-      editor.setText("sample")
-      rootView.trigger 'fuzzy-finder:find-under-cursor'
-
-      waitsFor ->
-        finderView.list.children('li').length > 0
-
-      runs ->
-        expect(finderView).toBeVisible()
-        expect(rootView.find('.fuzzy-finder input:focus')).toExist()
-
-    it "opens a file directly when there is a single match", ->
-      editor.setText("sample.txt")
-      rootView.trigger 'fuzzy-finder:find-under-cursor'
-
-      openedPath = null
-      spyOn(rootView, "open").andCallFake (path) ->
-        openedPath = path
-
-      waitsFor ->
-        openedPath != null
-
-      runs ->
-        expect(finderView).not.toBeVisible()
-        expect(openedPath).toBe project.resolve("sample.txt")
-
-    it "displays an error when the word under the cursor doesn't match any files", ->
-      editor.setText("moogoogaipan")
-      editor.setCursorBufferPosition([0,5])
-
-      rootView.trigger 'fuzzy-finder:find-under-cursor'
-
-      waitsFor ->
-        finderView.is(':visible')
-
-      runs ->
-        expect(finderView.error.text().length).toBeGreaterThan 0
-
-    it "displays error when there is no word under the cursor", ->
-      editor.setText("&&&&&&&&&&&&&&& sample")
-      editor.setCursorBufferPosition([0,5])
-
-      rootView.trigger 'fuzzy-finder:find-under-cursor'
-
-      waitsFor ->
-        finderView.is(':visible')
-
-      runs ->
-        expect(finderView.error.text().length).toBeGreaterThan 0
-
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
       expect(rootView.getPanes().length).toBe 1
