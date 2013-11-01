@@ -175,16 +175,9 @@ class FuzzyFinderView extends SelectList
 
     @setArray(paths)
 
-  populateProjectPaths: (options = {}) ->
+  populateProjectPaths: ->
     if @projectPaths?
-      listedItems =
-        if options.filter?
-          @projectPaths.filter (filePath) ->
-            filePath.indexOf(options.filter) >= 0
-        else
-          @projectPaths
-      @setArray(listedItems)
-      options.done(listedItems) if options.done?
+      @setArray(@projectPaths)
 
     if @reloadProjectPaths
       @setLoading("Indexing project...")
@@ -194,7 +187,7 @@ class FuzzyFinderView extends SelectList
       @loadPathsTask = PathLoader.startTask (paths) =>
         @projectPaths = paths
         @reloadProjectPaths = false
-        @populateProjectPaths(options)
+        @populateProjectPaths()
 
       pathsFound = 0
       @loadPathsTask.on 'load-paths:paths-found', (paths) =>
