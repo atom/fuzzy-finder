@@ -59,7 +59,7 @@ describe 'FuzzyFinder', ->
             expect(finderView.list.children().first()).toHaveClass 'selected'
             expect(finderView.find(".loading")).not.toBeVisible()
 
-        describe "symlinks", ->
+        describe "symlinks on #darwin or #linux", ->
           beforeEach ->
             fs.symlinkSync(project.resolve('sample.txt'), project.resolve('symlink-to-file'))
             fs.symlinkSync(project.resolve('dir'), project.resolve('symlink-to-dir'))
@@ -191,7 +191,7 @@ describe 'FuzzyFinder', ->
           paths = [ 'sample-with-tabs.coffee', 'sample.txt', 'sample.js' ]
 
           for [time, bufferPath] in states
-            expect(_.last bufferPath.split '/').toBe paths.shift()
+            expect(_.last bufferPath.split path.sep).toBe paths.shift()
             expect(time).toBeGreaterThan 50000
 
       describe "when there are only panes with anonymous items", ->
