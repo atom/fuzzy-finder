@@ -6,18 +6,18 @@ module.exports =
   loadPathsTask: null
 
   activate: (state) ->
-    rootView.command 'fuzzy-finder:toggle-file-finder', =>
+    atom.rootView.command 'fuzzy-finder:toggle-file-finder', =>
       @createView().toggleFileFinder()
-    rootView.command 'fuzzy-finder:toggle-buffer-finder', =>
+    atom.rootView.command 'fuzzy-finder:toggle-buffer-finder', =>
       @createView().toggleBufferFinder()
-    rootView.command 'fuzzy-finder:toggle-git-status-finder', =>
+    atom.rootView.command 'fuzzy-finder:toggle-git-status-finder', =>
       @createView().toggleGitFinder()
 
-    if project.getPath()?
+    if atom.project.getPath()?
       PathLoader = require './path-loader'
       @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
 
-    for editSession in project.getEditSessions()
+    for editSession in atom.project.getEditSessions()
       editSession.lastOpened = state[editSession.getPath()]
 
   deactivate: ->
@@ -33,7 +33,7 @@ module.exports =
   serialize: ->
     if @fuzzyFinderView?
       paths = {}
-      for editSession in project.getEditSessions()
+      for editSession in atom.project.getEditSessions()
         path = editSession.getPath()
         paths[path] = editSession.lastOpened if path?
       paths

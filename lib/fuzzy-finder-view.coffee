@@ -24,8 +24,8 @@ class FuzzyFinderView extends SelectList
 
     @subscribe $(window), 'focus', => @reloadProjectPaths = true
     @observeConfig 'fuzzy-finder.ignoredNames', => @reloadProjectPaths = true
-    rootView.eachPane (pane) ->
-      pane.activeItem?.lastOpened = (new Date) - 1
+    atom.rootView.eachPane (pane) ->
+      pane.activeItem?.lastOpened = Date.now() - 1
       pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = (new Date) - 1
 
     @miniEditor.command 'pane:split-left', =>
@@ -40,7 +40,7 @@ class FuzzyFinderView extends SelectList
   itemForElement: ({filePath, projectRelativePath}) ->
     $$ ->
       @li class: 'two-lines', =>
-        repo = project.getRepo()
+        repo = atom.project.getRepo()
         if repo?
           status = repo.statuses[filePath]
           if repo.isStatusNew(status)
@@ -68,13 +68,13 @@ class FuzzyFinderView extends SelectList
   openPath: (filePath, lineNumber) ->
     return unless filePath
 
-    rootView.open(filePath, {@allowActiveEditorChange}).done =>
+    atom.rootView.open(filePath, {@allowActiveEditorChange}).done =>
       @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
 
-    if editor = rootView.getActiveView()
+    if editor = atom.rootView.getActiveView()
       position = new Point(lineNumber)
       editor.scrollToBufferPosition(position, center: true)
       editor.setCursorBufferPosition(position)
@@ -85,8 +85,8 @@ class FuzzyFinderView extends SelectList
     return unless filePath
 
     lineNumber = @getLineNumber()
-    if pane = rootView.getActivePane()
-      project.open(filePath).done (editSession) =>
+    if pane = atom.rootView.getActivePane()
+      atom.project.open(filePath).done (editSession) =>
         fn(pane, editSession)
         @moveToLine(lineNumber)
     else
@@ -127,7 +127,7 @@ class FuzzyFinderView extends SelectList
     if @hasParent()
       @cancel()
     else
-      return unless project.getPath()? and project.getRepo()
+      return unless atom.project.getRepo()?
       @allowActiveEditorChange = false
       @populateGitStatusPaths()
       @attach()
@@ -164,14 +164,14 @@ class FuzzyFinderView extends SelectList
 
   setArray: (paths) ->
     projectRelativePaths = paths.map (filePath) ->
-      projectRelativePath = project.relativize(filePath)
+      projectRelativePath = atom.project.relativize(filePath)
       {filePath, projectRelativePath}
 
     super(projectRelativePaths)
 
   populateGitStatusPaths: ->
     paths = []
-    paths.push(filePath) for filePath, status of project.getRepo().statuses when fs.isFileSync(filePath)
+    paths.push(filePath) for filePath, status of atom.project.getRepo().statuses when fs.isFileSync(filePath)
 
     @setArray(paths)
 
@@ -195,11 +195,11 @@ class FuzzyFinderView extends SelectList
         @loadingBadge.text(humanize.intComma(pathsFound))
 
   populateOpenBufferPaths: ->
-    editSessions = project.getEditSessions().filter (editSession) ->
+    editSessions = atom.project.getEditSessions().filter (editSession) ->
       editSession.getPath()?
 
     editSessions = _.sortBy editSessions, (editSession) =>
-      if editSession is rootView.getActivePaneItem()
+      if editSession is atom.rootView.getActivePaneItem()
         0
       else
         -(editSession.lastOpened or 1)
@@ -215,5 +215,5 @@ class FuzzyFinderView extends SelectList
   attach: ->
     super
 
-    rootView.append(this)
+    atom.rootView.append(this)
     @miniEditor.focus()

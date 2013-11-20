@@ -4,14 +4,15 @@ PathLoader = require '../lib/path-loader'
 path = require 'path'
 
 describe 'FuzzyFinder', ->
-  [finderView] = []
+  [finderView, rootView] = []
 
   beforeEach ->
-    window.rootView = new RootView
+    rootView = new RootView
+    atom.rootView = rootView
     rootView.openSync('sample.js')
     rootView.enableKeymap()
 
-    finderView = atom.activatePackage("fuzzy-finder").mainModule.createView()
+    finderView = atom.packages.activatePackage("fuzzy-finder").mainModule.createView()
 
   describe "file-finder behavior", ->
     describe "toggling", ->
@@ -184,7 +185,7 @@ describe 'FuzzyFinder', ->
           rootView.openSync()
 
           atom.deactivatePackage('fuzzy-finder')
-          states = _.map atom.getPackageState('fuzzy-finder'), (path, time) -> [ path, time ]
+          states = _.map atom.packages.getPackageState('fuzzy-finder'), (path, time) -> [ path, time ]
           expect(states.length).toBe 3
           states = _.sortBy states, (path, time) -> -time
 
@@ -365,7 +366,7 @@ describe 'FuzzyFinder', ->
         expect(PathLoader.startTask).toHaveBeenCalled()
 
   it "ignores paths that match entries in config.fuzzyFinder.ignoredNames", ->
-    config.set("fuzzyFinder.ignoredNames", ["tree-view.js"])
+    atom.config.set("fuzzyFinder.ignoredNames", ["tree-view.js"])
     rootView.trigger 'fuzzy-finder:toggle-file-finder'
     finderView.maxItems = Infinity
 
@@ -555,7 +556,7 @@ describe 'FuzzyFinder', ->
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
       beforeEach ->
-        config.set("core.excludeVcsIgnoredPaths", true)
+        atom.config.set("core.excludeVcsIgnoredPaths", true)
 
       describe "when the project's path is the repository's working directory", ->
         [ignoreFile, ignoredFile] = []
@@ -567,7 +568,7 @@ describe 'FuzzyFinder', ->
           ignoredFile = path.join(projectPath, 'ignored.txt')
           fs.writeSync(ignoredFile, 'ignored text')
 
-          config.set("core.excludeVcsIgnoredPaths", true)
+          atom.config.set("core.excludeVcsIgnoredPaths", true)
 
         afterEach ->
           fs.remove(ignoredFile)
