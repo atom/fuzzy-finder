@@ -184,7 +184,7 @@ describe 'FuzzyFinder', ->
           rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
           rootView.openSync()
 
-          atom.deactivatePackage('fuzzy-finder')
+          atom.packages.deactivatePackage('fuzzy-finder')
           states = _.map atom.packages.getPackageState('fuzzy-finder'), (path, time) -> [ path, time ]
           expect(states.length).toBe 3
           states = _.sortBy states, (path, time) -> -time
