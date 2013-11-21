@@ -483,11 +483,11 @@ describe 'FuzzyFinder', ->
 
     beforeEach ->
       projectPath = atom.project.resolve('git/working-dir')
-      fs.move(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+      fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
       atom.project.setPath(projectPath)
 
     afterEach ->
-      fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
+      fs.moveSync(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
@@ -497,16 +497,16 @@ describe 'FuzzyFinder', ->
         editor = rootView.getActiveView()
         originalText = editor.getText()
         originalPath = editor.getPath()
-        fs.writeSync(originalPath, 'making a change for the better')
+        fs.writeFileSync(originalPath, 'making a change for the better')
         atom.project.getRepo().getPathStatus(originalPath)
 
         newPath = atom.project.resolve('newsample.js')
-        fs.writeSync(newPath, '')
+        fs.writeFileSync(newPath, '')
         atom.project.getRepo().getPathStatus(newPath)
 
       afterEach ->
-        fs.writeSync(originalPath, originalText)
-        fs.remove(newPath)
+        fs.writeFileSync(originalPath, originalText)
+        fs.removeSync(newPath)
 
       it "displays all new and modified paths", ->
         expect(rootView.find('.fuzzy-finder')).not.toExist()
@@ -528,11 +528,11 @@ describe 'FuzzyFinder', ->
         originalText = editor.getText()
         originalPath = editor.getPath()
         newPath = atom.project.resolve('newsample.js')
-        fs.writeSync(newPath, '')
+        fs.writeFileSync(newPath, '')
 
       afterEach ->
-        fs.writeSync(originalPath, originalText)
-        fs.remove(newPath) if fs.exists(newPath)
+        fs.writeFileSync(originalPath, originalText)
+        fs.removeSync(newPath)
 
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
@@ -563,16 +563,16 @@ describe 'FuzzyFinder', ->
 
         beforeEach ->
           ignoreFile = path.join(atom.project.getPath(), '.gitignore')
-          fs.writeSync(ignoreFile, 'ignored.txt')
+          fs.writeFileSync(ignoreFile, 'ignored.txt')
 
           ignoredFile = path.join(projectPath, 'ignored.txt')
-          fs.writeSync(ignoredFile, 'ignored text')
+          fs.writeFileSync(ignoredFile, 'ignored text')
 
           atom.config.set("core.excludeVcsIgnoredPaths", true)
 
         afterEach ->
-          fs.remove(ignoredFile)
-          fs.remove(ignoreFile)
+          fs.removeSync(ignoredFile)
+          fs.removeSync(ignoreFile)
 
         it "excludes paths that are git ignored", ->
           rootView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -590,10 +590,10 @@ describe 'FuzzyFinder', ->
         beforeEach ->
           atom.project.setPath(atom.project.resolve('dir'))
           ignoreFile = path.join(atom.project.getPath(), '.gitignore')
-          fs.writeSync(ignoreFile, 'b.txt')
+          fs.writeFileSync(ignoreFile, 'b.txt')
 
         afterEach ->
-          fs.remove(ignoreFile)
+          fs.removeSync(ignoreFile)
 
         it "does not exclude paths that are git ignored", ->
           rootView.trigger 'fuzzy-finder:toggle-file-finder'
