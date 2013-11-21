@@ -6,7 +6,7 @@ module.exports =
     taskPath = require.resolve('./load-paths-handler')
     ignoredNames = atom.config.get('fuzzyFinder.ignoredNames') ? []
     ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
-    ignoreVcsIgnores = atom.config.get('core.excludeVcsIgnoredPaths') and project?.getRepo()?.isProjectAtRoot()
+    ignoreVcsIgnores = atom.config.get('core.excludeVcsIgnoredPaths') and atom.project?.getRepo()?.isProjectAtRoot()
 
     task = Task.once taskPath, atom.project.getPath(), ignoreVcsIgnores, ignoredNames, ->
       callback(projectPaths)

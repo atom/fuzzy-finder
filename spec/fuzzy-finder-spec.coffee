@@ -62,12 +62,12 @@ describe 'FuzzyFinder', ->
 
         describe "symlinks on #darwin or #linux", ->
           beforeEach ->
-            fs.symlinkSync(project.resolve('sample.txt'), project.resolve('symlink-to-file'))
-            fs.symlinkSync(project.resolve('dir'), project.resolve('symlink-to-dir'))
+            fs.symlinkSync(atom.project.resolve('sample.txt'), atom.project.resolve('symlink-to-file'))
+            fs.symlinkSync(atom.project.resolve('dir'), atom.project.resolve('symlink-to-dir'))
 
           afterEach ->
-            fs.unlinkSync(path.join(project.getPath(), 'symlink-to-file'))
-            fs.unlinkSync(path.join(project.getPath(), 'symlink-to-dir'))
+            fs.unlinkSync(path.join(atom.project.getPath(), 'symlink-to-file'))
+            fs.unlinkSync(path.join(atom.project.getPath(), 'symlink-to-dir'))
 
           it "includes symlinked file paths", ->
             rootView.attachToDom()
@@ -93,7 +93,7 @@ describe 'FuzzyFinder', ->
 
       describe "when root view's project has no path", ->
         beforeEach ->
-          project.setPath(null)
+          atom.project.setPath(null)
 
         it "does not open the FuzzyFinder", ->
           expect(rootView.find('.fuzzy-finder')).not.toExist()
@@ -108,7 +108,7 @@ describe 'FuzzyFinder', ->
         expect(rootView.getActiveView()).toBe editor2
         rootView.trigger 'fuzzy-finder:toggle-file-finder'
 
-        expectedPath = project.resolve('dir/a')
+        expectedPath = atom.project.resolve('dir/a')
         finderView.confirmed({filePath: expectedPath})
 
         waitsFor ->
@@ -127,7 +127,7 @@ describe 'FuzzyFinder', ->
           rootView.attachToDom()
           editorPath = rootView.getActiveView().getPath()
           rootView.trigger 'fuzzy-finder:toggle-file-finder'
-          finderView.confirmed({filePath: project.resolve('dir')})
+          finderView.confirmed({filePath: atom.project.resolve('dir')})
           expect(finderView.hasParent()).toBeTruthy()
           expect(rootView.getActiveView().getPath()).toBe editorPath
           expect(finderView.error.text().length).toBeGreaterThan 0
@@ -233,7 +233,7 @@ describe 'FuzzyFinder', ->
 
       describe "when the active pane has an item for the selected path", ->
         it "switches to the item for the selected path", ->
-          expectedPath = project.resolve('sample.txt')
+          expectedPath = atom.project.resolve('sample.txt')
           finderView.confirmed({filePath: expectedPath})
 
           waitsFor ->
@@ -254,7 +254,7 @@ describe 'FuzzyFinder', ->
 
           expect(rootView.getActiveView()).toBe editor1
 
-          expectedPath = project.resolve('sample.txt')
+          expectedPath = atom.project.resolve('sample.txt')
           finderView.confirmed({filePath: expectedPath})
 
           waitsFor ->
@@ -332,15 +332,15 @@ describe 'FuzzyFinder', ->
         expect(PathLoader.startTask).not.toHaveBeenCalled()
 
     it "doesn't cache buffer paths", ->
-      spyOn(project, "getEditSessions").andCallThrough()
+      spyOn(atom.project, "getEditSessions").andCallThrough()
       rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
       waitsFor ->
         finderView.list.children('li').length > 0
 
       runs ->
-        expect(project.getEditSessions).toHaveBeenCalled()
-        project.getEditSessions.reset()
+        expect(atom.project.getEditSessions).toHaveBeenCalled()
+        atom.project.getEditSessions.reset()
         rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
         rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
@@ -348,7 +348,7 @@ describe 'FuzzyFinder', ->
         finderView.list.children('li').length > 0
 
       runs ->
-        expect(project.getEditSessions).toHaveBeenCalled()
+        expect(atom.project.getEditSessions).toHaveBeenCalled()
 
     it "busts the cache when the window gains focus", ->
       spyOn(PathLoader, "startTask").andCallThrough()
@@ -392,7 +392,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(rootView.getPanes().length).toBe 2
         expect(pane.splitLeft).toHaveBeenCalled()
-        expect(rootView.getActiveView().getPath()).toBe project.resolve(filePath)
+        expect(rootView.getActiveView().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
       expect(rootView.getPanes().length).toBe 1
@@ -409,7 +409,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(rootView.getPanes().length).toBe 2
         expect(pane.splitRight).toHaveBeenCalled()
-        expect(rootView.getActiveView().getPath()).toBe project.resolve(filePath)
+        expect(rootView.getActiveView().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
       expect(rootView.getPanes().length).toBe 1
@@ -426,7 +426,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(rootView.getPanes().length).toBe 2
         expect(pane.splitUp).toHaveBeenCalled()
-        expect(rootView.getActiveView().getPath()).toBe project.resolve(filePath)
+        expect(rootView.getActiveView().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
       expect(rootView.getPanes().length).toBe 1
@@ -443,7 +443,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(rootView.getPanes().length).toBe 2
         expect(pane.splitDown).toHaveBeenCalled()
-        expect(rootView.getActiveView().getPath()).toBe project.resolve(filePath)
+        expect(rootView.getActiveView().getPath()).toBe atom.project.resolve(filePath)
 
   describe "when the filter text contains a colon followed by a number", ->
     it "opens the selected path to that line number", ->
@@ -482,9 +482,9 @@ describe 'FuzzyFinder', ->
     [projectPath] = []
 
     beforeEach ->
-      projectPath = project.resolve('git/working-dir')
+      projectPath = atom.project.resolve('git/working-dir')
       fs.move(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
-      project.setPath(projectPath)
+      atom.project.setPath(projectPath)
 
     afterEach ->
       fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
@@ -498,11 +498,11 @@ describe 'FuzzyFinder', ->
         originalText = editor.getText()
         originalPath = editor.getPath()
         fs.writeSync(originalPath, 'making a change for the better')
-        project.getRepo().getPathStatus(originalPath)
+        atom.project.getRepo().getPathStatus(originalPath)
 
-        newPath = project.resolve('newsample.js')
+        newPath = atom.project.resolve('newsample.js')
         fs.writeSync(newPath, '')
-        project.getRepo().getPathStatus(newPath)
+        atom.project.getRepo().getPathStatus(newPath)
 
       afterEach ->
         fs.writeSync(originalPath, originalText)
@@ -527,7 +527,7 @@ describe 'FuzzyFinder', ->
         editor = rootView.getActiveView()
         originalText = editor.getText()
         originalPath = editor.getPath()
-        newPath = project.resolve('newsample.js')
+        newPath = atom.project.resolve('newsample.js')
         fs.writeSync(newPath, '')
 
       afterEach ->
@@ -538,7 +538,7 @@ describe 'FuzzyFinder', ->
         it "displays the modified icon", ->
           editor.setText('modified')
           editor.activeEditSession.save()
-          project.getRepo().getPathStatus(editor.getPath())
+          atom.project.getRepo().getPathStatus(editor.getPath())
 
           rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(finderView.find('.status.status-modified').length).toBe 1
@@ -548,7 +548,7 @@ describe 'FuzzyFinder', ->
         it "displays the new icon", ->
           rootView.openSync('newsample.js')
           editor = rootView.getActiveView()
-          project.getRepo().getPathStatus(editor.getPath())
+          atom.project.getRepo().getPathStatus(editor.getPath())
 
           rootView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(finderView.find('.status.status-added').length).toBe 1
@@ -562,7 +562,7 @@ describe 'FuzzyFinder', ->
         [ignoreFile, ignoredFile] = []
 
         beforeEach ->
-          ignoreFile = path.join(project.getPath(), '.gitignore')
+          ignoreFile = path.join(atom.project.getPath(), '.gitignore')
           fs.writeSync(ignoreFile, 'ignored.txt')
 
           ignoredFile = path.join(projectPath, 'ignored.txt')
@@ -588,8 +588,8 @@ describe 'FuzzyFinder', ->
         [ignoreFile] = []
 
         beforeEach ->
-          project.setPath(project.resolve('dir'))
-          ignoreFile = path.join(project.getPath(), '.gitignore')
+          atom.project.setPath(atom.project.resolve('dir'))
+          ignoreFile = path.join(atom.project.getPath(), '.gitignore')
           fs.writeSync(ignoreFile, 'b.txt')
 
         afterEach ->

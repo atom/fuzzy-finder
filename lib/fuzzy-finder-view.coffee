@@ -108,7 +108,7 @@ class FuzzyFinderView extends SelectList
     if @hasParent()
       @cancel()
     else
-      return unless project.getPath()?
+      return unless atom.project.getPath()?
       @allowActiveEditorChange = false
       @populateProjectPaths()
       @attach()
