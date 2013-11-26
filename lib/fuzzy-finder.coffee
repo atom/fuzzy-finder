@@ -6,11 +6,11 @@ module.exports =
   loadPathsTask: null
 
   activate: (state) ->
-    atom.rootView.command 'fuzzy-finder:toggle-file-finder', =>
+    atom.workspaceView.command 'fuzzy-finder:toggle-file-finder', =>
       @createView().toggleFileFinder()
-    atom.rootView.command 'fuzzy-finder:toggle-buffer-finder', =>
+    atom.workspaceView.command 'fuzzy-finder:toggle-buffer-finder', =>
       @createView().toggleBufferFinder()
-    atom.rootView.command 'fuzzy-finder:toggle-git-status-finder', =>
+    atom.workspaceView.command 'fuzzy-finder:toggle-git-status-finder', =>
       @createView().toggleGitFinder()
 
     if atom.project.getPath()?

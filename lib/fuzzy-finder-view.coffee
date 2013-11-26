@@ -24,7 +24,7 @@ class FuzzyFinderView extends SelectList
 
     @subscribe $(window), 'focus', => @reloadProjectPaths = true
     @observeConfig 'fuzzy-finder.ignoredNames', => @reloadProjectPaths = true
-    atom.rootView.eachPane (pane) ->
+    atom.workspaceView.eachPane (pane) ->
       pane.activeItem?.lastOpened = Date.now() - 1
       pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = (new Date) - 1
 
@@ -68,13 +68,13 @@ class FuzzyFinderView extends SelectList
   openPath: (filePath, lineNumber) ->
     return unless filePath
 
-    atom.rootView.open(filePath, {@allowActiveEditorChange}).done =>
+    atom.workspaceView.open(filePath, {@allowActiveEditorChange}).done =>
       @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
 
-    if editor = atom.rootView.getActiveView()
+    if editor = atom.workspaceView.getActiveView()
       position = new Point(lineNumber)
       editor.scrollToBufferPosition(position, center: true)
       editor.setCursorBufferPosition(position)
@@ -85,7 +85,7 @@ class FuzzyFinderView extends SelectList
     return unless filePath
 
     lineNumber = @getLineNumber()
-    if pane = atom.rootView.getActivePane()
+    if pane = atom.workspaceView.getActivePane()
       atom.project.open(filePath).done (editSession) =>
         fn(pane, editSession)
         @moveToLine(lineNumber)
@@ -199,7 +199,7 @@ class FuzzyFinderView extends SelectList
       editSession.getPath()?
 
     editSessions = _.sortBy editSessions, (editSession) =>
-      if editSession is atom.rootView.getActivePaneItem()
+      if editSession is atom.workspaceView.getActivePaneItem()
         0
       else
         -(editSession.lastOpened or 1)
@@ -215,5 +215,5 @@ class FuzzyFinderView extends SelectList
   attach: ->
     super
 
-    atom.rootView.append(this)
+    atom.workspaceView.append(this)
     @miniEditor.focus()
