@@ -195,7 +195,7 @@ class FuzzyFinderView extends SelectList
         @loadingBadge.text(humanize.intComma(pathsFound))
 
   populateOpenBufferPaths: ->
-    editSessions = atom.project.getEditSessions().filter (editSession) ->
+    editSessions = atom.project.getEditors().filter (editSession) ->
       editSession.getPath()?
 
     editSessions = _.sortBy editSessions, (editSession) =>

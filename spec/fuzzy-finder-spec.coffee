@@ -21,7 +21,7 @@ describe 'FuzzyFinder', ->
           workspaceView.attachToDom()
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
           workspaceView.getActiveView().splitRight()
-          [editor1, editor2] = workspaceView.getEditors()
+          [editor1, editor2] = workspaceView.getEditorViews()
 
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -144,7 +144,7 @@ describe 'FuzzyFinder', ->
         it "shows the FuzzyFinder if it isn't showing, or hides it and returns focus to the active editor", ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
           workspaceView.getActiveView().splitRight()
-          [editor1, editor2, editor3] = workspaceView.getEditors()
+          [editor1, editor2, editor3] = workspaceView.getEditorViews()
           expect(workspaceView.getActiveView()).toBe editor3
 
           expect(editor1.isFocused).toBeFalsy()
@@ -224,7 +224,7 @@ describe 'FuzzyFinder', ->
         editor2 = editor1.splitRight()
         editor3 = workspaceView.openSync ('sample.txt')
 
-        [editor1, editor2, editor3] = workspaceView.getEditors()
+        [editor1, editor2, editor3] = workspaceView.getEditorViews()
 
         expect(workspaceView.getActiveView()).toBe editor3
 
@@ -332,15 +332,15 @@ describe 'FuzzyFinder', ->
         expect(PathLoader.startTask).not.toHaveBeenCalled()
 
     it "doesn't cache buffer paths", ->
-      spyOn(atom.project, "getEditSessions").andCallThrough()
+      spyOn(atom.project, "getEditors").andCallThrough()
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
       waitsFor ->
         finderView.list.children('li').length > 0
 
       runs ->
-        expect(atom.project.getEditSessions).toHaveBeenCalled()
-        atom.project.getEditSessions.reset()
+        expect(atom.project.getEditors).toHaveBeenCalled()
+        atom.project.getEditors.reset()
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
@@ -348,7 +348,7 @@ describe 'FuzzyFinder', ->
         finderView.list.children('li').length > 0
 
       runs ->
-        expect(atom.project.getEditSessions).toHaveBeenCalled()
+        expect(atom.project.getEditors).toHaveBeenCalled()
 
     it "busts the cache when the window gains focus", ->
       spyOn(PathLoader, "startTask").andCallThrough()
@@ -449,7 +449,7 @@ describe 'FuzzyFinder', ->
     it "opens the selected path to that line number", ->
       workspaceView.attachToDom()
       expect(workspaceView.find('.fuzzy-finder')).not.toExist()
-      [editor] = workspaceView.getEditors()
+      [editor] = workspaceView.getEditorViews()
       expect(editor.getCursorBufferPosition()).toEqual [0, 0]
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
@@ -537,7 +537,7 @@ describe 'FuzzyFinder', ->
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
           editor.setText('modified')
-          editor.activeEditSession.save()
+          editor.save()
           atom.project.getRepo().getPathStatus(editor.getPath())
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'

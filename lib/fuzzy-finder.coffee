@@ -17,7 +17,7 @@ module.exports =
       PathLoader = require './path-loader'
       @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
 
-    for editSession in atom.project.getEditSessions()
+    for editSession in atom.project.getEditors()
       editSession.lastOpened = state[editSession.getPath()]
 
   deactivate: ->
@@ -33,7 +33,7 @@ module.exports =
   serialize: ->
     if @fuzzyFinderView?
       paths = {}
-      for editSession in atom.project.getEditSessions()
+      for editSession in atom.project.getEditors()
         path = editSession.getPath()
         paths[path] = editSession.lastOpened if path?
       paths
