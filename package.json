@@ -3,20 +3,11 @@
   "version": "0.27.0",
   "main": "./lib/fuzzy-finder",
   "description": "Open an editor to a file in the project with `cmd-t`.",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/atom/fuzzy-finder.git"
-  },
+  "repository": "https://github.com/atom/fuzzy-finder",
   "dependencies": {
     "humanize-plus": "~1.4.2"
   },
-  "bugs": {
-    "url": "https://github.com/atom/fuzzy-finder/issues"
-  },
   "engines": {
     "atom": "*"
-  },
-  "publishConfig": {
-    "registry": "https://atom.cloudant.com/registry/_design/app/_rewrite"
   }
 }
