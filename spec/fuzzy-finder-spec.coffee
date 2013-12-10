@@ -48,9 +48,8 @@ describe 'FuzzyFinder', ->
           expect(finderView.find(".loading").text().length).toBeGreaterThan 0
 
           waitsFor "all project paths to load", 5000, ->
-            unless finderView.reloadProjectPaths
-              paths = finderView.projectPaths
-              true
+            paths = finderView.projectPaths
+            paths?.length > 0
 
           runs ->
             expect(paths.length).toBeGreaterThan 0
@@ -59,6 +58,14 @@ describe 'FuzzyFinder', ->
               expect(finderView.list.find("li:contains(#{path.basename(filePath)})")).toExist()
             expect(finderView.list.children().first()).toHaveClass 'selected'
             expect(finderView.find(".loading")).not.toBeVisible()
+
+        it "only creates a single path loader task", ->
+          workspaceView.attachToDom()
+          spyOn(PathLoader, 'startTask').andCallThrough()
+          workspaceView.trigger 'fuzzy-finder:toggle-file-finder' # Show
+          workspaceView.trigger 'fuzzy-finder:toggle-file-finder' # Hide
+          workspaceView.trigger 'fuzzy-finder:toggle-file-finder' # Show again
+          expect(PathLoader.startTask.callCount).toBe 1
 
         describe "symlinks on #darwin or #linux", ->
           beforeEach ->
@@ -75,7 +82,7 @@ describe 'FuzzyFinder', ->
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
-              not finderView.reloadProjectPaths
+              finderView.projectPaths?.length > 0
 
             runs ->
               expect(finderView.list.find("li:contains(symlink-to-file)")).toExist()

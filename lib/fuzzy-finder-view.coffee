@@ -17,7 +17,7 @@ class FuzzyFinderView extends SelectList
   reloadProjectPaths: true
   filterKey: 'projectRelativePath'
 
-  initialize: (@projectPaths)->
+  initialize: (@projectPaths) ->
     super
 
     @reloadProjectPaths = false if @projectPaths?.length > 0
@@ -180,13 +180,13 @@ class FuzzyFinderView extends SelectList
       @setArray(@projectPaths)
 
     if @reloadProjectPaths
+      @reloadProjectPaths = false
       @setLoading("Indexing project...")
       @loadingBadge.text("0")
 
       @loadPathsTask?.terminate()
       @loadPathsTask = PathLoader.startTask (paths) =>
         @projectPaths = paths
-        @reloadProjectPaths = false
         @populateProjectPaths()
 
       pathsFound = 0
