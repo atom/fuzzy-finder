@@ -7,7 +7,6 @@ class GitStatusView extends FuzzyFinderView
     if @hasParent()
       @cancel()
     else if atom.project.getRepo()?
-      @allowActiveEditorChange = false
       @populate()
       @attach()
 

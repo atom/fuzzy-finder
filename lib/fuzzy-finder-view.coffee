@@ -6,7 +6,7 @@ class FuzzyFinderView extends SelectList
   @viewClass: ->
     [super, 'fuzzy-finder', 'overlay', 'from-top'].join(' ')
 
-  allowActiveEditorChange: null
+  allowActiveEditorChange: false
   maxItems: 10
   filterKey: 'projectRelativePath'
 
