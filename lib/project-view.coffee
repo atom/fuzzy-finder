@@ -38,16 +38,18 @@ class ProjectView extends FuzzyFinderView
 
     if @reloadPaths
       @reloadPaths = false
-      @setLoading("Indexing project...")
-      @loadingBadge.text("0")
-
       @loadPathsTask?.terminate()
       @loadPathsTask = PathLoader.startTask (@paths) => @populate()
 
-      pathsFound = 0
-      @loadPathsTask.on 'load-paths:paths-found', (paths) =>
-        pathsFound += paths.length
-        @loadingBadge.text(humanize.intComma(pathsFound))
+      if @paths?
+        @setLoading("Reindexing project\u2026")
+      else
+        @setLoading("Indexing project\u2026")
+        @loadingBadge.text('0')
+        pathsFound = 0
+        @loadPathsTask.on 'load-paths:paths-found', (paths) =>
+          pathsFound += paths.length
+          @loadingBadge.text(humanize.intComma(pathsFound))
 
   beforeRemove: ->
     @loadPathsTask?.terminate()
