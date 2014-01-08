@@ -50,7 +50,7 @@ describe 'FuzzyFinder', ->
           expect(projectView.find(".loading").text().length).toBeGreaterThan 0
 
           waitsFor "all project paths to load", 5000, ->
-            paths = projectView.projectPaths
+            {paths} = projectView
             paths?.length > 0
 
           runs ->
@@ -84,7 +84,7 @@ describe 'FuzzyFinder', ->
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
-              projectView.projectPaths?.length > 0
+              projectView.paths?.length > 0
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
@@ -95,7 +95,7 @@ describe 'FuzzyFinder', ->
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
-              not projectView.reloadProjectPaths
+              not projectView.reloadPaths
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()

@@ -6,16 +6,16 @@ PathLoader = require './path-loader'
 
 module.exports =
 class ProjectView extends FuzzyFinderView
-  projectPaths: null
-  reloadProjectPaths: true
+  paths: null
+  reloadPaths: true
 
-  initialize: (@projectPaths) ->
+  initialize: (@paths) ->
     super
 
-    @reloadProjectPaths = false if @projectPaths?.length > 0
+    @reloadPaths = false if @paths?.length > 0
 
-    @subscribe $(window), 'focus', => @reloadProjectPaths = true
-    @observeConfig 'fuzzy-finder.ignoredNames', => @reloadProjectPaths = true
+    @subscribe $(window), 'focus', => @reloadPaths = true
+    @observeConfig 'fuzzy-finder.ignoredNames', => @reloadPaths = true
 
   toggle: ->
     if @hasParent()
@@ -32,18 +32,16 @@ class ProjectView extends FuzzyFinderView
       super
 
   populate: ->
-    if @projectPaths?
-      @setArray(@projectPaths)
+    if @paths?
+      @setArray(@paths)
 
-    if @reloadProjectPaths
-      @reloadProjectPaths = false
+    if @reloadPaths
+      @reloadPaths = false
       @setLoading("Indexing project...")
       @loadingBadge.text("0")
 
       @loadPathsTask?.terminate()
-      @loadPathsTask = PathLoader.startTask (paths) =>
-        @projectPaths = paths
-        @populate()
+      @loadPathsTask = PathLoader.startTask (@paths) => @populate()
 
       pathsFound = 0
       @loadPathsTask.on 'load-paths:paths-found', (paths) =>
