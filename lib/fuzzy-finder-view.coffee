@@ -26,7 +26,7 @@ class FuzzyFinderView extends SelectList
     @observeConfig 'fuzzy-finder.ignoredNames', => @reloadProjectPaths = true
     atom.workspaceView.eachPane (pane) ->
       pane.activeItem?.lastOpened = Date.now() - 1
-      pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = (new Date) - 1
+      pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = Date.now() - 1
 
     @miniEditor.command 'pane:split-left', =>
       @splitOpenPath (pane, session) -> pane.splitLeft(session)
