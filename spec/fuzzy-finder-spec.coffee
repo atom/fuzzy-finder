@@ -1,10 +1,9 @@
 {_, $, $$, fs, WorkspaceView} = require 'atom'
-FuzzyFinder = require '../lib/fuzzy-finder-view'
 PathLoader = require '../lib/path-loader'
 path = require 'path'
 
 describe 'FuzzyFinder', ->
-  [finderView, workspaceView] = []
+  [projectView, bufferView, gitStatusView, workspaceView] = []
 
   beforeEach ->
     workspaceView = new WorkspaceView
@@ -12,7 +11,10 @@ describe 'FuzzyFinder', ->
     workspaceView.openSync('sample.js')
     workspaceView.enableKeymap()
 
-    finderView = atom.packages.activatePackage("fuzzy-finder").mainModule.createView()
+    fuzzyFinder = atom.packages.activatePackage('fuzzy-finder').mainModule
+    projectView = fuzzyFinder.createProjectView()
+    bufferView = fuzzyFinder.createBufferView()
+    gitStatusView = fuzzyFinder.createGitStatusView()
 
   describe "file-finder behavior", ->
     describe "toggling", ->
@@ -26,10 +28,10 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
-          expect(finderView.miniEditor.isFocused).toBeTruthy()
+          expect(projectView.miniEditor.isFocused).toBeTruthy()
           expect(editor1.isFocused).toBeFalsy()
           expect(editor2.isFocused).toBeFalsy()
-          finderView.miniEditor.insertText('this should not show up next time we toggle')
+          projectView.miniEditor.insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(editor1.isFocused).toBeFalsy()
@@ -37,27 +39,27 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          expect(finderView.miniEditor.getText()).toBe ''
+          expect(projectView.miniEditor.getText()).toBe ''
 
         it "shows all relative file paths for the current project and selects the first", ->
           workspaceView.attachToDom()
-          finderView.maxItems = Infinity
+          projectView.maxItems = Infinity
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           paths = null
-          expect(finderView.find(".loading")).toBeVisible()
-          expect(finderView.find(".loading").text().length).toBeGreaterThan 0
+          expect(projectView.find(".loading")).toBeVisible()
+          expect(projectView.find(".loading").text().length).toBeGreaterThan 0
 
           waitsFor "all project paths to load", 5000, ->
-            paths = finderView.projectPaths
+            {paths} = projectView
             paths?.length > 0
 
           runs ->
             expect(paths.length).toBeGreaterThan 0
-            expect(finderView.list.children('li').length).toBe paths.length
+            expect(projectView.list.children('li').length).toBe paths.length
             for filePath in paths
-              expect(finderView.list.find("li:contains(#{path.basename(filePath)})")).toExist()
-            expect(finderView.list.children().first()).toHaveClass 'selected'
-            expect(finderView.find(".loading")).not.toBeVisible()
+              expect(projectView.list.find("li:contains(#{path.basename(filePath)})")).toExist()
+            expect(projectView.list.children().first()).toHaveClass 'selected'
+            expect(projectView.find(".loading")).not.toBeVisible()
 
         it "only creates a single path loader task", ->
           workspaceView.attachToDom()
@@ -78,25 +80,25 @@ describe 'FuzzyFinder', ->
 
           it "includes symlinked file paths", ->
             workspaceView.attachToDom()
-            finderView.maxItems = Infinity
+            projectView.maxItems = Infinity
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
-              finderView.projectPaths?.length > 0
+              projectView.paths?.length > 0
 
             runs ->
-              expect(finderView.list.find("li:contains(symlink-to-file)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
 
           it "excludes symlinked folder paths", ->
             workspaceView.attachToDom()
-            finderView.maxItems = Infinity
+            projectView.maxItems = Infinity
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
-              not finderView.reloadProjectPaths
+              not projectView.reloadPaths
 
             runs ->
-              expect(finderView.list.find("li:contains(symlink-to-dir)")).not.toExist()
+              expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
 
       describe "when root view's project has no path", ->
         beforeEach ->
@@ -116,14 +118,14 @@ describe 'FuzzyFinder', ->
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
         expectedPath = atom.project.resolve('dir/a')
-        finderView.confirmed({filePath: expectedPath})
+        projectView.confirmed({filePath: expectedPath})
 
         waitsFor ->
           workspaceView.getActivePane().getItems().length == 2
 
         runs ->
           editor3 = workspaceView.getActiveView()
-          expect(finderView.hasParent()).toBeFalsy()
+          expect(projectView.hasParent()).toBeFalsy()
           expect(editor1.getPath()).not.toBe expectedPath
           expect(editor2.getPath()).not.toBe expectedPath
           expect(editor3.getPath()).toBe expectedPath
@@ -134,12 +136,12 @@ describe 'FuzzyFinder', ->
           workspaceView.attachToDom()
           editorPath = workspaceView.getActiveView().getPath()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          finderView.confirmed({filePath: atom.project.resolve('dir')})
-          expect(finderView.hasParent()).toBeTruthy()
+          projectView.confirmed({filePath: atom.project.resolve('dir')})
+          expect(projectView.hasParent()).toBeTruthy()
           expect(workspaceView.getActiveView().getPath()).toBe editorPath
-          expect(finderView.error.text().length).toBeGreaterThan 0
+          expect(projectView.error.text().length).toBeGreaterThan 0
           advanceClock(2000)
-          expect(finderView.error.text().length).toBe 0
+          expect(projectView.error.text().length).toBe 0
 
   describe "buffer-finder behavior", ->
     describe "toggling", ->
@@ -161,7 +163,7 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
           expect(workspaceView.find('.fuzzy-finder input:focus')).toExist()
-          finderView.miniEditor.insertText('this should not show up next time we toggle')
+          bufferView.miniEditor.insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(editor1.isFocused).toBeFalsy()
@@ -170,19 +172,19 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(finderView.miniEditor.getText()).toBe ''
+          expect(bufferView.miniEditor.getText()).toBe ''
 
         it "lists the paths of the current items, sorted by most recently opened but with the current item last", ->
           workspaceView.openSync 'sample-with-tabs.coffee'
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(_.pluck(finderView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
+          expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
           workspaceView.openSync 'sample.txt'
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
-          expect(_.pluck(finderView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
-          expect(finderView.list.children().first()).toHaveClass 'selected'
+          expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
+          expect(bufferView.list.children().first()).toHaveClass 'selected'
 
         it "serializes the list of paths and their last opened time", ->
           workspaceView.openSync 'sample-with-tabs.coffee'
@@ -220,7 +222,7 @@ describe 'FuzzyFinder', ->
           workspaceView.openSync 'sample.js'
           workspaceView.getActiveView().splitRight()
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(_.pluck(finderView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
+          expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
 
     describe "when a path selection is confirmed", ->
       [editor1, editor2, editor3] = []
@@ -241,13 +243,13 @@ describe 'FuzzyFinder', ->
       describe "when the active pane has an item for the selected path", ->
         it "switches to the item for the selected path", ->
           expectedPath = atom.project.resolve('sample.txt')
-          finderView.confirmed({filePath: expectedPath})
+          bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
             workspaceView.getActiveView().getPath() == expectedPath
 
           runs ->
-            expect(finderView.hasParent()).toBeFalsy()
+            expect(bufferView.hasParent()).toBeFalsy()
             expect(editor1.getPath()).not.toBe expectedPath
             expect(editor2.getPath()).not.toBe expectedPath
             expect(editor3.getPath()).toBe expectedPath
@@ -262,7 +264,7 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.getActiveView()).toBe editor1
 
           expectedPath = atom.project.resolve('sample.txt')
-          finderView.confirmed({filePath: expectedPath})
+          bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
             workspaceView.getActivePane().getItems().length == 2
@@ -270,7 +272,7 @@ describe 'FuzzyFinder', ->
           runs ->
             editor4 = workspaceView.getActiveView()
 
-            expect(finderView.hasParent()).toBeFalsy()
+            expect(bufferView.hasParent()).toBeFalsy()
             expect(editor1.isFocused).toBeFalsy()
 
             expect(editor4).not.toBe editor1
@@ -289,15 +291,15 @@ describe 'FuzzyFinder', ->
           activeEditor.focus()
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          expect(finderView.hasParent()).toBeTruthy()
+          expect(projectView.hasParent()).toBeTruthy()
           expect(activeEditor.isFocused).toBeFalsy()
-          expect(finderView.miniEditor.isFocused).toBeTruthy()
+          expect(projectView.miniEditor.isFocused).toBeTruthy()
 
-          finderView.cancel()
+          projectView.cancel()
 
-          expect(finderView.hasParent()).toBeFalsy()
+          expect(projectView.hasParent()).toBeFalsy()
           expect(activeEditor.isFocused).toBeTruthy()
-          expect(finderView.miniEditor.isFocused).toBeFalsy()
+          expect(projectView.miniEditor.isFocused).toBeFalsy()
 
       describe "when no editors are open", ->
         it "detaches the finder and focuses the previously focused element", ->
@@ -309,14 +311,14 @@ describe 'FuzzyFinder', ->
           inputView.focus()
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          expect(finderView.hasParent()).toBeTruthy()
-          expect(finderView.miniEditor.isFocused).toBeTruthy()
+          expect(projectView.hasParent()).toBeTruthy()
+          expect(projectView.miniEditor.isFocused).toBeTruthy()
 
-          finderView.cancel()
+          projectView.cancel()
 
-          expect(finderView.hasParent()).toBeFalsy()
+          expect(projectView.hasParent()).toBeFalsy()
           expect(document.activeElement).toBe inputView[0]
-          expect(finderView.miniEditor.isFocused).toBeFalsy()
+          expect(projectView.miniEditor.isFocused).toBeFalsy()
 
   describe "cached file paths", ->
     it "caches file paths after first time", ->
@@ -324,7 +326,7 @@ describe 'FuzzyFinder', ->
       workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
       waitsFor ->
-        finderView.list.children('li').length > 0
+        projectView.list.children('li').length > 0
 
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
@@ -333,7 +335,7 @@ describe 'FuzzyFinder', ->
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
       waitsFor ->
-        finderView.list.children('li').length > 0
+        projectView.list.children('li').length > 0
 
       runs ->
         expect(PathLoader.startTask).not.toHaveBeenCalled()
@@ -343,7 +345,7 @@ describe 'FuzzyFinder', ->
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
       waitsFor ->
-        finderView.list.children('li').length > 0
+        bufferView.list.children('li').length > 0
 
       runs ->
         expect(atom.project.getEditors).toHaveBeenCalled()
@@ -352,7 +354,7 @@ describe 'FuzzyFinder', ->
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
       waitsFor ->
-        finderView.list.children('li').length > 0
+        bufferView.list.children('li').length > 0
 
       runs ->
         expect(atom.project.getEditors).toHaveBeenCalled()
@@ -362,7 +364,7 @@ describe 'FuzzyFinder', ->
       workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
       waitsFor ->
-        finderView.list.children('li').length > 0
+        projectView.list.children('li').length > 0
 
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
@@ -375,13 +377,13 @@ describe 'FuzzyFinder', ->
   it "ignores paths that match entries in config.fuzzyFinder.ignoredNames", ->
     atom.config.set("fuzzyFinder.ignoredNames", ["tree-view.js"])
     workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-    finderView.maxItems = Infinity
+    projectView.maxItems = Infinity
 
     waitsFor ->
-      finderView.list.children('li').length > 0
+      projectView.list.children('li').length > 0
 
     runs ->
-      expect(finderView.list.find("li:contains(tree-view.js)")).not.toExist()
+      expect(projectView.list.find("li:contains(tree-view.js)")).not.toExist()
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
@@ -390,8 +392,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitLeft").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = finderView.getSelectedElement()
-      finderView.miniEditor.trigger 'pane:split-left'
+      {filePath} = bufferView.getSelectedElement()
+      bufferView.miniEditor.trigger 'pane:split-left'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -407,8 +409,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitRight").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = finderView.getSelectedElement()
-      finderView.miniEditor.trigger 'pane:split-right'
+      {filePath} = bufferView.getSelectedElement()
+      bufferView.miniEditor.trigger 'pane:split-right'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -424,8 +426,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitUp").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = finderView.getSelectedElement()
-      finderView.miniEditor.trigger 'pane:split-up'
+      {filePath} = bufferView.getSelectedElement()
+      bufferView.miniEditor.trigger 'pane:split-up'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -441,8 +443,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitDown").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = finderView.getSelectedElement()
-      finderView.miniEditor.trigger 'pane:split-down'
+      {filePath} = bufferView.getSelectedElement()
+      bufferView.miniEditor.trigger 'pane:split-down'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -461,29 +463,28 @@ describe 'FuzzyFinder', ->
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
       expect(workspaceView.find('.fuzzy-finder')).toExist()
-      finderView.miniEditor.insertText(':4')
-      finderView.trigger 'core:confirm'
-      spyOn(finderView, 'moveToLine').andCallThrough()
+      bufferView.miniEditor.insertText(':4')
+      bufferView.trigger 'core:confirm'
+      spyOn(bufferView, 'moveToLine').andCallThrough()
 
       waitsFor ->
-        finderView.moveToLine.callCount > 0
+        bufferView.moveToLine.callCount > 0
 
       runs ->
-        finderView.moveToLine.reset()
+        bufferView.moveToLine.reset()
         expect(editor.getCursorBufferPosition()).toEqual [3, 4]
 
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
         expect(workspaceView.find('.fuzzy-finder')).toExist()
-        finderView.miniEditor.insertText(':10')
-        finderView.miniEditor.trigger 'pane:split-left'
+        bufferView.miniEditor.insertText(':10')
+        bufferView.miniEditor.trigger 'pane:split-left'
 
       waitsFor ->
-        finderView.moveToLine.callCount > 0
+        bufferView.moveToLine.callCount > 0
 
       runs ->
         expect(workspaceView.getActiveView()).not.toBe editor
         expect(workspaceView.getActiveView().getCursorBufferPosition()).toEqual [9, 2]
-
 
   describe "Git integration", ->
     [projectPath] = []
@@ -520,10 +521,10 @@ describe 'FuzzyFinder', ->
         workspaceView.trigger 'fuzzy-finder:toggle-git-status-finder'
         expect(workspaceView.find('.fuzzy-finder')).toExist()
 
-        expect(finderView.find('.file').length).toBe 2
+        expect(gitStatusView.find('.file').length).toBe 2
 
-        expect(finderView.find('.status.status-modified').length).toBe 1
-        expect(finderView.find('.status.status-added').length).toBe 1
+        expect(gitStatusView.find('.status.status-modified').length).toBe 1
+        expect(gitStatusView.find('.status.status-added').length).toBe 1
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
@@ -548,8 +549,8 @@ describe 'FuzzyFinder', ->
           atom.project.getRepo().getPathStatus(editor.getPath())
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(finderView.find('.status.status-modified').length).toBe 1
-          expect(finderView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
+          expect(bufferView.find('.status.status-modified').length).toBe 1
+          expect(bufferView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
 
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
@@ -558,8 +559,8 @@ describe 'FuzzyFinder', ->
           atom.project.getRepo().getPathStatus(editor.getPath())
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(finderView.find('.status.status-added').length).toBe 1
-          expect(finderView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
+          expect(bufferView.find('.status.status-added').length).toBe 1
+          expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
       beforeEach ->
@@ -583,13 +584,13 @@ describe 'FuzzyFinder', ->
 
         it "excludes paths that are git ignored", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          finderView.maxItems = Infinity
+          projectView.maxItems = Infinity
 
           waitsFor ->
-            finderView.list.children('li').length > 0
+            projectView.list.children('li').length > 0
 
           runs ->
-            expect(finderView.list.find("li:contains(ignored.txt)")).not.toExist()
+            expect(projectView.list.find("li:contains(ignored.txt)")).not.toExist()
 
       describe "when the project's path is a subfolder of the repository's working directory", ->
         [ignoreFile] = []
@@ -604,10 +605,10 @@ describe 'FuzzyFinder', ->
 
         it "does not exclude paths that are git ignored", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          finderView.maxItems = Infinity
+          projectView.maxItems = Infinity
 
           waitsFor ->
-            finderView.list.children('li').length > 0
+            projectView.list.children('li').length > 0
 
           runs ->
-            expect(finderView.list.find("li:contains(b.txt)")).toExist()
+            expect(projectView.list.find("li:contains(b.txt)")).toExist()

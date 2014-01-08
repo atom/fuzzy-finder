@@ -1,5 +1,3 @@
-{_} = require 'atom'
-
 module.exports =
   projectPaths: null
   fuzzyFinderView: null
@@ -7,41 +5,61 @@ module.exports =
 
   activate: (state) ->
     atom.workspaceView.command 'fuzzy-finder:toggle-file-finder', =>
-      @createView().toggleFileFinder()
+      @createProjectView().toggle()
     atom.workspaceView.command 'fuzzy-finder:toggle-buffer-finder', =>
-      @createView().toggleBufferFinder()
+      @createBufferView().toggle()
     atom.workspaceView.command 'fuzzy-finder:toggle-git-status-finder', =>
-      @createView().toggleGitFinder()
+      @createGitStatusView().toggle()
 
     if atom.project.getPath()?
       PathLoader = require './path-loader'
       @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
 
-    for editSession in atom.project.getEditors()
-      editSession.lastOpened = state[editSession.getPath()]
+    for editor in atom.project.getEditors()
+      editor.lastOpened = state[editor.getPath()]
+
+    atom.workspaceView.eachPane (pane) ->
+      pane.activeItem?.lastOpened = Date.now()
+      pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = Date.now()
 
   deactivate: ->
     if @loadPathsTask?
       @loadPathsTask.terminate()
       @loadPathsTask = null
-    if @fuzzyFinderView?
-      @fuzzyFinderView.cancel()
-      @fuzzyFinderView.remove()
-      @fuzzyFinderView = null
+    if @projectView?
+      @projectView.destroy()
+      @projectView = null
+    if @bufferView?
+      @bufferView.destroy()
+      @bufferView = null
+    if @gitStatusView?
+      @gitStatusView.destroy()
+      @gitStatusView = null
     @projectPaths = null
 
   serialize: ->
-    if @fuzzyFinderView?
-      paths = {}
-      for editSession in atom.project.getEditors()
-        path = editSession.getPath()
-        paths[path] = editSession.lastOpened if path?
-      paths
+    paths = {}
+    for editor in atom.project.getEditors()
+      path = editor.getPath()
+      paths[path] = editor.lastOpened if path?
+    paths
 
-  createView:  ->
-    unless @fuzzyFinderView?
+  createProjectView:  ->
+    unless @projectView?
       @loadPathsTask?.terminate()
-      FuzzyFinderView  = require './fuzzy-finder-view'
-      @fuzzyFinderView = new FuzzyFinderView(@projectPaths)
+      ProjectView  = require './project-view'
+      @projectView = new ProjectView(@projectPaths)
       @projectPaths = null
-    @fuzzyFinderView
+    @projectView
+
+  createGitStatusView:  ->
+    unless @gitStatusView?
+      GitStatusView  = require './git-status-view'
+      @gitStatusView = new GitStatusView()
+    @gitStatusView
+
+  createBufferView: ->
+    unless @bufferView?
+      BufferView = require './buffer-view'
+      @bufferView = new BufferView()
+    @bufferView
