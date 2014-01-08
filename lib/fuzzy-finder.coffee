@@ -1,5 +1,3 @@
-{_} = require 'atom'
-
 module.exports =
   projectPaths: null
   fuzzyFinderView: null
