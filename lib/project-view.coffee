@@ -14,8 +14,10 @@ class ProjectView extends FuzzyFinderView
 
     @reloadPaths = false if @paths?.length > 0
 
-    @subscribe $(window), 'focus', => @reloadPaths = true
-    @observeConfig 'fuzzy-finder.ignoredNames', => @reloadPaths = true
+    @subscribe $(window), 'focus', =>
+      @reloadPaths = true
+    @observeConfig 'fuzzy-finder.ignoredNames', callNow: false, =>
+      @reloadPaths = true
 
   toggle: ->
     if @hasParent()
