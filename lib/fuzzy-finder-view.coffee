@@ -9,6 +9,8 @@ class FuzzyFinderView extends SelectList
   allowActiveEditorChange: false
   maxItems: 10
   filterKey: 'projectRelativePath'
+  filePaths: null
+  projectRelativePaths: null
 
   initialize: ->
     super
@@ -108,12 +110,15 @@ class FuzzyFinderView extends SelectList
     else
       parseInt(query[colon+1..]) - 1
 
-  setArray: (paths) ->
-    projectRelativePaths = paths.map (filePath) ->
-      projectRelativePath = atom.project.relativize(filePath)
-      {filePath, projectRelativePath}
+  setArray: (filePaths) ->
+    # Don't regenerate project relative paths unless the file paths have changed
+    if filePaths isnt @filePaths
+      @filePaths = filePaths
+      @projectRelativePaths = @filePaths.map (filePath) ->
+        projectRelativePath = atom.project.relativize(filePath)
+        {filePath, projectRelativePath}
 
-    super(projectRelativePaths)
+    super(@projectRelativePaths)
 
   attach: ->
     super
