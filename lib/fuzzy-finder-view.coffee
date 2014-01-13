@@ -65,11 +65,11 @@ class FuzzyFinderView extends SelectList
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
 
-    if editor = atom.workspaceView.getActiveView()
+    if editorView = atom.workspaceView.getActiveView()
       position = new Point(lineNumber)
-      editor.scrollToBufferPosition(position, center: true)
-      editor.setCursorBufferPosition(position)
-      editor.moveCursorToFirstCharacterOfLine()
+      editorView.scrollToBufferPosition(position, center: true)
+      editorView.editor.setCursorBufferPosition(position)
+      editorView.editor.moveCursorToFirstCharacterOfLine()
 
   splitOpenPath: (fn) ->
     {filePath} = @getSelectedElement()
