@@ -16,7 +16,7 @@ class ProjectView extends FuzzyFinderView
 
     @subscribe $(window), 'focus', =>
       @reloadPaths = true
-    @observeConfig 'fuzzy-finder.ignoredNames', callNow: false, =>
+    @subscribe atom.config.observe 'fuzzy-finder.ignoredNames', callNow: false, =>
       @reloadPaths = true
 
   toggle: ->
