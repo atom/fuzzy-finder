@@ -11,10 +11,12 @@ describe 'FuzzyFinder', ->
     workspaceView.openSync('sample.js')
     workspaceView.enableKeymap()
 
-    fuzzyFinder = atom.packages.activatePackage('fuzzy-finder').mainModule
-    projectView = fuzzyFinder.createProjectView()
-    bufferView = fuzzyFinder.createBufferView()
-    gitStatusView = fuzzyFinder.createGitStatusView()
+    waitsForPromise ->
+      atom.packages.activatePackage('fuzzy-finder').then (pack) ->
+        fuzzyFinder = pack.mainModule
+        projectView = fuzzyFinder.createProjectView()
+        bufferView = fuzzyFinder.createBufferView()
+        gitStatusView = fuzzyFinder.createGitStatusView()
 
   describe "file-finder behavior", ->
     describe "toggling", ->
