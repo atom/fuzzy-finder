@@ -21,4 +21,4 @@ class GitStatusView extends FuzzyFinderView
     for filePath, status of atom.project.getRepo().statuses
       paths.push(filePath) if fs.isFileSync(filePath)
 
-    @setArray(paths)
+    @setItems(paths)

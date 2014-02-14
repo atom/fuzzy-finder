@@ -28,4 +28,4 @@ class BufferView extends FuzzyFinderView
     @paths = []
     @paths.push(editor.getPath()) for editor in editors
 
-    @setArray(_.uniq(@paths))
+    @setItems(_.uniq(@paths))

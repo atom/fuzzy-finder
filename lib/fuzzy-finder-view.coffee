@@ -3,32 +3,33 @@ path = require 'path'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
-  @viewClass: ->
-    [super, 'fuzzy-finder', 'overlay', 'from-top'].join(' ')
-
   allowActiveEditorChange: false
   maxItems: 10
-  filterKey: 'projectRelativePath'
   filePaths: null
   projectRelativePaths: null
 
   initialize: ->
     super
 
-    @miniEditor.command 'pane:split-left', =>
+    @addClass('fuzzy-finder overlay from-top')
+
+    @subscribe this, 'pane:split-left', =>
       @splitOpenPath (pane, session) -> pane.splitLeft(session)
-    @miniEditor.command 'pane:split-right', =>
+    @subscribe this, 'pane:split-right', =>
       @splitOpenPath (pane, session) -> pane.splitRight(session)
-    @miniEditor.command 'pane:split-down', =>
+    @subscribe this, 'pane:split-down', =>
       @splitOpenPath (pane, session) -> pane.splitDown(session)
-    @miniEditor.command 'pane:split-up', =>
+    @subscribe this, 'pane:split-up', =>
       @splitOpenPath (pane, session) -> pane.splitUp(session)
+
+  getFilterKey: ->
+    'projectRelativePath'
 
   destroy: ->
     @cancel()
     @remove()
 
-  itemForElement: ({filePath, projectRelativePath}) ->
+  viewForItem: ({filePath, projectRelativePath}) ->
     $$ ->
       @li class: 'two-lines', =>
         repo = atom.project.getRepo()
@@ -72,7 +73,7 @@ class FuzzyFinderView extends SelectListView
       editorView.editor.moveCursorToFirstCharacterOfLine()
 
   splitOpenPath: (fn) ->
-    {filePath} = @getSelectedElement()
+    {filePath} = @getSelectedItem() ? {}
     return unless filePath
 
     lineNumber = @getLineNumber()
@@ -103,14 +104,14 @@ class FuzzyFinderView extends SelectListView
       query[0...colon]
 
   getLineNumber: ->
-    query = @miniEditor.getText()
+    query = @filterEditorView.getText()
     colon = query.indexOf(':')
     if colon is -1
       -1
     else
       parseInt(query[colon+1..]) - 1
 
-  setArray: (filePaths) ->
+  setItems: (filePaths) ->
     # Don't regenerate project relative paths unless the file paths have changed
     if filePaths isnt @filePaths
       @filePaths = filePaths
@@ -121,7 +122,6 @@ class FuzzyFinderView extends SelectListView
     super(@projectRelativePaths)
 
   attach: ->
-    super
-
+    @storeFocusedElement()
     atom.workspaceView.append(this)
-    @miniEditor.focus()
+    @focusFilterEditor()

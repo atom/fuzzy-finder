@@ -34,7 +34,7 @@ class ProjectView extends FuzzyFinderView
 
   populate: ->
     if @paths?
-      @setArray(@paths)
+      @setItems(@paths)
 
     if @reloadPaths
       @reloadPaths = false

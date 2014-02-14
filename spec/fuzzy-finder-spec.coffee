@@ -30,10 +30,10 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
-          expect(projectView.miniEditor.isFocused).toBeTruthy()
+          expect(projectView.filterEditorView.isFocused).toBeTruthy()
           expect(editor1.isFocused).toBeFalsy()
           expect(editor2.isFocused).toBeFalsy()
-          projectView.miniEditor.insertText('this should not show up next time we toggle')
+          projectView.filterEditorView.insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(editor1.isFocused).toBeFalsy()
@@ -41,7 +41,7 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          expect(projectView.miniEditor.getText()).toBe ''
+          expect(projectView.filterEditorView.getText()).toBe ''
 
         it "shows all relative file paths for the current project and selects the first", ->
           workspaceView.attachToDom()
@@ -165,7 +165,7 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
           expect(workspaceView.find('.fuzzy-finder input:focus')).toExist()
-          bufferView.miniEditor.insertText('this should not show up next time we toggle')
+          bufferView.filterEditorView.insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(editor1.isFocused).toBeFalsy()
@@ -174,7 +174,7 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(bufferView.miniEditor.getText()).toBe ''
+          expect(bufferView.filterEditorView.getText()).toBe ''
 
         it "lists the paths of the current items, sorted by most recently opened but with the current item last", ->
           workspaceView.openSync 'sample-with-tabs.coffee'
@@ -295,13 +295,13 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(projectView.hasParent()).toBeTruthy()
           expect(activeEditor.isFocused).toBeFalsy()
-          expect(projectView.miniEditor.isFocused).toBeTruthy()
+          expect(projectView.filterEditorView.isFocused).toBeTruthy()
 
           projectView.cancel()
 
           expect(projectView.hasParent()).toBeFalsy()
           expect(activeEditor.isFocused).toBeTruthy()
-          expect(projectView.miniEditor.isFocused).toBeFalsy()
+          expect(projectView.filterEditorView.isFocused).toBeFalsy()
 
       describe "when no editors are open", ->
         it "detaches the finder and focuses the previously focused element", ->
@@ -314,13 +314,13 @@ describe 'FuzzyFinder', ->
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(projectView.hasParent()).toBeTruthy()
-          expect(projectView.miniEditor.isFocused).toBeTruthy()
+          expect(projectView.filterEditorView.isFocused).toBeTruthy()
 
           projectView.cancel()
 
           expect(projectView.hasParent()).toBeFalsy()
           expect(document.activeElement).toBe inputView[0]
-          expect(projectView.miniEditor.isFocused).toBeFalsy()
+          expect(projectView.filterEditorView.isFocused).toBeFalsy()
 
   describe "cached file paths", ->
     it "caches file paths after first time", ->
@@ -394,8 +394,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitLeft").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = bufferView.getSelectedElement()
-      bufferView.miniEditor.trigger 'pane:split-left'
+      {filePath} = bufferView.getSelectedItem()
+      bufferView.filterEditorView.trigger 'pane:split-left'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -411,8 +411,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitRight").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = bufferView.getSelectedElement()
-      bufferView.miniEditor.trigger 'pane:split-right'
+      {filePath} = bufferView.getSelectedItem()
+      bufferView.filterEditorView.trigger 'pane:split-right'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -428,8 +428,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitUp").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = bufferView.getSelectedElement()
-      bufferView.miniEditor.trigger 'pane:split-up'
+      {filePath} = bufferView.getSelectedItem()
+      bufferView.filterEditorView.trigger 'pane:split-up'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -445,8 +445,8 @@ describe 'FuzzyFinder', ->
       spyOn(pane, "splitDown").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      {filePath} = bufferView.getSelectedElement()
-      bufferView.miniEditor.trigger 'pane:split-down'
+      {filePath} = bufferView.getSelectedItem()
+      bufferView.filterEditorView.trigger 'pane:split-down'
 
       waitsFor ->
         workspaceView.getPanes().length == 2
@@ -465,7 +465,7 @@ describe 'FuzzyFinder', ->
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
       expect(workspaceView.find('.fuzzy-finder')).toExist()
-      bufferView.miniEditor.insertText(':4')
+      bufferView.filterEditorView.insertText(':4')
       bufferView.trigger 'core:confirm'
       spyOn(bufferView, 'moveToLine').andCallThrough()
 
@@ -478,8 +478,8 @@ describe 'FuzzyFinder', ->
 
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
         expect(workspaceView.find('.fuzzy-finder')).toExist()
-        bufferView.miniEditor.insertText(':10')
-        bufferView.miniEditor.trigger 'pane:split-left'
+        bufferView.filterEditorView.insertText(':10')
+        bufferView.filterEditorView.trigger 'pane:split-left'
 
       waitsFor ->
         bufferView.moveToLine.callCount > 0
