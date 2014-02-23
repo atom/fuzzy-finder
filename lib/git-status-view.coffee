@@ -1,4 +1,4 @@
-{fs} = require 'atom'
+fs = require 'fs-plus'
 FuzzyFinderView = require './fuzzy-finder-view'
 
 module.exports =

@@ -1,5 +1,6 @@
-{$$, fs, Point, SelectListView} = require 'atom'
 path = require 'path'
+{$$, Point, SelectListView} = require 'atom'
+fs = require 'fs-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
