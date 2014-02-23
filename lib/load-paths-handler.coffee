@@ -1,6 +1,7 @@
 fs = require 'fs'
 path = require 'path'
-{_, Git} = require 'atom'
+_ = require 'underscore-plus'
+{Git} = require 'atom'
 
 asyncCallsInProgress = 0
 pathsChunkSize = 100

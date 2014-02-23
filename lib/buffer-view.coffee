@@ -1,4 +1,4 @@
-{_} = require 'atom'
+_ = require 'underscore-plus'
 FuzzyFinderView = require './fuzzy-finder-view'
 
 module.exports =

@@ -1,4 +1,5 @@
-{_, $, $$, fs, WorkspaceView} = require 'atom'
+_ = require 'underscore-plus'
+{$, $$, fs, WorkspaceView} = require 'atom'
 PathLoader = require '../lib/path-loader'
 path = require 'path'
 
