@@ -1,8 +1,4 @@
 module.exports =
-  projectPaths: null
-  fuzzyFinderView: null
-  loadPathsTask: null
-
   activate: (state) ->
     atom.workspaceView.command 'fuzzy-finder:toggle-file-finder', =>
       @createProjectView().toggle()
