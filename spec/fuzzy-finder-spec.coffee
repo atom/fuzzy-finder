@@ -47,7 +47,7 @@ describe 'FuzzyFinder', ->
 
         it "shows all relative file paths for the current project and selects the first", ->
           workspaceView.attachToDom()
-          projectView.maxItems = Infinity
+          projectView.setMaxItems(Infinity)
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           paths = null
           expect(projectView.find(".loading")).toBeVisible()
@@ -84,7 +84,7 @@ describe 'FuzzyFinder', ->
 
           it "includes symlinked file paths", ->
             workspaceView.attachToDom()
-            projectView.maxItems = Infinity
+            projectView.setMaxItems(Infinity)
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
@@ -95,7 +95,7 @@ describe 'FuzzyFinder', ->
 
           it "excludes symlinked folder paths", ->
             workspaceView.attachToDom()
-            projectView.maxItems = Infinity
+            projectView.setMaxItems(Infinity)
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
@@ -381,7 +381,7 @@ describe 'FuzzyFinder', ->
   it "ignores paths that match entries in config.fuzzyFinder.ignoredNames", ->
     atom.config.set("fuzzyFinder.ignoredNames", ["tree-view.js"])
     workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-    projectView.maxItems = Infinity
+    projectView.setMaxItems(Infinity)
 
     waitsFor ->
       projectView.list.children('li').length > 0
@@ -585,7 +585,7 @@ describe 'FuzzyFinder', ->
 
         it "excludes paths that are git ignored", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          projectView.maxItems = Infinity
+          projectView.setMaxItems(Infinity)
 
           waitsFor ->
             projectView.list.children('li').length > 0
@@ -606,7 +606,7 @@ describe 'FuzzyFinder', ->
 
         it "does not exclude paths that are git ignored", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          projectView.maxItems = Infinity
+          projectView.setMaxItems(Infinity)
 
           waitsFor ->
             projectView.list.children('li').length > 0

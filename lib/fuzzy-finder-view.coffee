@@ -5,7 +5,6 @@ fs = require 'fs-plus'
 module.exports =
 class FuzzyFinderView extends SelectListView
   allowActiveEditorChange: false
-  maxItems: 10
   filePaths: null
   projectRelativePaths: null
 
@@ -13,6 +12,7 @@ class FuzzyFinderView extends SelectListView
     super
 
     @addClass('fuzzy-finder overlay from-top')
+    @setMaxItems(10)
 
     @subscribe this, 'pane:split-left', =>
       @splitOpenPath (pane, session) -> pane.splitLeft(session)
