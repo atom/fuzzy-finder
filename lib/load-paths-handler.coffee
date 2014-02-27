@@ -36,7 +36,10 @@ loadPath = (path) ->
         asyncCallStarting()
         fs.stat path, (error, stats) ->
           unless error?
-            pathLoaded(path) if stats.isFile()
+            if stats.isFile()
+              pathLoaded(path)
+            else if stats.isDirectory()
+              loadFolder(path) unless isIgnored(path)
           asyncCallDone()
       else if stats.isDirectory()
         loadFolder(path) unless isIgnored(path)
