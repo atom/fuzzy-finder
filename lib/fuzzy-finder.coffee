@@ -1,4 +1,7 @@
 module.exports =
+  configDefaults:
+    ignoredNames: []
+
   activate: (state) ->
     atom.workspaceView.command 'fuzzy-finder:toggle-file-finder', =>
       @createProjectView().toggle()
