@@ -11,7 +11,14 @@ ignoredNames = null
 callback = null
 
 isIgnored = (loadedPath) ->
-  repo?.isPathIgnored(loadedPath) or _.indexOf(ignoredNames, path.basename(loadedPath), true) isnt -1
+  if repo?.isPathIgnored(loadedPath)
+    true
+  else
+    name = path.basename(loadedPath)
+    return true if _.indexOf(ignoredNames, name, true) isnt -1
+
+    if extension = path.extname(name)
+      return true if  _.indexOf(ignoredNames, "*#{extension}", true) isnt -1
 
 asyncCallStarting = ->
   asyncCallsInProgress++

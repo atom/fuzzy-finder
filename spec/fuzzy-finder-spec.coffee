@@ -379,7 +379,7 @@ describe 'FuzzyFinder', ->
         expect(PathLoader.startTask).toHaveBeenCalled()
 
   it "ignores paths that match entries in config.fuzzy-finder.ignoredNames", ->
-    atom.config.set("fuzzy-finder.ignoredNames", ["sample.js"])
+    atom.config.set("fuzzy-finder.ignoredNames", ["sample.js", "*.txt"])
     workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
     projectView.setMaxItems(Infinity)
 
@@ -388,6 +388,8 @@ describe 'FuzzyFinder', ->
 
     runs ->
       expect(projectView.list.find("li:contains(sample.js)")).not.toExist()
+      expect(projectView.list.find("li:contains(sample.txt)")).not.toExist()
+      expect(projectView.list.find("li:contains(a)")).toExist()
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
