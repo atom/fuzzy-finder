@@ -55,7 +55,7 @@ class ProjectView extends FuzzyFinderView
     projectRelativePaths = super
 
     if lastOpenedPath = @getLastOpenedPath()
-      for {filePath}, index in @projectRelativePaths
+      for {filePath}, index in projectRelativePaths
         if filePath is lastOpenedPath
           projectRelativePaths.splice(index, 1)
           break
