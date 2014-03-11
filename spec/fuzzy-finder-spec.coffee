@@ -10,6 +10,7 @@ describe 'FuzzyFinder', ->
   beforeEach ->
     workspaceView = new WorkspaceView
     atom.workspaceView = workspaceView
+    atom.workspace = atom.workspaceView.model
     workspaceView.openSync('sample.js')
     workspaceView.enableKeymap()
 
@@ -72,6 +73,26 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder' # Hide
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder' # Show again
           expect(PathLoader.startTask.callCount).toBe 1
+
+        it "puts the last active path first", ->
+          workspaceView.attachToDom()
+
+          waitsForPromise ->
+            atom.workspace.open 'sample.txt'
+
+          waitsForPromise ->
+            atom.workspace.open 'sample.js'
+
+          runs ->
+            projectView.setMaxItems(Infinity)
+            workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
+
+          waitsFor "all project paths to load", 5000, ->
+            projectView.paths?.length > 0
+
+          runs ->
+            expect(projectView.list.find("li:eq(0)").text()).toContain('sample.txt')
+            expect(projectView.list.find("li:eq(1)").text()).toContain('sample.js')
 
         describe "symlinks on #darwin or #linux", ->
           beforeEach ->

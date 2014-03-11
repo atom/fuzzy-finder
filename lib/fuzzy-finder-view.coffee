@@ -113,6 +113,9 @@ class FuzzyFinderView extends SelectListView
       parseInt(query[colon+1..]) - 1
 
   setItems: (filePaths) ->
+    super(@projectRelativePathsForFilePaths(filePaths))
+
+  projectRelativePathsForFilePaths: (filePaths) ->
     # Don't regenerate project relative paths unless the file paths have changed
     if filePaths isnt @filePaths
       @filePaths = filePaths
@@ -120,7 +123,7 @@ class FuzzyFinderView extends SelectListView
         projectRelativePath = atom.project.relativize(filePath)
         {filePath, projectRelativePath}
 
-    super(@projectRelativePaths)
+    @projectRelativePaths
 
   attach: ->
     @storeFocusedElement()
