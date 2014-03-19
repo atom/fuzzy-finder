@@ -8,6 +8,7 @@ module.exports =
 class ProjectView extends FuzzyFinderView
   paths: null
   reloadPaths: true
+  reloadAfterFirstLoad: false
 
   initialize: (@paths) ->
     super
@@ -15,7 +16,13 @@ class ProjectView extends FuzzyFinderView
     @reloadPaths = false if @paths?.length > 0
 
     @subscribe $(window), 'focus', =>
-      @reloadPaths = true
+      if @paths?
+        @reloadPaths = true
+      else
+        # The window gained focused while the first task was still running
+        # so let it complete but reload the paths on the next populate call.
+        @reloadAfterFirstLoad = true
+
     @subscribe atom.config.observe 'fuzzy-finder.ignoredNames', callNow: false, =>
       @reloadPaths = true
 
@@ -39,7 +46,12 @@ class ProjectView extends FuzzyFinderView
     if @reloadPaths
       @reloadPaths = false
       @loadPathsTask?.terminate()
-      @loadPathsTask = PathLoader.startTask (@paths) => @populate()
+      @loadPathsTask = PathLoader.startTask (@paths) =>
+        if @reloadAfterFirstLoad
+          @reloadPaths = true
+          @reloadAfterFirstLoad = false
+
+        @populate()
 
       if @paths?
         @setLoading("Reindexing project\u2026")
