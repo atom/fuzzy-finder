@@ -85,7 +85,7 @@ class FuzzyFinderView extends SelectListView
     else
       @openPath(filePath, lineNumber)
 
-  confirmed : ({filePath}) ->
+  confirmed: ({filePath}) ->
     return unless filePath
 
     if fs.isDirectorySync(filePath)
