@@ -1,3 +1,4 @@
+path = require 'path'
 fs = require 'fs-plus'
 FuzzyFinderView = require './fuzzy-finder-view'
 
@@ -19,6 +20,7 @@ class GitStatusView extends FuzzyFinderView
   populate: ->
     paths = []
     for filePath, status of atom.project.getRepo().statuses
+      filePath = path.join(atom.project.getPath(), filePath)
       paths.push(filePath) if fs.isFileSync(filePath)
 
     @setItems(paths)

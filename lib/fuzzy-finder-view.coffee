@@ -35,7 +35,7 @@ class FuzzyFinderView extends SelectListView
       @li class: 'two-lines', =>
         repo = atom.project.getRepo()
         if repo?
-          status = repo.statuses[filePath]
+          status = repo.getCachedPathStatus(filePath)
           if repo.isStatusNew(status)
             @div class: 'status status-added icon icon-diff-added'
           else if repo.isStatusModified(status)
