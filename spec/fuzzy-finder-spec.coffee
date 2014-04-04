@@ -1,13 +1,22 @@
+path = require 'path'
+
 _ = require 'underscore-plus'
 {$, $$, WorkspaceView} = require 'atom'
 fs = require 'fs-plus'
+temp = require 'temp'
+wrench = require 'wrench'
+
 PathLoader = require '../lib/path-loader'
-path = require 'path'
 
 describe 'FuzzyFinder', ->
   [projectView, bufferView, gitStatusView, workspaceView] = []
 
   beforeEach ->
+    tempPath = fs.realpathSync(temp.mkdirSync('atom'))
+    fixturesPath = atom.project.getPath()
+    wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
+    atom.project.setPath(path.join(tempPath, 'fuzzy-finder'))
+
     workspaceView = new WorkspaceView
     atom.workspaceView = workspaceView
     atom.workspace = atom.workspaceView.model
@@ -98,10 +107,6 @@ describe 'FuzzyFinder', ->
           beforeEach ->
             fs.symlinkSync(atom.project.resolve('sample.txt'), atom.project.resolve('symlink-to-file'))
             fs.symlinkSync(atom.project.resolve('dir'), atom.project.resolve('symlink-to-dir'))
-
-          afterEach ->
-            fs.unlinkSync(path.join(atom.project.getPath(), 'symlink-to-file'))
-            fs.unlinkSync(path.join(atom.project.getPath(), 'symlink-to-dir'))
 
           it "includes symlinked file paths", ->
             workspaceView.attachToDom()
@@ -521,9 +526,6 @@ describe 'FuzzyFinder', ->
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
       atom.project.setPath(projectPath)
 
-    afterEach ->
-      fs.moveSync(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
-
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
@@ -537,10 +539,6 @@ describe 'FuzzyFinder', ->
         newPath = atom.project.resolve('newsample.js')
         fs.writeFileSync(newPath, '')
         atom.project.getRepo().getPathStatus(newPath)
-
-      afterEach ->
-        fs.writeFileSync(originalPath, originalText)
-        fs.removeSync(newPath)
 
       it "displays all new and modified paths", ->
         expect(workspaceView.find('.fuzzy-finder')).not.toExist()
@@ -562,10 +560,6 @@ describe 'FuzzyFinder', ->
         originalPath = editor.getPath()
         newPath = atom.project.resolve('newsample.js')
         fs.writeFileSync(newPath, '')
-
-      afterEach ->
-        fs.writeFileSync(originalPath, originalText)
-        fs.removeSync(newPath)
 
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
@@ -602,10 +596,6 @@ describe 'FuzzyFinder', ->
 
           atom.config.set("core.excludeVcsIgnoredPaths", true)
 
-        afterEach ->
-          fs.removeSync(ignoredFile)
-          fs.removeSync(ignoreFile)
-
         it "excludes paths that are git ignored", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           projectView.setMaxItems(Infinity)
@@ -623,9 +613,6 @@ describe 'FuzzyFinder', ->
           atom.project.setPath(atom.project.resolve('dir'))
           ignoreFile = path.join(atom.project.getPath(), '.gitignore')
           fs.writeFileSync(ignoreFile, 'b.txt')
-
-        afterEach ->
-          fs.removeSync(ignoreFile)
 
         it "does not exclude paths that are git ignored", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'

@@ -8,7 +8,9 @@
   "dependencies": {
     "fs-plus": "2.x",
     "humanize-plus": "~1.4.2",
-    "underscore-plus": "1.x"
+    "temp": "~0.6.0",
+    "underscore-plus": "1.x",
+    "wrench": "^1.5"
   },
   "engines": {
     "atom": "*"
