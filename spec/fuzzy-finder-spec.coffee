@@ -404,6 +404,22 @@ describe 'FuzzyFinder', ->
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
         expect(PathLoader.startTask).toHaveBeenCalled()
 
+    it "busts the cache when the project path changes", ->
+      spyOn(PathLoader, "startTask").andCallThrough()
+      workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
+
+      waitsFor ->
+        projectView.list.children('li').length > 0
+
+      runs ->
+        expect(PathLoader.startTask).toHaveBeenCalled()
+        PathLoader.startTask.reset()
+        atom.project.setPath(temp.mkdirSync('atom'))
+        workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
+        workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
+        expect(PathLoader.startTask).toHaveBeenCalled()
+        expect(projectView.list.children('li').length).toBe 0
+
   it "ignores paths that match entries in config.fuzzy-finder.ignoredNames", ->
     atom.config.set("fuzzy-finder.ignoredNames", ["sample.js", "*.txt"])
     workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
