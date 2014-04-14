@@ -25,7 +25,5 @@ class BufferView extends FuzzyFinderView
       else
         -(editor.lastOpened or 1)
 
-    @paths = []
-    @paths.push(editor.getPath()) for editor in editors
-
+    @paths = editors.map (editor) -> editor.getPath()
     @setItems(_.uniq(@paths))
