@@ -7,8 +7,8 @@ Quickly find and open files using `cmd-t`.
 
 This package uses both the `core.ignoredNames` and `fuzzy-finder.ignoredNames`
 config settings to filter out files and folders that will not be shown.
-Both of those config settings are interpreted as [minimatch](https://github.com/isaacs/minimatch)
-glob patterns.
+Both of those config settings are interpreted as arrays of
+[minimatch](https://github.com/isaacs/minimatch) glob patterns.
 
 This package also will also not show Git ignored files when the
 `core.ignoreVcsIgnoredPaths` is enabled.
