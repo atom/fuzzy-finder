@@ -14,7 +14,7 @@ module.exports =
       PathLoader = require './path-loader'
       @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
 
-    for editor in atom.project.getEditors()
+    for editor in atom.workspace.getEditors()
       editor.lastOpened = state[editor.getPath()]
 
     atom.workspaceView.eachPane (pane) ->
@@ -38,7 +38,7 @@ module.exports =
 
   serialize: ->
     paths = {}
-    for editor in atom.project.getEditors()
+    for editor in atom.workspace.getEditors()
       path = editor.getPath()
       paths[path] = editor.lastOpened if path?
     paths
