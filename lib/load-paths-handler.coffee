@@ -61,7 +61,7 @@ module.exports = (rootPath, ignoreVcsIgnores, ignores=[]) ->
     try
       ignoredNames.push(new Minimatch(ignore, matchBase: true, dot: true))
     catch error
-      console.warn "Invalid ignore pattern: #{ignore}"
+      console.warn "Error parsing ignore pattern (#{ignore}): #{error.message}"
 
   callback = @async()
   repo = Git.open(rootPath, refreshOnWindowFocus: false) if ignoreVcsIgnores
