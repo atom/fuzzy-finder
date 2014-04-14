@@ -55,8 +55,14 @@ loadFolder = (folderPath) ->
     loadPath(path.join(folderPath, childName)) for childName in children
     asyncCallDone()
 
-module.exports = (rootPath, ignoreVcsIgnores, ignore) ->
-  ignoredNames = ignore.map (name) -> new Minimatch(name, matchBase: true, dot: true)
+module.exports = (rootPath, ignoreVcsIgnores, ignores=[]) ->
+  ignoredNames = []
+  for ignore in ignores when ignore
+    try
+      ignoredNames.push(new Minimatch(ignore, matchBase: true, dot: true))
+    catch error
+      console.warn "Invalid ignore pattern: #{ignore}"
+
   callback = @async()
   repo = Git.open(rootPath, refreshOnWindowFocus: false) if ignoreVcsIgnores
   loadFolder(rootPath)
