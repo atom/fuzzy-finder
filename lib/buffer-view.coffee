@@ -7,7 +7,6 @@ class BufferView extends FuzzyFinderView
     if @hasParent()
       @cancel()
     else
-      @allowActiveEditorChange = true
       @populate()
       @attach() if @paths?.length > 0
 

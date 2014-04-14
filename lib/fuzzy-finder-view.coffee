@@ -4,7 +4,6 @@ fs = require 'fs-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
-  allowActiveEditorChange: false
   filePaths: null
   projectRelativePaths: null
 
@@ -59,10 +58,8 @@ class FuzzyFinderView extends SelectListView
         @div projectRelativePath, class: 'secondary-line path no-icon'
 
   openPath: (filePath, lineNumber) ->
-    return unless filePath
-
-    atom.workspaceView.open(filePath, {@allowActiveEditorChange}).done =>
-      @moveToLine(lineNumber)
+    if filePath
+      atom.workspaceView.open(filePath).done => @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
