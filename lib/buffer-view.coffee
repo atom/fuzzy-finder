@@ -7,7 +7,6 @@ class BufferView extends FuzzyFinderView
     if @hasParent()
       @cancel()
     else
-      @allowActiveEditorChange = true
       @populate()
       @attach() if @paths?.length > 0
 
@@ -25,7 +24,5 @@ class BufferView extends FuzzyFinderView
       else
         -(editor.lastOpened or 1)
 
-    @paths = []
-    @paths.push(editor.getPath()) for editor in editors
-
+    @paths = editors.map (editor) -> editor.getPath()
     @setItems(_.uniq(@paths))
