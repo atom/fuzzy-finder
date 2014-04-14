@@ -8,10 +8,10 @@
   "dependencies": {
     "fs-plus": "2.x",
     "humanize-plus": "~1.4.2",
+    "minimatch": "git://github.com/kevinsawicki/minimatch.git#f2af9b4a7addd8c91365ab901b5b367b40483061",
     "temp": "~0.6.0",
     "underscore-plus": "1.x",
-    "wrench": "^1.5",
-    "minimatch": "git://github.com/kevinsawicki/minimatch.git#f2af9b4a7addd8c91365ab901b5b367b40483061"
+    "wrench": "^1.5"
   },
   "engines": {
     "atom": "*"
