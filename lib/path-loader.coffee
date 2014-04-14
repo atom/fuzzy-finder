@@ -11,7 +11,7 @@ module.exports =
     task = Task.once taskPath, atom.project.getPath(), ignoreVcsIgnores, ignoredNames, ->
       callback(projectPaths)
 
-    task.on 'load-paths:paths-found', (paths) =>
+    task.on 'load-paths:paths-found', (paths) ->
       projectPaths.push(paths...)
 
     task
