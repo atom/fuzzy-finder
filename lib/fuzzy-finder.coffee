@@ -12,7 +12,10 @@ module.exports =
 
     if atom.project.getPath()?
       PathLoader = require './path-loader'
-      @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
+      s = Date.now()
+      @loadPathsTask = PathLoader.startTask (paths) =>
+        @projectPaths = paths
+        console.log @projectPaths.length, Date.now() - s
 
     for editor in atom.project.getEditors()
       editor.lastOpened = state[editor.getPath()]

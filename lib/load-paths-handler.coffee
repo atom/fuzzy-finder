@@ -2,6 +2,7 @@ fs = require 'fs'
 path = require 'path'
 _ = require 'underscore-plus'
 {Git} = require 'atom'
+{Minimatch} = require 'minimatch'
 
 asyncCallsInProgress = 0
 pathsChunkSize = 100
@@ -14,11 +15,8 @@ isIgnored = (loadedPath) ->
   if repo?.isPathIgnored(loadedPath)
     true
   else
-    name = path.basename(loadedPath)
-    return true if _.indexOf(ignoredNames, name, true) isnt -1
-
-    if extension = path.extname(name)
-      return true if  _.indexOf(ignoredNames, "*#{extension}", true) isnt -1
+    for ignoredName in ignoredNames
+      return true if ignoredName.match(loadedPath)
 
 asyncCallStarting = ->
   asyncCallsInProgress++
@@ -58,8 +56,7 @@ loadFolder = (folderPath) ->
     asyncCallDone()
 
 module.exports = (rootPath, ignoreVcsIgnores, ignore) ->
-  ignoredNames = ignore
+  ignoredNames = ignore.map (name) -> new Minimatch(name, matchBase: true, dot: true)
   callback = @async()
   repo = Git.open(rootPath, refreshOnWindowFocus: false) if ignoreVcsIgnores
-  ignoredNames.sort()
   loadFolder(rootPath)
