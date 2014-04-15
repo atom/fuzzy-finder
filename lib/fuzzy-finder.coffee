@@ -17,9 +17,9 @@ module.exports =
     for editor in atom.workspace.getEditors()
       editor.lastOpened = state[editor.getPath()]
 
-    atom.workspaceView.eachPane (pane) ->
-      pane.activeItem?.lastOpened = Date.now()
-      pane.on 'pane:active-item-changed', (e, item) -> item.lastOpened = Date.now()
+    atom.workspaceView.eachPaneView (paneView) ->
+      paneView.activeItem?.lastOpened = Date.now()
+      paneView.on 'pane:active-item-changed', (e, item) -> item.lastOpened = Date.now()
 
   deactivate: ->
     if @loadPathsTask?
