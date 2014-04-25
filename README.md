@@ -1,4 +1,4 @@
-# Fuzzy Finder package
+# Fuzzy Finder package [![Build Status](https://travis-ci.org/atom/fuzzy-finder.svg?branch=master)](https://travis-ci.org/atom/fuzzy-finder)
 
 Quickly find and open files using `cmd-t`.
 
