@@ -11,6 +11,6 @@ Both of those config settings are interpreted as arrays of
 [minimatch](https://github.com/isaacs/minimatch) glob patterns.
 
 This package also will also not show Git ignored files when the
-`core.ignoreVcsIgnoredPaths` is enabled.
+`core.excludeVcsIgnoredPaths` is enabled.
 
 ![](https://f.cloud.github.com/assets/671378/2241456/100db6b8-9cd3-11e3-9b3a-569c6b50cc60.png)
