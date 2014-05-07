@@ -1,6 +1,7 @@
 path = require 'path'
 {$$, Point, SelectListView} = require 'atom'
 fs = require 'fs-plus'
+{match} = require 'fuzzaldrin'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
@@ -30,7 +31,22 @@ class FuzzyFinderView extends SelectListView
     @remove()
 
   viewForItem: ({filePath, projectRelativePath}) ->
+
+    # Style matched characters in search results
+    filterQuery = @getFilterQuery()
+
     $$ ->
+
+      highlighter = (str) =>
+        # The match array alternates between unmatched and matched text
+        wrapMe = false
+        for term in match(str, filterQuery)
+          if wrapMe
+            @strong term, class: 'matched-chars'
+          else if term
+            @text term
+          wrapMe = !wrapMe
+
       @li class: 'two-lines', =>
         repo = atom.project.getRepo()
         if repo?
@@ -54,8 +70,8 @@ class FuzzyFinderView extends SelectListView
         else
           typeClass = 'icon-file-text'
 
-        @div path.basename(filePath), class: "primary-line file icon #{typeClass}"
-        @div projectRelativePath, class: 'secondary-line path no-icon'
+        @div class: "primary-line file icon #{typeClass}", -> highlighter(path.basename(filePath))
+        @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath)
 
   openPath: (filePath, lineNumber) ->
     if filePath
