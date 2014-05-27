@@ -54,7 +54,9 @@ class FuzzyFinderView extends SelectListView
         else
           typeClass = 'icon-file-text'
 
-        @div path.basename(filePath), class: "primary-line file icon #{typeClass}"
+        fileBasename = path.basename(filePath)
+
+        @div fileBasename, class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath
         @div projectRelativePath, class: 'secondary-line path no-icon'
 
   openPath: (filePath, lineNumber) ->
