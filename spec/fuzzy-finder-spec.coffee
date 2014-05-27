@@ -72,7 +72,13 @@ describe 'FuzzyFinder', ->
             expect(projectView.list.children('li').length).toBe paths.length
             for filePath in paths
               expect(projectView.list.find("li:contains(#{path.basename(filePath)})")).toExist()
-            expect(projectView.list.children().first()).toHaveClass 'selected'
+            firstChild = projectView.list.children().first()
+            firstChildName = firstChild.find('div:first-child')
+            firstChildPath = firstChild.find('div:last-child')
+
+            expect(firstChild).toHaveClass 'selected'
+            expect(firstChildName).toHaveAttr('data-name', firstChildName.text())
+            expect(firstChildName).toHaveAttr('data-path', firstChildPath.text())
             expect(projectView.find(".loading")).not.toBeVisible()
 
         it "only creates a single path loader task", ->
