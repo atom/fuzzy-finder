@@ -45,6 +45,7 @@ class FuzzyFinderView extends SelectListView
         lastIndex = 0
         for matchIndex in matches
           matchIndex -= offsetIndex
+          continue if matchIndex < 0 # If marking up the basename, omit path matches
           unmatched = path.substring(lastIndex, matchIndex)
           matchedChar = path[matchIndex]
 
@@ -81,8 +82,8 @@ class FuzzyFinderView extends SelectListView
         basename = path.basename(filePath)
         baseOffset = projectRelativePath.length - basename.length
 
-        @div class: "primary-line file icon #{typeClass}", -> highlighter(basename, matches.base, baseOffset)
-        @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches.path, 0)
+        @div class: "primary-line file icon #{typeClass}", -> highlighter(basename, matches, baseOffset)
+        @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches, 0)
 
   openPath: (filePath, lineNumber) ->
     if filePath
