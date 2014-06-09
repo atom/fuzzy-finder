@@ -34,18 +34,25 @@ class FuzzyFinderView extends SelectListView
 
     # Style matched characters in search results
     filterQuery = @getFilterQuery()
+    matches = match(projectRelativePath, filterQuery)
 
     $$ ->
 
-      highlighter = (str) =>
-        # The match array alternates between unmatched and matched text
-        wrapMe = false
-        for term in match(str, filterQuery)
-          if wrapMe
-            @strong term, class: 'matched-chars'
-          else if term
-            @text term
-          wrapMe = !wrapMe
+      highlighter = (path, matches, offsetIndex) =>
+        lastIndex = 0
+        for matchIndex in matches
+          matchIndex -= offsetIndex
+          continue if matchIndex < 0 # If marking up the basename, omit path matches
+          unmatched = path.substring(lastIndex, matchIndex)
+          matchedChar = path[matchIndex]
+
+          @text unmatched if unmatched
+          @strong matchedChar, class: 'matched-char', style: 'color:white'
+          lastIndex = matchIndex + 1
+
+        # Remaining characters are plain text
+        @text path.substring(lastIndex)
+
 
       @li class: 'two-lines', =>
         repo = atom.project.getRepo()
@@ -70,8 +77,11 @@ class FuzzyFinderView extends SelectListView
         else
           typeClass = 'icon-file-text'
 
-        @div class: "primary-line file icon #{typeClass}", -> highlighter(path.basename(filePath))
-        @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath)
+        basename = path.basename(filePath)
+        baseOffset = projectRelativePath.length - basename.length
+
+        @div class: "primary-line file icon #{typeClass}", -> highlighter(basename, matches, baseOffset)
+        @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches, 0)
 
   openPath: (filePath, lineNumber) ->
     if filePath
