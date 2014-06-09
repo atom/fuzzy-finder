@@ -47,7 +47,7 @@ class FuzzyFinderView extends SelectListView
           matchedChar = path[matchIndex]
 
           @text unmatched if unmatched
-          @strong matchedChar, class: 'matched-char', style: 'color:white'
+          @strong matchedChar, class: 'matched-char'
           lastIndex = matchIndex + 1
 
         # Remaining characters are plain text
