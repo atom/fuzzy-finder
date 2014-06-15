@@ -4,6 +4,7 @@ Quickly find and open files using `cmd-t`.
 
   * `cmd-b` to open the buffer list
   * `cmd-shift-b` to open the list of Git modified and untracked files
+  * Use string:line to jump directly to a line number. Example: index.php:12" jumps right to line 12 of index.php
 
 This package uses both the `core.ignoredNames` and `fuzzy-finder.ignoredNames`
 config settings to filter out files and folders that will not be shown.
