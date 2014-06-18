@@ -20,8 +20,10 @@ describe 'FuzzyFinder', ->
     workspaceView = new WorkspaceView
     atom.workspaceView = workspaceView
     atom.workspace = atom.workspaceView.model
-    workspaceView.openSync('sample.js')
     workspaceView.enableKeymap()
+
+    waitsForPromise ->
+      atom.workspace.open('sample.js')
 
     waitsForPromise ->
       atom.packages.activatePackage('fuzzy-finder').then (pack) ->
@@ -157,7 +159,7 @@ describe 'FuzzyFinder', ->
         projectView.confirmed({filePath: expectedPath})
 
         waitsFor ->
-          workspaceView.getActivePane().getItems().length == 2
+          workspaceView.getActivePaneView().getItems().length == 2
 
         runs ->
           editor3 = workspaceView.getActiveView()
@@ -170,11 +172,11 @@ describe 'FuzzyFinder', ->
       describe "when the selected path is a directory", ->
         it "leaves the the tree view open, doesn't open the path in the editor, and displays an error", ->
           workspaceView.attachToDom()
-          editorPath = workspaceView.getActivePaneItem().getPath()
+          editorPath = atom.workspace.getActiveEditor().getPath()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           projectView.confirmed({filePath: atom.project.resolve('dir')})
           expect(projectView.hasParent()).toBeTruthy()
-          expect(workspaceView.getActivePaneItem().getPath()).toBe editorPath
+          expect(atom.workspace.getActiveEditor().getPath()).toBe editorPath
           expect(projectView.error.text().length).toBeGreaterThan 0
           advanceClock(2000)
           expect(projectView.error.text().length).toBe 0
@@ -184,7 +186,9 @@ describe 'FuzzyFinder', ->
       describe "when there are pane items with paths", ->
         beforeEach ->
           workspaceView.attachToDom()
-          workspaceView.openSync('sample.txt')
+
+          waitsForPromise ->
+            atom.workspace.open('sample.txt')
 
         it "shows the FuzzyFinder if it isn't showing, or hides it and returns focus to the active editor", ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
@@ -211,70 +215,93 @@ describe 'FuzzyFinder', ->
           expect(bufferView.filterEditorView.getText()).toBe ''
 
         it "lists the paths of the current items, sorted by most recently opened but with the current item last", ->
-          workspaceView.openSync 'sample-with-tabs.coffee'
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          waitsForPromise ->
+            atom.workspace.open 'sample-with-tabs.coffee'
 
-          workspaceView.openSync 'sample.txt'
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          runs ->
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
-          expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
-          expect(bufferView.list.children().first()).toHaveClass 'selected'
+          waitsForPromise ->
+            atom.workspace.open 'sample.txt'
+
+          runs ->
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
+            expect(bufferView.list.children().first()).toHaveClass 'selected'
 
         it "serializes the list of paths and their last opened time", ->
-          workspaceView.openSync 'sample-with-tabs.coffee'
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          workspaceView.openSync 'sample.js'
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          workspaceView.openSync()
+          waitsForPromise ->
+            atom.workspace.open 'sample-with-tabs.coffee'
 
-          atom.packages.deactivatePackage('fuzzy-finder')
-          states = _.map atom.packages.getPackageState('fuzzy-finder'), (path, time) -> [ path, time ]
-          expect(states.length).toBe 3
-          states = _.sortBy states, (path, time) -> -time
+          runs ->
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
-          paths = [ 'sample-with-tabs.coffee', 'sample.txt', 'sample.js' ]
+          waitsForPromise ->
+            atom.workspace.open 'sample.js'
 
-          for [time, bufferPath] in states
-            expect(_.last bufferPath.split path.sep).toBe paths.shift()
-            expect(time).toBeGreaterThan 50000
+          runs ->
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+
+          waitsForPromise ->
+            atom.workspace.open()
+
+          runs ->
+            atom.packages.deactivatePackage('fuzzy-finder')
+            states = _.map atom.packages.getPackageState('fuzzy-finder'), (path, time) -> [ path, time ]
+            expect(states.length).toBe 3
+            states = _.sortBy states, (path, time) -> -time
+
+            paths = [ 'sample-with-tabs.coffee', 'sample.txt', 'sample.js' ]
+
+            for [time, bufferPath] in states
+              expect(_.last bufferPath.split path.sep).toBe paths.shift()
+              expect(time).toBeGreaterThan 50000
 
       describe "when there are only panes with anonymous items", ->
         it "does not open", ->
-          workspaceView.getActivePane().remove()
-          workspaceView.openSync()
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(workspaceView.find('.fuzzy-finder')).not.toExist()
+          workspaceView.getActivePaneView().remove()
+          waitsForPromise ->
+            atom.workspace.open()
+
+          runs ->
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+            expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
       describe "when there are no pane items", ->
         it "does not open", ->
-          workspaceView.getActivePane().remove()
+          workspaceView.getActivePaneView().remove()
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
       describe "when multiple sessions are opened on the same path", ->
         it "does not display duplicates for that path in the list", ->
-          workspaceView.openSync 'sample.js'
-          workspaceView.getActiveView().splitRight()
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
+          waitsForPromise ->
+            atom.workspace.open 'sample.js'
+
+          runs ->
+            workspaceView.getActiveView().splitRight()
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
 
     describe "when a path selection is confirmed", ->
       [editor1, editor2, editor3] = []
 
       beforeEach ->
         workspaceView.attachToDom()
-        editor1 = workspaceView.getActiveView()
-        editor2 = editor1.splitRight()
-        editor3 = workspaceView.openSync('sample.txt')
+        workspaceView.getActiveView().splitRight()
 
-        [editor1, editor2, editor3] = workspaceView.getEditorViews()
+        waitsForPromise ->
+          atom.workspace.open('sample.txt')
 
-        expect(workspaceView.getActiveView()).toBe editor3
+        runs ->
+          [editor1, editor2, editor3] = workspaceView.getEditorViews()
 
-        editor2.trigger 'pane:show-previous-item'
-        workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          expect(workspaceView.getActiveView()).toBe editor3
+
+          editor2.trigger 'pane:show-previous-item'
+          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
       describe "when the active pane has an item for the selected path", ->
         it "switches to the item for the selected path", ->
@@ -282,7 +309,7 @@ describe 'FuzzyFinder', ->
           bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
-            workspaceView.getActivePaneItem().getPath() == expectedPath
+            atom.workspace.getActiveEditor().getPath() == expectedPath
 
           runs ->
             expect(bufferView.hasParent()).toBeFalsy()
@@ -303,7 +330,7 @@ describe 'FuzzyFinder', ->
           bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
-            workspaceView.getActivePane().getItems().length == 2
+            workspaceView.getActivePaneView().getItems().length == 2
 
           runs ->
             editor4 = workspaceView.getActiveView()
@@ -340,7 +367,7 @@ describe 'FuzzyFinder', ->
       describe "when no editors are open", ->
         it "detaches the finder and focuses the previously focused element", ->
           workspaceView.attachToDom()
-          workspaceView.getActivePane().remove()
+          workspaceView.getActivePaneView().remove()
 
           inputView = $$ -> @input()
           workspaceView.append(inputView)
@@ -441,8 +468,8 @@ describe 'FuzzyFinder', ->
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
-      expect(workspaceView.getPanes().length).toBe 1
-      pane = workspaceView.getActivePane()
+      expect(workspaceView.getPaneViews().length).toBe 1
+      pane = workspaceView.getActivePaneView()
       spyOn(pane, "splitLeft").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
@@ -450,16 +477,16 @@ describe 'FuzzyFinder', ->
       bufferView.filterEditorView.trigger 'pane:split-left'
 
       waitsFor ->
-        workspaceView.getPanes().length == 2
+        workspaceView.getPaneViews().length == 2
 
       runs ->
-        expect(workspaceView.getPanes().length).toBe 2
+        expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitLeft).toHaveBeenCalled()
-        expect(workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
-      expect(workspaceView.getPanes().length).toBe 1
-      pane = workspaceView.getActivePane()
+      expect(workspaceView.getPaneViews().length).toBe 1
+      pane = workspaceView.getActivePaneView()
       spyOn(pane, "splitRight").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
@@ -467,16 +494,16 @@ describe 'FuzzyFinder', ->
       bufferView.filterEditorView.trigger 'pane:split-right'
 
       waitsFor ->
-        workspaceView.getPanes().length == 2
+        workspaceView.getPaneViews().length == 2
 
       runs ->
-        expect(workspaceView.getPanes().length).toBe 2
+        expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitRight).toHaveBeenCalled()
-        expect(workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
-      expect(workspaceView.getPanes().length).toBe 1
-      pane = workspaceView.getActivePane()
+      expect(workspaceView.getPaneViews().length).toBe 1
+      pane = workspaceView.getActivePaneView()
       spyOn(pane, "splitUp").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
@@ -484,16 +511,16 @@ describe 'FuzzyFinder', ->
       bufferView.filterEditorView.trigger 'pane:split-up'
 
       waitsFor ->
-        workspaceView.getPanes().length == 2
+        workspaceView.getPaneViews().length == 2
 
       runs ->
-        expect(workspaceView.getPanes().length).toBe 2
+        expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitUp).toHaveBeenCalled()
-        expect(workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
-      expect(workspaceView.getPanes().length).toBe 1
-      pane = workspaceView.getActivePane()
+      expect(workspaceView.getPaneViews().length).toBe 1
+      pane = workspaceView.getActivePaneView()
       spyOn(pane, "splitDown").andCallThrough()
 
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
@@ -501,12 +528,12 @@ describe 'FuzzyFinder', ->
       bufferView.filterEditorView.trigger 'pane:split-down'
 
       waitsFor ->
-        workspaceView.getPanes().length == 2
+        workspaceView.getPaneViews().length == 2
 
       runs ->
-        expect(workspaceView.getPanes().length).toBe 2
+        expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitDown).toHaveBeenCalled()
-        expect(workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
 
   describe "when the filter text contains a colon followed by a number", ->
     it "opens the selected path to that line number", ->
@@ -552,15 +579,19 @@ describe 'FuzzyFinder', ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
-        editor = workspaceView.openSync('a.txt')
-        originalText = editor.getText()
-        originalPath = editor.getPath()
-        fs.writeFileSync(originalPath, 'making a change for the better')
-        atom.project.getRepo().getPathStatus(originalPath)
+        waitsForPromise ->
+          atom.workspace.open('a.txt')
 
-        newPath = atom.project.resolve('newsample.js')
-        fs.writeFileSync(newPath, '')
-        atom.project.getRepo().getPathStatus(newPath)
+        runs ->
+          editor = atom.workspace.getActiveEditor()
+          originalText = editor.getText()
+          originalPath = editor.getPath()
+          fs.writeFileSync(originalPath, 'making a change for the better')
+          atom.project.getRepo().getPathStatus(originalPath)
+
+          newPath = atom.project.resolve('newsample.js')
+          fs.writeFileSync(newPath, '')
+          atom.project.getRepo().getPathStatus(newPath)
 
       it "displays all new and modified paths", ->
         expect(workspaceView.find('.fuzzy-finder')).not.toExist()
@@ -577,11 +608,16 @@ describe 'FuzzyFinder', ->
 
       beforeEach ->
         workspaceView.attachToDom()
-        editor = workspaceView.openSync('a.txt')
-        originalText = editor.getText()
-        originalPath = editor.getPath()
-        newPath = atom.project.resolve('newsample.js')
-        fs.writeFileSync(newPath, '')
+
+        waitsForPromise ->
+          atom.workspace.open('a.txt')
+
+        runs ->
+          editor = atom.workspace.getActiveEditor()
+          originalText = editor.getText()
+          originalPath = editor.getPath()
+          newPath = atom.project.resolve('newsample.js')
+          fs.writeFileSync(newPath, '')
 
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
@@ -595,12 +631,15 @@ describe 'FuzzyFinder', ->
 
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
-          editor = workspaceView.openSync('newsample.js')
-          atom.project.getRepo().getPathStatus(editor.getPath())
+          waitsForPromise ->
+            atom.workspace.open('newsample.js')
 
-          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-          expect(bufferView.find('.status.status-added').length).toBe 1
-          expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
+          runs ->
+            atom.project.getRepo().getPathStatus(editor.getPath())
+
+            workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+            expect(bufferView.find('.status.status-added').length).toBe 1
+            expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
       beforeEach ->

@@ -77,7 +77,7 @@ class FuzzyFinderView extends SelectListView
     return unless filePath
 
     lineNumber = @getLineNumber()
-    if pane = atom.workspaceView.getActivePane()
+    if pane = atom.workspaceView.getActivePaneView()
       atom.project.open(filePath).done (editor) =>
         fn(pane, editor)
         @moveToLine(lineNumber)
