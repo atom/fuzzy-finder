@@ -127,16 +127,16 @@ describe 'FuzzyFinder', ->
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
 
-          it "excludes symlinked folder paths", ->
+          it "includes symlinked folder paths", ->
             workspaceView.attachToDom()
             projectView.setMaxItems(Infinity)
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
 
             waitsFor "all project paths to load", 5000, ->
-              not projectView.reloadPaths
+              projectView.paths?.length > 0
 
             runs ->
-              expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
+              expect(projectView.list.find("li:contains(symlink-to-dir)")).toExist()
 
       describe "when root view's project has no path", ->
         beforeEach ->
