@@ -127,7 +127,22 @@ describe 'FuzzyFinder', ->
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
 
-          it "includes symlinked folder paths", ->
+          it "excludes symlinked folder paths if traverseIntoSymlinkDirectories is false", ->
+            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', false)
+
+            workspaceView.attachToDom()
+            projectView.setMaxItems(Infinity)
+            workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
+
+            waitsFor "all project paths to load", 5000, ->
+              not projectView.reloadPaths
+
+            runs ->
+              expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
+
+          it "includes symlinked folder paths if traverseIntoSymlinkDirectories is true", ->
+            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', true)
+
             workspaceView.attachToDom()
             projectView.setMaxItems(Infinity)
             workspaceView.trigger 'fuzzy-finder:toggle-file-finder'

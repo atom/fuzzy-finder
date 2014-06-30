@@ -1,6 +1,7 @@
 module.exports =
   configDefaults:
     ignoredNames: []
+    traverseIntoSymlinkDirectories: false
 
   activate: (state) ->
     atom.workspaceView.command 'fuzzy-finder:toggle-file-finder', =>
