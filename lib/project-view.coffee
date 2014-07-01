@@ -33,6 +33,9 @@ class ProjectView extends FuzzyFinderView
     @subscribe atom.config.observe 'fuzzy-finder.ignoredNames', callNow: false, =>
       @reloadPaths = true
 
+    @subscribe atom.config.observe 'fuzzy-finder.traverseIntoSymlinkDirectories', callNow: false, =>
+      @reloadPaths = true
+
     @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
       @reloadPaths = true
 
