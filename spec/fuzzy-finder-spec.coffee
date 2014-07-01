@@ -139,6 +139,7 @@ describe 'FuzzyFinder', ->
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
+              expect(projectView.list.find("li:contains(symlink-to-dir/a)")).not.toExist()
 
           it "includes symlinked folder paths if traverseIntoSymlinkDirectories is true", ->
             atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', true)
@@ -151,7 +152,7 @@ describe 'FuzzyFinder', ->
               projectView.paths?.length > 0
 
             runs ->
-              expect(projectView.list.find("li:contains(symlink-to-dir)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-dir/a)")).toExist()
 
       describe "when root view's project has no path", ->
         beforeEach ->
