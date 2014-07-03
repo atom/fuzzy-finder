@@ -23,12 +23,24 @@ class ProjectView extends FuzzyFinderView
         # so let it complete but reload the paths on the next populate call.
         @reloadAfterFirstLoad = true
 
-    @subscribe atom.config.observe 'fuzzy-finder.ignoredNames', callNow: false, =>
-      @reloadPaths = true
+    @subscribeToConfig()
 
     @subscribe atom.project, 'path-changed', =>
       @reloadPaths = true
       @paths = null
+
+  subscribeToConfig: ->
+    @subscribe atom.config.observe 'fuzzy-finder.ignoredNames', callNow: false, =>
+      @reloadPaths = true
+
+    @subscribe atom.config.observe 'fuzzy-finder.traverseIntoSymlinkDirectories', callNow: false, =>
+      @reloadPaths = true
+
+    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
+      @reloadPaths = true
+
+    @subscribe atom.config.observe 'core.excludeVcsIgnoredPaths', callNow: false, =>
+      @reloadPaths = true
 
   toggle: ->
     if @hasParent()

@@ -18,8 +18,9 @@ class BufferView extends FuzzyFinderView
 
   populate: ->
     editors = atom.workspace.getEditors().filter (editor) -> editor.getPath()?
+    activeEditor = atom.workspace.getActiveEditor()
     editors = _.sortBy editors, (editor) ->
-      if editor is atom.workspaceView.getActivePaneItem()
+      if editor is activeEditor
         0
       else
         -(editor.lastOpened or 1)

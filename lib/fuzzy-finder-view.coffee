@@ -77,10 +77,10 @@ class FuzzyFinderView extends SelectListView
         else
           typeClass = 'icon-file-text'
 
-        basename = path.basename(filePath)
-        baseOffset = projectRelativePath.length - basename.length
+        fileBasename = path.basename(filePath)
+        baseOffset = projectRelativePath.length - fileBasename.length
 
-        @div class: "primary-line file icon #{typeClass}", -> highlighter(basename, matches, baseOffset)
+        @div class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath, -> highlighter(fileBasename, matches, baseOffset)
         @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches, 0)
 
   openPath: (filePath, lineNumber) ->
@@ -101,7 +101,7 @@ class FuzzyFinderView extends SelectListView
     return unless filePath
 
     lineNumber = @getLineNumber()
-    if pane = atom.workspaceView.getActivePane()
+    if pane = atom.workspaceView.getActivePaneView()
       atom.project.open(filePath).done (editor) =>
         fn(pane, editor)
         @moveToLine(lineNumber)

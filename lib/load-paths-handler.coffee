@@ -9,6 +9,7 @@ pathsChunkSize = 100
 paths = []
 repo = null
 ignoredNames = null
+traverseSymlinkDirectories = false
 callback = null
 
 isIgnored = (loadedPath) ->
@@ -41,7 +42,10 @@ loadPath = (path) ->
         asyncCallStarting()
         fs.stat path, (error, stats) ->
           unless error?
-            pathLoaded(path) if stats.isFile()
+            if stats.isFile()
+              pathLoaded(path)
+            else if stats.isDirectory() and traverseSymlinkDirectories
+              loadFolder(path) unless isIgnored(path)
           asyncCallDone()
       else if stats.isDirectory()
         loadFolder(path) unless isIgnored(path)
@@ -55,7 +59,8 @@ loadFolder = (folderPath) ->
     loadPath(path.join(folderPath, childName)) for childName in children
     asyncCallDone()
 
-module.exports = (rootPath, ignoreVcsIgnores, ignores=[]) ->
+module.exports = (rootPath, traverseIntoSymlinkDirectories, ignoreVcsIgnores, ignores=[]) ->
+  traverseSymlinkDirectories = traverseIntoSymlinkDirectories
   ignoredNames = []
   for ignore in ignores when ignore
     try
