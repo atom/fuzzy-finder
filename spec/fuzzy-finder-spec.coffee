@@ -601,6 +601,7 @@ describe 'FuzzyFinder', ->
 
           bufferView.filterEditorView.insertText(':4')
           bufferView.populateList()
+          expect(bufferView.list.children('li').length).toBe 0
 
           spyOn(bufferView, 'moveToLine').andCallThrough()
           bufferView.trigger 'core:confirm'
@@ -627,6 +628,7 @@ describe 'FuzzyFinder', ->
 
           bufferView.filterEditorView.insertText(':4')
           bufferView.populateList()
+          expect(bufferView.list.children('li').length).toBe 0
 
           spyOn(bufferView, 'moveToLine').andCallThrough()
           bufferView.filterEditorView.trigger 'pane:split-left'

@@ -1,5 +1,5 @@
 path = require 'path'
-{$$, Point, SelectListView} = require 'atom'
+{$, $$, Point, SelectListView} = require 'atom'
 fs = require 'fs-plus'
 
 module.exports =
@@ -74,26 +74,55 @@ class FuzzyFinderView extends SelectListView
 
   splitOpenPath: (fn) ->
     {filePath} = @getSelectedItem() ? {}
-    return unless filePath
 
-    lineNumber = @getLineNumber()
-    if pane = atom.workspaceView.getActivePaneView()
+    if @isQueryALineJump() and editor = atom.workspace.getActiveEditor()
+      lineNumber = @getLineNumber()
+      pane = atom.workspaceView.getActivePaneView()
+      fn(pane, pane.copyActiveItem())
+      @moveToLine(lineNumber)
+    else if not filePath
+      return
+    else if pane = atom.workspaceView.getActivePaneView()
       atom.project.open(filePath).done (editor) =>
         fn(pane, editor)
         @moveToLine(lineNumber)
     else
       @openPath(filePath, lineNumber)
 
-  confirmed: ({filePath}) ->
-    return unless filePath
+  populateList: ->
+    if @isQueryALineJump()
+      @list.empty()
+      @setError('Jump to line in active editor')
+    else
+      super
 
-    if fs.isDirectorySync(filePath)
+  confirmSelection: ->
+    item = @getSelectedItem()
+    @confirmed(item)
+
+  confirmed: (item) ->
+    {filePath} = item ? {}
+
+    if atom.workspace.getActiveEditor() and @isQueryALineJump()
+      lineNumber = @getLineNumber()
+      @cancel()
+      @moveToLine(lineNumber)
+    else if not filePath
+      @cancel()
+    else if fs.isDirectorySync(filePath)
       @setError('Selected path is a directory')
       setTimeout((=> @setError()), 2000)
     else
       lineNumber = @getLineNumber()
       @cancel()
       @openPath(filePath, lineNumber)
+
+  isQueryALineJump: ->
+    query = @filterEditorView.getEditor().getText()
+    colon = query.indexOf(':')
+    trimmedPath = @getFilterQuery().trim()
+
+    return trimmedPath == '' and colon != -1
 
   getFilterQuery: ->
     query = super
