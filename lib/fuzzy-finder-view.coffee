@@ -1,5 +1,5 @@
 path = require 'path'
-{$, $$, Point, SelectListView} = require 'atom'
+{$$, Point, SelectListView} = require 'atom'
 fs = require 'fs-plus'
 
 module.exports =
@@ -100,9 +100,7 @@ class FuzzyFinderView extends SelectListView
     item = @getSelectedItem()
     @confirmed(item)
 
-  confirmed: (item) ->
-    {filePath} = item ? {}
-
+  confirmed: ({filePath}={}) ->
     if atom.workspace.getActiveEditor() and @isQueryALineJump()
       lineNumber = @getLineNumber()
       @cancel()
@@ -122,7 +120,7 @@ class FuzzyFinderView extends SelectListView
     colon = query.indexOf(':')
     trimmedPath = @getFilterQuery().trim()
 
-    return trimmedPath == '' and colon != -1
+    trimmedPath == '' and colon != -1
 
   getFilterQuery: ->
     query = super
