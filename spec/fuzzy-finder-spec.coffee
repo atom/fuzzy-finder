@@ -552,36 +552,94 @@ describe 'FuzzyFinder', ->
         expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
 
   describe "when the filter text contains a colon followed by a number", ->
-    it "opens the selected path to that line number", ->
+    beforeEach ->
       workspaceView.attachToDom()
       expect(workspaceView.find('.fuzzy-finder')).not.toExist()
-      [editorView] = workspaceView.getEditorViews()
-      expect(editorView.editor.getCursorBufferPosition()).toEqual [0, 0]
 
-      workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
-      expect(workspaceView.find('.fuzzy-finder')).toExist()
-      bufferView.filterEditorView.insertText(':4')
-      bufferView.trigger 'core:confirm'
-      spyOn(bufferView, 'moveToLine').andCallThrough()
-
-      waitsFor ->
-        bufferView.moveToLine.callCount > 0
+      waitsForPromise ->
+        atom.workspace.open('sample.txt')
 
       runs ->
-        bufferView.moveToLine.reset()
-        expect(editorView.editor.getCursorBufferPosition()).toEqual [3, 4]
+        [editor1, editor2] = workspaceView.getEditorViews()
+        expect(workspaceView.getActiveView()).toBe editor2
+        expect(editor1.editor.getCursorBufferPosition()).toEqual [0, 0]
+
+    describe "when the filter text has a file path", ->
+      it "opens the selected path to that line number", ->
+        [editor1, editor2] = workspaceView.getEditorViews()
 
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
         expect(workspaceView.find('.fuzzy-finder')).toExist()
-        bufferView.filterEditorView.insertText(':10')
-        bufferView.filterEditorView.trigger 'pane:split-left'
 
-      waitsFor ->
-        bufferView.moveToLine.callCount > 0
+        bufferView.filterEditorView.getEditor().setText('sample.js:4')
+        bufferView.populateList()
+        {filePath} = bufferView.getSelectedItem()
+        expect(atom.project.resolve(filePath)).toBe editor1.editor.getPath()
 
-      runs ->
-        expect(workspaceView.getActiveView()).not.toBe editorView
-        expect(workspaceView.getActiveView().editor.getCursorBufferPosition()).toEqual [9, 2]
+        spyOn(bufferView, 'moveToLine').andCallThrough()
+        bufferView.trigger 'core:confirm'
+
+        waitsFor ->
+          bufferView.moveToLine.callCount > 0
+
+        runs ->
+          expect(workspaceView.getActiveView()).toBe editor1
+          expect(editor1.editor.getCursorBufferPosition()).toEqual [3, 4]
+
+    describe "when the filter text doesn't have a file path", ->
+      it "moves the cursor in the active editor to that line number", ->
+        [editor1, editor2] = workspaceView.getEditorViews()
+
+        waitsForPromise ->
+          atom.workspace.open('sample.js')
+
+        runs ->
+          expect(workspaceView.getActiveView()).toBe editor1
+
+          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          expect(workspaceView.find('.fuzzy-finder')).toExist()
+
+          bufferView.filterEditorView.insertText(':4')
+          bufferView.populateList()
+          expect(bufferView.list.children('li').length).toBe 0
+
+          spyOn(bufferView, 'moveToLine').andCallThrough()
+          bufferView.trigger 'core:confirm'
+
+        waitsFor ->
+          bufferView.moveToLine.callCount > 0
+
+        runs ->
+          expect(workspaceView.getActiveView()).toBe editor1
+          expect(editor1.editor.getCursorBufferPosition()).toEqual [3, 4]
+
+    describe "when splitting panes", ->
+      it "opens the selected path to that line number in a new pane", ->
+        [editor1, editor2] = workspaceView.getEditorViews()
+
+        waitsForPromise ->
+          atom.workspace.open('sample.js')
+
+        runs ->
+          expect(workspaceView.getActiveView()).toBe editor1
+
+          workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+          expect(workspaceView.find('.fuzzy-finder')).toExist()
+
+          bufferView.filterEditorView.insertText(':4')
+          bufferView.populateList()
+          expect(bufferView.list.children('li').length).toBe 0
+
+          spyOn(bufferView, 'moveToLine').andCallThrough()
+          bufferView.filterEditorView.trigger 'pane:split-left'
+
+        waitsFor ->
+          bufferView.moveToLine.callCount > 0
+
+        runs ->
+          expect(workspaceView.getActiveView()).not.toBe editor1
+          expect(workspaceView.getActiveView().editor.getPath()).toBe editor1.editor.getPath()
+          expect(workspaceView.getActiveView().editor.getCursorBufferPosition()).toEqual [3, 4]
 
   describe "Git integration", ->
     [projectPath] = []
