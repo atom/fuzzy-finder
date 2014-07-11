@@ -120,7 +120,7 @@ class FuzzyFinderView extends SelectListView
     colon = query.indexOf(':')
     trimmedPath = @getFilterQuery().trim()
 
-    trimmedPath == '' and colon != -1
+    trimmedPath is '' and colon isnt -1
 
   getFilterQuery: ->
     query = super
