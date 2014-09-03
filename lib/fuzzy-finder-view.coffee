@@ -125,10 +125,10 @@ class FuzzyFinderView extends SelectListView
   getFilterQuery: ->
     query = super
     colon = query.indexOf(':')
-    if colon is -1
-      query
-    else
-      query[0...colon]
+    query = query[0...colon] if colon isnt -1
+    # Normalize to backslashes on Windows
+    query = query.replace(/\//g, '\\') if process.platform is 'win32'
+    query
 
   getLineNumber: ->
     query = @filterEditorView.getText()
