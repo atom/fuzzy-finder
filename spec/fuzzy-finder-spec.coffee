@@ -218,7 +218,7 @@ describe 'FuzzyFinder', ->
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
-          expect(workspaceView.find('.fuzzy-finder input:focus')).toExist()
+          expect(workspaceView.find('.fuzzy-finder')[0].contains(document.activeElement)).toBe true
           bufferView.filterEditorView.insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
