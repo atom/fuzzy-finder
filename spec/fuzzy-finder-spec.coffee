@@ -154,14 +154,14 @@ describe 'FuzzyFinder', ->
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).toExist()
 
-      describe "when root view's project has no path", ->
+      describe "when the project has no path", ->
         beforeEach ->
           atom.project.setPath(null)
 
-        it "does not open the FuzzyFinder", ->
-          expect(workspaceView.find('.fuzzy-finder')).not.toExist()
+        it "shows an empty message with no files in the list", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          expect(workspaceView.find('.fuzzy-finder')).not.toExist()
+          expect(projectView.error.text()).toBe 'Project is empty'
+          expect(projectView.list.children('li').length).toBe 0
 
     describe "when a path selection is confirmed", ->
       it "opens the file associated with that path in that split", ->

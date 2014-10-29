@@ -45,7 +45,7 @@ class ProjectView extends FuzzyFinderView
   toggle: ->
     if @hasParent()
       @cancel()
-    else if atom.project.getPath()?
+    else
       @populate()
       @attach()
 
@@ -56,8 +56,11 @@ class ProjectView extends FuzzyFinderView
       super
 
   populate: ->
-    if @paths?
-      @setItems(@paths)
+    @setItems(@paths) if @paths?
+
+    unless atom.project.getPath()?
+      @setItems([])
+      return
 
     if @reloadPaths
       @reloadPaths = false
