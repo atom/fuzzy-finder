@@ -13,9 +13,9 @@ describe 'FuzzyFinder', ->
 
   beforeEach ->
     tempPath = fs.realpathSync(temp.mkdirSync('atom'))
-    fixturesPath = atom.project.getPath()
+    fixturesPath = atom.project.getPaths()[0]
     wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
-    atom.project.setPath(path.join(tempPath, 'fuzzy-finder'))
+    atom.project.setPaths([path.join(tempPath, 'fuzzy-finder')])
 
     workspaceView = new WorkspaceView
     atom.workspaceView = workspaceView
@@ -156,7 +156,7 @@ describe 'FuzzyFinder', ->
 
       describe "when the project has no path", ->
         beforeEach ->
-          atom.project.setPath(null)
+          atom.project.setPaths([])
 
         it "shows an empty message with no files in the list", ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -463,7 +463,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         PathLoader.startTask.reset()
-        atom.project.setPath(temp.mkdirSync('atom'))
+        atom.project.setPaths([temp.mkdirSync('atom')])
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
         expect(PathLoader.startTask).toHaveBeenCalled()
@@ -647,7 +647,7 @@ describe 'FuzzyFinder', ->
     beforeEach ->
       projectPath = atom.project.resolve('git/working-dir')
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
-      atom.project.setPath(projectPath)
+      atom.project.setPaths([projectPath])
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
@@ -723,7 +723,7 @@ describe 'FuzzyFinder', ->
         [ignoreFile, ignoredFile] = []
 
         beforeEach ->
-          ignoreFile = path.join(atom.project.getPath(), '.gitignore')
+          ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
           fs.writeFileSync(ignoreFile, 'ignored.txt')
 
           ignoredFile = path.join(projectPath, 'ignored.txt')
@@ -745,8 +745,8 @@ describe 'FuzzyFinder', ->
         [ignoreFile] = []
 
         beforeEach ->
-          atom.project.setPath(atom.project.resolve('dir'))
-          ignoreFile = path.join(atom.project.getPath(), '.gitignore')
+          atom.project.setPaths([atom.project.resolve('dir')])
+          ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
           fs.writeFileSync(ignoreFile, 'b.txt')
 
         it "does not exclude paths that are git ignored", ->
