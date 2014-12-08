@@ -4,12 +4,13 @@ module.exports =
     traverseIntoSymlinkDirectories: false
 
   activate: (state) ->
-    atom.workspaceView.command 'fuzzy-finder:toggle-file-finder', =>
-      @createProjectView().toggle()
-    atom.workspaceView.command 'fuzzy-finder:toggle-buffer-finder', =>
-      @createBufferView().toggle()
-    atom.workspaceView.command 'fuzzy-finder:toggle-git-status-finder', =>
-      @createGitStatusView().toggle()
+    atom.commands.add 'atom-workspace',
+      'fuzzy-finder:toggle-file-finder': =>
+        @createProjectView().toggle()
+      'fuzzy-finder:toggle-buffer-finder': =>
+        @createBufferView().toggle()
+      'fuzzy-finder:toggle-git-status-finder': =>
+        @createGitStatusView().toggle()
 
     if atom.project.getPaths()[0]?
       PathLoader = require './path-loader'
