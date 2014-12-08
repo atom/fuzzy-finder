@@ -1,7 +1,11 @@
 module.exports =
-  configDefaults:
-    ignoredNames: []
-    traverseIntoSymlinkDirectories: false
+  config:
+    ignoredNames:
+      type: 'array'
+      default: []
+    traverseIntoSymlinkDirectories:
+      type: 'boolean'
+      default: false
 
   activate: (state) ->
     atom.commands.add 'atom-workspace',
