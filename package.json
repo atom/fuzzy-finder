@@ -6,6 +6,7 @@
   "repository": "https://github.com/atom/fuzzy-finder",
   "license": "MIT",
   "dependencies": {
+    "atom-space-pen-views": "^0.20.0",
     "fs-plus": "2.x",
     "humanize-plus": "~1.4.2",
     "minimatch": "~0.3.0",

@@ -1,7 +1,8 @@
 path = require 'path'
 
 _ = require 'underscore-plus'
-{$, $$, WorkspaceView} = require 'atom'
+{WorkspaceView} = require 'atom'
+{$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 temp = require 'temp'
 wrench = require 'wrench'
@@ -45,14 +46,14 @@ describe 'FuzzyFinder', ->
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
-          expect(projectView.filterEditorView.isFocused).toBeTruthy()
+          expect(document.activeElement).toHaveFocus()
           expect(editor1.isFocused).toBeFalsy()
           expect(editor2.isFocused).toBeFalsy()
-          projectView.filterEditorView.insertText('this should not show up next time we toggle')
+          projectView.filterEditorView.getModel().insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
-          expect(editor1.isFocused).toBeFalsy()
-          expect(editor2.isFocused).toBeTruthy()
+          expect(editor1).not.toHaveFocus()
+          expect(editor2).toHaveFocus()
           expect(workspaceView.find('.fuzzy-finder')).not.toExist()
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
@@ -220,7 +221,7 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
           expect(workspaceView.find('.fuzzy-finder')[0].contains(document.activeElement)).toBe true
-          bufferView.filterEditorView.insertText('this should not show up next time we toggle')
+          bufferView.filterEditorView.getModel().insertText('this should not show up next time we toggle')
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(editor1.isFocused).toBeFalsy()
@@ -373,7 +374,7 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(projectView.hasParent()).toBeTruthy()
           expect(activeEditor.isFocused).toBeFalsy()
-          expect(projectView.filterEditorView.isFocused).toBeTruthy()
+          expect(projectView.filterEditorView).toHaveFocus()
 
           projectView.cancel()
 
@@ -392,7 +393,7 @@ describe 'FuzzyFinder', ->
 
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           expect(projectView.hasParent()).toBeTruthy()
-          expect(projectView.filterEditorView.isFocused).toBeTruthy()
+          expect(projectView.filterEditorView).toHaveFocus()
 
           projectView.cancel()
 
@@ -449,7 +450,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         PathLoader.startTask.reset()
-        $(window).triggerHandler 'focus'
+        window.dispatchEvent new CustomEvent('focus')
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
         workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
         expect(PathLoader.startTask).toHaveBeenCalled()
@@ -490,7 +491,7 @@ describe 'FuzzyFinder', ->
 
       atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
-      bufferView.filterEditorView.trigger 'pane:split-left'
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -506,7 +507,7 @@ describe 'FuzzyFinder', ->
 
       atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
-      bufferView.filterEditorView.trigger 'pane:split-right'
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-right'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -522,7 +523,7 @@ describe 'FuzzyFinder', ->
 
       atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
-      bufferView.filterEditorView.trigger 'pane:split-up'
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-up'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -538,7 +539,7 @@ describe 'FuzzyFinder', ->
 
       atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
-      bufferView.filterEditorView.trigger 'pane:split-down'
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-down'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -568,13 +569,13 @@ describe 'FuzzyFinder', ->
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
         expect(workspaceView.find('.fuzzy-finder')).toExist()
 
-        bufferView.filterEditorView.getEditor().setText('sample.js:4')
+        bufferView.filterEditorView.getModel().setText('sample.js:4')
         bufferView.populateList()
         {filePath} = bufferView.getSelectedItem()
         expect(atom.project.resolve(filePath)).toBe editor1.editor.getPath()
 
         spyOn(bufferView, 'moveToLine').andCallThrough()
-        bufferView.trigger 'core:confirm'
+        atom.commands.dispatch bufferView.element, 'core:confirm'
 
         waitsFor ->
           bufferView.moveToLine.callCount > 0
@@ -596,12 +597,12 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
 
-          bufferView.filterEditorView.insertText(':4')
+          bufferView.filterEditorView.getModel().insertText(':4')
           bufferView.populateList()
           expect(bufferView.list.children('li').length).toBe 0
 
           spyOn(bufferView, 'moveToLine').andCallThrough()
-          bufferView.trigger 'core:confirm'
+          atom.commands.dispatch bufferView.element, 'core:confirm'
 
         waitsFor ->
           bufferView.moveToLine.callCount > 0
@@ -623,12 +624,12 @@ describe 'FuzzyFinder', ->
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(workspaceView.find('.fuzzy-finder')).toExist()
 
-          bufferView.filterEditorView.insertText(':4')
+          bufferView.filterEditorView.getModel().insertText(':4')
           bufferView.populateList()
           expect(bufferView.list.children('li').length).toBe 0
 
           spyOn(bufferView, 'moveToLine').andCallThrough()
-          bufferView.filterEditorView.trigger 'pane:split-left'
+          atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
 
         waitsFor ->
           bufferView.moveToLine.callCount > 0

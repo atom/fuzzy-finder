@@ -1,4 +1,5 @@
-{$} = require 'atom'
+{$} = require 'atom-space-pen-views'
+{Disposable, CompositeDisposable} = require 'atom'
 humanize = require 'humanize-plus'
 
 FuzzyFinderView = require './fuzzy-finder-view'
@@ -13,9 +14,11 @@ class ProjectView extends FuzzyFinderView
   initialize: (@paths) ->
     super
 
+    @disposables = new CompositeDisposable
+
     @reloadPaths = false if @paths?.length > 0
 
-    @subscribe $(window), 'focus', =>
+    windowFocused = =>
       if @paths?
         @reloadPaths = true
       else
@@ -23,23 +26,26 @@ class ProjectView extends FuzzyFinderView
         # so let it complete but reload the paths on the next populate call.
         @reloadAfterFirstLoad = true
 
+    window.addEventListener('focus', windowFocused)
+    @disposables.add new Disposable -> window.removeEventListener('focus', windowFocused)
+
     @subscribeToConfig()
 
-    @subscribe atom.project.onDidChangePaths =>
+    @disposables.add atom.project.onDidChangePaths =>
       @reloadPaths = true
       @paths = null
 
   subscribeToConfig: ->
-    @subscribe atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
+    @disposables.add atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
       @reloadPaths = true
 
-    @subscribe atom.config.onDidChange 'fuzzy-finder.traverseIntoSymlinkDirectories', =>
+    @disposables.add atom.config.onDidChange 'fuzzy-finder.traverseIntoSymlinkDirectories', =>
       @reloadPaths = true
 
-    @subscribe atom.config.onDidChange 'core.ignoredNames', =>
+    @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
       @reloadPaths = true
 
-    @subscribe atom.config.onDidChange 'core.excludeVcsIgnoredPaths', =>
+    @disposables.add atom.config.onDidChange 'core.excludeVcsIgnoredPaths', =>
       @reloadPaths = true
 
   toggle: ->
@@ -114,5 +120,7 @@ class ProjectView extends FuzzyFinderView
 
     lastOpenedEditor?.getPath()
 
-  beforeRemove: ->
+  destroy: ->
     @loadPathsTask?.terminate()
+    @disposables.dispose()
+    super
