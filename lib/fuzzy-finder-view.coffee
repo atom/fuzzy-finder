@@ -72,7 +72,7 @@ class FuzzyFinderView extends SelectListView
       position = new Point(lineNumber)
       textEditor.scrollToBufferPosition(position, center: true)
       textEditor.setCursorBufferPosition(position)
-      textEditor.moveCursorToFirstCharacterOfLine()
+      textEditor.moveToFirstCharacterOfLine()
 
   splitOpenPath: (fn) ->
     {filePath} = @getSelectedItem() ? {}
