@@ -9,7 +9,7 @@ wrench = require 'wrench'
 PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
-  [projectView, bufferView, gitStatusView, workspaceView] = []
+  [projectView, bufferView, gitStatusView, workspaceView, workspaceElement] = []
 
   beforeEach ->
     tempPath = fs.realpathSync(temp.mkdirSync('atom'))
@@ -18,6 +18,7 @@ describe 'FuzzyFinder', ->
     atom.project.setPaths([path.join(tempPath, 'fuzzy-finder')])
 
     workspaceView = new WorkspaceView
+    workspaceElement = workspaceView.element
     atom.workspaceView = workspaceView
     atom.workspace = atom.workspaceView.model
     workspaceView.enableKeymap()
@@ -484,71 +485,67 @@ describe 'FuzzyFinder', ->
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
-      expect(workspaceView.getPaneViews().length).toBe 1
-      pane = workspaceView.getActivePaneView()
-      spyOn(pane, "splitLeft").andCallThrough()
+      expect(atom.workspace.getPanes().length).toBe 1
+      pane = atom.workspace.getActivePane()
 
-      workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
       bufferView.filterEditorView.trigger 'pane:split-left'
 
       waitsFor ->
-        workspaceView.getPaneViews().length == 2
+        atom.workspace.getPanes().length is 2
 
       runs ->
-        expect(workspaceView.getPaneViews().length).toBe 2
-        expect(pane.splitLeft).toHaveBeenCalled()
+        [leftPane, rightPane] = atom.workspace.getPanes()
+        expect(atom.workspace.getActivePane()).toBe leftPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
-      expect(workspaceView.getPaneViews().length).toBe 1
-      pane = workspaceView.getActivePaneView()
-      spyOn(pane, "splitRight").andCallThrough()
+      expect(atom.workspace.getPanes().length).toBe 1
+      pane = atom.workspace.getActivePane()
 
-      workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
       bufferView.filterEditorView.trigger 'pane:split-right'
 
       waitsFor ->
-        workspaceView.getPaneViews().length == 2
+        atom.workspace.getPanes().length is 2
 
       runs ->
-        expect(workspaceView.getPaneViews().length).toBe 2
-        expect(pane.splitRight).toHaveBeenCalled()
+        [leftPane, rightPane] = atom.workspace.getPanes()
+        expect(atom.workspace.getActivePane()).toBe rightPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
-      expect(workspaceView.getPaneViews().length).toBe 1
-      pane = workspaceView.getActivePaneView()
-      spyOn(pane, "splitUp").andCallThrough()
+      expect(atom.workspace.getPanes().length).toBe 1
+      pane = atom.workspace.getActivePane()
 
-      workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
       bufferView.filterEditorView.trigger 'pane:split-up'
 
       waitsFor ->
-        workspaceView.getPaneViews().length == 2
+        atom.workspace.getPanes().length is 2
 
       runs ->
-        expect(workspaceView.getPaneViews().length).toBe 2
-        expect(pane.splitUp).toHaveBeenCalled()
+        [topPane, bottomPane] = atom.workspace.getPanes()
+        expect(atom.workspace.getActivePane()).toBe topPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
-      expect(workspaceView.getPaneViews().length).toBe 1
-      pane = workspaceView.getActivePaneView()
-      spyOn(pane, "splitDown").andCallThrough()
+      expect(atom.workspace.getPanes().length).toBe 1
+      pane = atom.workspace.getActivePane()
 
-      workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
+      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
       {filePath} = bufferView.getSelectedItem()
       bufferView.filterEditorView.trigger 'pane:split-down'
 
       waitsFor ->
-        workspaceView.getPaneViews().length == 2
+        atom.workspace.getPanes().length is 2
 
       runs ->
-        expect(workspaceView.getPaneViews().length).toBe 2
-        expect(pane.splitDown).toHaveBeenCalled()
+        [topPane, bottomPane] = atom.workspace.getPanes()
+        expect(atom.workspace.getActivePane()).toBe bottomPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
   describe "when the filter text contains a colon followed by a number", ->

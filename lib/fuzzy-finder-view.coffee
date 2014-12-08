@@ -13,14 +13,15 @@ class FuzzyFinderView extends SelectListView
     @addClass('fuzzy-finder overlay from-top')
     @setMaxItems(10)
 
-    @subscribe this, 'pane:split-left', =>
-      @splitOpenPath (pane, session) -> pane.splitLeft(session)
-    @subscribe this, 'pane:split-right', =>
-      @splitOpenPath (pane, session) -> pane.splitRight(session)
-    @subscribe this, 'pane:split-down', =>
-      @splitOpenPath (pane, session) -> pane.splitDown(session)
-    @subscribe this, 'pane:split-up', =>
-      @splitOpenPath (pane, session) -> pane.splitUp(session)
+    atom.commands.add @element,
+      'pane:split-left': =>
+        @splitOpenPath (pane, item) -> pane.splitLeft(items: [item])
+      'pane:split-right': =>
+        @splitOpenPath (pane, item) -> pane.splitRight(items: [item])
+      'pane:split-down': =>
+        @splitOpenPath (pane, item) -> pane.splitDown(items: [item])
+      'pane:split-up': =>
+        @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
 
   getFilterKey: ->
     'projectRelativePath'
@@ -77,12 +78,12 @@ class FuzzyFinderView extends SelectListView
 
     if @isQueryALineJump() and editor = atom.workspace.getActiveTextEditor()
       lineNumber = @getLineNumber()
-      pane = atom.workspaceView.getActivePaneView()
+      pane = atom.workspace.getActivePane()
       fn(pane, pane.copyActiveItem())
       @moveToLine(lineNumber)
     else if not filePath
       return
-    else if pane = atom.workspaceView.getActivePaneView()
+    else if pane = atom.workspace.getActivePane()
       atom.project.open(filePath).done (editor) =>
         fn(pane, editor)
         @moveToLine(lineNumber)
