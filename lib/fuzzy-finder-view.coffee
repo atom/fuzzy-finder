@@ -75,7 +75,7 @@ class FuzzyFinderView extends SelectListView
   splitOpenPath: (fn) ->
     {filePath} = @getSelectedItem() ? {}
 
-    if @isQueryALineJump() and editor = atom.workspace.getActiveEditor()
+    if @isQueryALineJump() and editor = atom.workspace.getActiveTextEditor()
       lineNumber = @getLineNumber()
       pane = atom.workspaceView.getActivePaneView()
       fn(pane, pane.copyActiveItem())
@@ -101,7 +101,7 @@ class FuzzyFinderView extends SelectListView
     @confirmed(item)
 
   confirmed: ({filePath}={}) ->
-    if atom.workspace.getActiveEditor() and @isQueryALineJump()
+    if atom.workspace.getActiveTextEditor() and @isQueryALineJump()
       lineNumber = @getLineNumber()
       @cancel()
       @moveToLine(lineNumber)

@@ -188,11 +188,11 @@ describe 'FuzzyFinder', ->
       describe "when the selected path is a directory", ->
         it "leaves the the tree view open, doesn't open the path in the editor, and displays an error", ->
           workspaceView.attachToDom()
-          editorPath = atom.workspace.getActiveEditor().getPath()
+          editorPath = atom.workspace.getActiveTextEditor().getPath()
           workspaceView.trigger 'fuzzy-finder:toggle-file-finder'
           projectView.confirmed({filePath: atom.project.resolve('dir')})
           expect(projectView.hasParent()).toBeTruthy()
-          expect(atom.workspace.getActiveEditor().getPath()).toBe editorPath
+          expect(atom.workspace.getActiveTextEditor().getPath()).toBe editorPath
           expect(projectView.error.text().length).toBeGreaterThan 0
           advanceClock(2000)
           expect(projectView.error.text().length).toBe 0
@@ -325,7 +325,7 @@ describe 'FuzzyFinder', ->
           bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
-            atom.workspace.getActiveEditor().getPath() == expectedPath
+            atom.workspace.getActiveTextEditor().getPath() == expectedPath
 
           runs ->
             expect(bufferView.hasParent()).toBeFalsy()
@@ -498,7 +498,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitLeft).toHaveBeenCalled()
-        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
       expect(workspaceView.getPaneViews().length).toBe 1
@@ -515,7 +515,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitRight).toHaveBeenCalled()
-        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
       expect(workspaceView.getPaneViews().length).toBe 1
@@ -532,7 +532,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitUp).toHaveBeenCalled()
-        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
       expect(workspaceView.getPaneViews().length).toBe 1
@@ -549,7 +549,7 @@ describe 'FuzzyFinder', ->
       runs ->
         expect(workspaceView.getPaneViews().length).toBe 2
         expect(pane.splitDown).toHaveBeenCalled()
-        expect(atom.workspace.getActiveEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
 
   describe "when the filter text contains a colon followed by a number", ->
     beforeEach ->
@@ -657,7 +657,7 @@ describe 'FuzzyFinder', ->
           atom.workspace.open('a.txt')
 
         runs ->
-          editor = atom.workspace.getActiveEditor()
+          editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
@@ -687,7 +687,7 @@ describe 'FuzzyFinder', ->
           atom.workspace.open('a.txt')
 
         runs ->
-          editor = atom.workspace.getActiveEditor()
+          editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
           newPath = atom.project.resolve('newsample.js')
