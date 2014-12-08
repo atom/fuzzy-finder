@@ -105,7 +105,7 @@ class ProjectView extends FuzzyFinderView
     projectRelativePaths
 
   getLastOpenedPath: ->
-    activePath = atom.workspace.activePaneItem?.getPath?()
+    activePath = atom.workspace.getActivePaneItem()?.getPath?()
 
     lastOpenedEditor = null
 
