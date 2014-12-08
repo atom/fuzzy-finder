@@ -7,7 +7,7 @@ class GitStatusView extends FuzzyFinderView
   toggle: ->
     if @hasParent()
       @cancel()
-    else if atom.project.getRepo()?
+    else if atom.project.getRepositories()[0]?
       @populate()
       @attach()
 
@@ -19,8 +19,8 @@ class GitStatusView extends FuzzyFinderView
 
   populate: ->
     paths = []
-    workingDirectory = atom.project.getRepo().getWorkingDirectory()
-    for filePath, status of atom.project.getRepo().statuses
+    workingDirectory = atom.project.getRepositories()[0].getWorkingDirectory()
+    for filePath, status of atom.project.getRepositories()[0].statuses
       filePath = path.join(workingDirectory, filePath)
       paths.push(filePath) if fs.isFileSync(filePath)
 

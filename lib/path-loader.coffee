@@ -7,7 +7,7 @@ module.exports =
     traverseIntoSymlinkDirectories = atom.config.get 'fuzzy-finder.traverseIntoSymlinkDirectories'
     ignoredNames = atom.config.get('fuzzy-finder.ignoredNames') ? []
     ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
-    ignoreVcsIgnores = atom.config.get('core.excludeVcsIgnoredPaths') and atom.project?.getRepo()?.isProjectAtRoot()
+    ignoreVcsIgnores = atom.config.get('core.excludeVcsIgnoredPaths') and atom.project?.getRepositories()[0]?.isProjectAtRoot()
 
     task = Task.once taskPath, atom.project.getPath(), traverseIntoSymlinkDirectories, ignoreVcsIgnores, ignoredNames, ->
       callback(projectPaths)

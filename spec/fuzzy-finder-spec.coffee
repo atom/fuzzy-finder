@@ -661,11 +661,11 @@ describe 'FuzzyFinder', ->
           originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
-          atom.project.getRepo().getPathStatus(originalPath)
+          atom.project.getRepositories()[0].getPathStatus(originalPath)
 
           newPath = atom.project.resolve('newsample.js')
           fs.writeFileSync(newPath, '')
-          atom.project.getRepo().getPathStatus(newPath)
+          atom.project.getRepositories()[0].getPathStatus(newPath)
 
       it "displays all new and modified paths", ->
         expect(workspaceView.find('.fuzzy-finder')).not.toExist()
@@ -697,7 +697,7 @@ describe 'FuzzyFinder', ->
         it "displays the modified icon", ->
           editor.setText('modified')
           editor.save()
-          atom.project.getRepo().getPathStatus(editor.getPath())
+          atom.project.getRepositories()[0].getPathStatus(editor.getPath())
 
           workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
           expect(bufferView.find('.status.status-modified').length).toBe 1
@@ -709,7 +709,7 @@ describe 'FuzzyFinder', ->
             atom.workspace.open('newsample.js')
 
           runs ->
-            atom.project.getRepo().getPathStatus(editor.getPath())
+            atom.project.getRepositories()[0].getPathStatus(editor.getPath())
 
             workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
             expect(bufferView.find('.status.status-added').length).toBe 1
