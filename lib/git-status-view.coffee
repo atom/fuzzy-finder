@@ -5,11 +5,11 @@ FuzzyFinderView = require './fuzzy-finder-view'
 module.exports =
 class GitStatusView extends FuzzyFinderView
   toggle: ->
-    if @hasParent()
+    if @panel?.isVisible()
       @cancel()
     else if atom.project.getRepositories()[0]?
       @populate()
-      @attach()
+      @show()
 
   getEmptyMessage: (itemCount) ->
     if itemCount is 0

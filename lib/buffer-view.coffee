@@ -4,11 +4,11 @@ FuzzyFinderView = require './fuzzy-finder-view'
 module.exports =
 class BufferView extends FuzzyFinderView
   toggle: ->
-    if @hasParent()
+    if @panel?.isVisible()
       @cancel()
     else
       @populate()
-      @attach() if @paths?.length > 0
+      @show() if @paths?.length > 0
 
   getEmptyMessage: (itemCount) ->
     if itemCount is 0

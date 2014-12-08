@@ -34,20 +34,21 @@ describe 'FuzzyFinder', ->
       describe "when the root view's project has a path", ->
         it "shows the FuzzyFinder or hides it and returns focus to the active editor if it already showing", ->
           jasmine.attachToDOM(workspaceElement)
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+
+          expect(atom.workspace.panelForItem(projectView)).toBeNull()
           atom.workspace.getActivePane().splitRight(copyActiveItem: true)
           [editor1, editor2] = atom.workspace.getTextEditors()
 
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+          expect(atom.workspace.panelForItem(projectView)).toBeNull()
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeDefined()
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
           expect(projectView.filterEditorView).toHaveFocus()
           projectView.filterEditorView.getModel().insertText('this should not show up next time we toggle')
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
           expect(atom.views.getView(editor1)).not.toHaveFocus()
           expect(atom.views.getView(editor2)).toHaveFocus()
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
           expect(projectView.filterEditorView.getText()).toBe ''
@@ -174,7 +175,7 @@ describe 'FuzzyFinder', ->
 
         runs ->
           editor3 = atom.workspace.getActiveTextEditor()
-          expect(projectView.hasParent()).toBeFalsy()
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
           expect(editor1.getPath()).not.toBe expectedPath
           expect(editor2.getPath()).not.toBe expectedPath
           expect(editor3.getPath()).toBe expectedPath
@@ -202,7 +203,7 @@ describe 'FuzzyFinder', ->
             atom.workspace.open('sample.txt')
 
         it "shows the FuzzyFinder if it isn't showing, or hides it and returns focus to the active editor", ->
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+          expect(atom.workspace.panelForItem(bufferView)).toBeNull()
           atom.workspace.getActivePane().splitRight(copyActiveItem: true)
           [editor1, editor2, editor3] = atom.workspace.getTextEditors()
           expect(atom.workspace.getActivePaneItem()).toBe editor3
@@ -210,13 +211,13 @@ describe 'FuzzyFinder', ->
           expect(atom.views.getView(editor3)).toHaveFocus()
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeDefined()
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
           expect(workspaceElement.querySelector('.fuzzy-finder')).toHaveFocus()
           bufferView.filterEditorView.getModel().insertText('this should not show up next time we toggle')
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
           expect(atom.views.getView(editor3)).toHaveFocus()
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
           expect(bufferView.filterEditorView.getText()).toBe ''
@@ -227,14 +228,17 @@ describe 'FuzzyFinder', ->
 
           runs ->
             atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
             expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
             atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
 
           waitsForPromise ->
             atom.workspace.open 'sample.txt'
 
           runs ->
             atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
             expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
             expect(bufferView.list.children().first()).toHaveClass 'selected'
 
@@ -274,13 +278,13 @@ describe 'FuzzyFinder', ->
 
           runs ->
             atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-            expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+            expect(atom.workspace.panelForItem(bufferView)).toBeNull()
 
       describe "when there are no pane items", ->
         it "does not open", ->
           atom.workspace.getActivePane().destroy()
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+          expect(atom.workspace.panelForItem(bufferView)).toBeNull()
 
       describe "when multiple sessions are opened on the same path", ->
         it "does not display duplicates for that path in the list", ->
@@ -319,7 +323,7 @@ describe 'FuzzyFinder', ->
             atom.workspace.getActiveTextEditor().getPath() == expectedPath
 
           runs ->
-            expect(bufferView.hasParent()).toBeFalsy()
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
             expect(editor1.getPath()).not.toBe expectedPath
             expect(editor2.getPath()).not.toBe expectedPath
             expect(editor3.getPath()).toBe expectedPath
@@ -342,7 +346,7 @@ describe 'FuzzyFinder', ->
           runs ->
             editor4 = atom.workspace.getActiveTextEditor()
 
-            expect(bufferView.hasParent()).toBeFalsy()
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
 
             expect(editor4).not.toBe editor1
             expect(editor4).not.toBe editor2
@@ -364,7 +368,7 @@ describe 'FuzzyFinder', ->
 
           projectView.cancel()
 
-          expect(projectView.hasParent()).toBeFalsy()
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
           expect(atom.views.getView(activeEditor)).toHaveFocus()
 
       describe "when no editors are open", ->
@@ -382,7 +386,7 @@ describe 'FuzzyFinder', ->
 
           projectView.cancel()
 
-          expect(projectView.hasParent()).toBeFalsy()
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
           expect(inputView).toHaveFocus()
 
   describe "cached file paths", ->
@@ -536,7 +540,7 @@ describe 'FuzzyFinder', ->
   describe "when the filter text contains a colon followed by a number", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
-      expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+      expect(atom.workspace.panelForItem(projectView)).toBeNull()
 
       waitsForPromise ->
         atom.workspace.open('sample.txt')
@@ -551,7 +555,7 @@ describe 'FuzzyFinder', ->
         [editor1, editor2] = atom.workspace.getTextEditors()
 
         atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-        expect(workspaceElement.querySelector('.fuzzy-finder')).toBeDefined()
+        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
 
         bufferView.filterEditorView.getModel().setText('sample.js:4')
         bufferView.populateList()
@@ -579,7 +583,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeDefined()
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
 
           bufferView.filterEditorView.getModel().insertText(':4')
           bufferView.populateList()
@@ -606,7 +610,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-          expect(workspaceElement.querySelector('.fuzzy-finder')).toBeDefined()
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
 
           bufferView.filterEditorView.getModel().insertText(':4')
           bufferView.populateList()
@@ -650,9 +654,9 @@ describe 'FuzzyFinder', ->
           atom.project.getRepositories()[0].getPathStatus(newPath)
 
       it "displays all new and modified paths", ->
-        expect(workspaceElement.querySelector('.fuzzy-finder')).toBeNull()
+        expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
         atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-git-status-finder'
-        expect(workspaceElement.querySelector('.fuzzy-finder')).toBeDefined()
+        expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
 
         expect(gitStatusView.find('.file').length).toBe 2
 

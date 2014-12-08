@@ -49,11 +49,11 @@ class ProjectView extends FuzzyFinderView
       @reloadPaths = true
 
   toggle: ->
-    if @hasParent()
+    if @panel?.isVisible()
       @cancel()
     else
       @populate()
-      @attach()
+      @show()
 
   getEmptyMessage: (itemCount) ->
     if itemCount is 0

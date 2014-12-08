@@ -29,7 +29,7 @@ class FuzzyFinderView extends SelectListView
 
   destroy: ->
     @cancel()
-    @remove()
+    @panel?.destroy()
 
   viewForItem: ({filePath, projectRelativePath}) ->
     $$ ->
@@ -153,10 +153,14 @@ class FuzzyFinderView extends SelectListView
 
     @projectRelativePaths
 
-  attach: ->
+  show: ->
     @storeFocusedElement()
-    atom.views.getView(atom.workspace).appendChild(@element)
+    @panel ?= atom.workspace.addModalPanel(item: this)
+    @panel.show()
     @focusFilterEditor()
 
+  hide: ->
+    @panel?.hide()
+
   cancelled: ->
-    @detach()
+    @hide()
