@@ -25,7 +25,7 @@ class ProjectView extends FuzzyFinderView
 
     @subscribeToConfig()
 
-    @subscribe atom.project, 'path-changed', =>
+    @subscribe atom.project.onDidChangePaths =>
       @reloadPaths = true
       @paths = null
 
