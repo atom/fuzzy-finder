@@ -103,7 +103,7 @@ class ProjectView extends FuzzyFinderView
 
     lastOpenedEditor = null
 
-    for editor in atom.workspace.getEditors()
+    for editor in atom.workspace.getTextEditors()
       filePath = editor.getPath()
       continue unless filePath
       continue if activePath is filePath

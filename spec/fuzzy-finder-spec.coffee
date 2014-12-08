@@ -420,15 +420,15 @@ describe 'FuzzyFinder', ->
         expect(PathLoader.startTask).not.toHaveBeenCalled()
 
     it "doesn't cache buffer paths", ->
-      spyOn(atom.workspace, "getEditors").andCallThrough()
+      spyOn(atom.workspace, "getTextEditors").andCallThrough()
       workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
       waitsFor ->
         bufferView.list.children('li').length > 0
 
       runs ->
-        expect(atom.workspace.getEditors).toHaveBeenCalled()
-        atom.workspace.getEditors.reset()
+        expect(atom.workspace.getTextEditors).toHaveBeenCalled()
+        atom.workspace.getTextEditors.reset()
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
         workspaceView.trigger 'fuzzy-finder:toggle-buffer-finder'
 
@@ -436,7 +436,7 @@ describe 'FuzzyFinder', ->
         bufferView.list.children('li').length > 0
 
       runs ->
-        expect(atom.workspace.getEditors).toHaveBeenCalled()
+        expect(atom.workspace.getTextEditors).toHaveBeenCalled()
 
     it "busts the cache when the window gains focus", ->
       spyOn(PathLoader, "startTask").andCallThrough()
