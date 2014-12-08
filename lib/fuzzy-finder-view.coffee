@@ -63,16 +63,16 @@ class FuzzyFinderView extends SelectListView
 
   openPath: (filePath, lineNumber) ->
     if filePath
-      atom.workspaceView.open(filePath).done => @moveToLine(lineNumber)
+      atom.workspace.open(filePath).done => @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
 
-    if editorView = atom.workspaceView.getActiveView()
+    if textEditor = atom.workspace.getActiveTextEditor()
       position = new Point(lineNumber)
-      editorView.scrollToBufferPosition(position, center: true)
-      editorView.editor.setCursorBufferPosition(position)
-      editorView.editor.moveCursorToFirstCharacterOfLine()
+      textEditor.scrollToBufferPosition(position, center: true)
+      textEditor.setCursorBufferPosition(position)
+      textEditor.moveCursorToFirstCharacterOfLine()
 
   splitOpenPath: (fn) ->
     {filePath} = @getSelectedItem() ? {}
@@ -155,7 +155,7 @@ class FuzzyFinderView extends SelectListView
 
   attach: ->
     @storeFocusedElement()
-    atom.workspaceView.append(this)
+    atom.views.getView(atom.workspace).appendChild(@element)
     @focusFilterEditor()
 
   cancelled: ->
