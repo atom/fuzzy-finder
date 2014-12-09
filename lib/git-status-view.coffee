@@ -19,8 +19,9 @@ class GitStatusView extends FuzzyFinderView
 
   populate: ->
     paths = []
-    workingDirectory = atom.project.getRepositories()[0].getWorkingDirectory()
-    for filePath, status of atom.project.getRepositories()[0].statuses
+    [repo] = atom.project.getRepositories()
+    workingDirectory = repo.getWorkingDirectory()
+    for filePath, status of repo.statuses
       filePath = path.join(workingDirectory, filePath)
       paths.push(filePath) if fs.isFileSync(filePath)
 

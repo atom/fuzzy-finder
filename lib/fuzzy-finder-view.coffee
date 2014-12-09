@@ -34,7 +34,7 @@ class FuzzyFinderView extends SelectListView
   viewForItem: ({filePath, projectRelativePath}) ->
     $$ ->
       @li class: 'two-lines', =>
-        repo = atom.project.getRepositories()[0]
+        [repo] = atom.project.getRepositories()
         if repo?
           status = repo.getCachedPathStatus(filePath)
           if repo.isStatusNew(status)
