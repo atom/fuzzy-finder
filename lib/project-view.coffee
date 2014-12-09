@@ -1,4 +1,5 @@
-{$} = require 'atom'
+{$} = require 'atom-space-pen-views'
+{Disposable, CompositeDisposable} = require 'atom'
 humanize = require 'humanize-plus'
 
 FuzzyFinderView = require './fuzzy-finder-view'
@@ -13,9 +14,11 @@ class ProjectView extends FuzzyFinderView
   initialize: (@paths) ->
     super
 
+    @disposables = new CompositeDisposable
+
     @reloadPaths = false if @paths?.length > 0
 
-    @subscribe $(window), 'focus', =>
+    windowFocused = =>
       if @paths?
         @reloadPaths = true
       else
@@ -23,31 +26,34 @@ class ProjectView extends FuzzyFinderView
         # so let it complete but reload the paths on the next populate call.
         @reloadAfterFirstLoad = true
 
+    window.addEventListener('focus', windowFocused)
+    @disposables.add new Disposable -> window.removeEventListener('focus', windowFocused)
+
     @subscribeToConfig()
 
-    @subscribe atom.project, 'path-changed', =>
+    @disposables.add atom.project.onDidChangePaths =>
       @reloadPaths = true
       @paths = null
 
   subscribeToConfig: ->
-    @subscribe atom.config.observe 'fuzzy-finder.ignoredNames', callNow: false, =>
+    @disposables.add atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
       @reloadPaths = true
 
-    @subscribe atom.config.observe 'fuzzy-finder.traverseIntoSymlinkDirectories', callNow: false, =>
+    @disposables.add atom.config.onDidChange 'fuzzy-finder.traverseIntoSymlinkDirectories', =>
       @reloadPaths = true
 
-    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
+    @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
       @reloadPaths = true
 
-    @subscribe atom.config.observe 'core.excludeVcsIgnoredPaths', callNow: false, =>
+    @disposables.add atom.config.onDidChange 'core.excludeVcsIgnoredPaths', =>
       @reloadPaths = true
 
   toggle: ->
-    if @hasParent()
+    if @panel?.isVisible()
       @cancel()
     else
       @populate()
-      @attach()
+      @show()
 
   getEmptyMessage: (itemCount) ->
     if itemCount is 0
@@ -58,7 +64,7 @@ class ProjectView extends FuzzyFinderView
   populate: ->
     @setItems(@paths) if @paths?
 
-    unless atom.project.getPath()?
+    unless atom.project.getPaths()[0]?
       @setItems([])
       return
 
@@ -99,11 +105,11 @@ class ProjectView extends FuzzyFinderView
     projectRelativePaths
 
   getLastOpenedPath: ->
-    activePath = atom.workspace.activePaneItem?.getPath?()
+    activePath = atom.workspace.getActivePaneItem()?.getPath?()
 
     lastOpenedEditor = null
 
-    for editor in atom.workspace.getEditors()
+    for editor in atom.workspace.getTextEditors()
       filePath = editor.getPath()
       continue unless filePath
       continue if activePath is filePath
@@ -114,5 +120,7 @@ class ProjectView extends FuzzyFinderView
 
     lastOpenedEditor?.getPath()
 
-  beforeRemove: ->
+  destroy: ->
     @loadPathsTask?.terminate()
+    @disposables.dispose()
+    super

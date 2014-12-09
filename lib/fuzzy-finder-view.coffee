@@ -1,5 +1,6 @@
 path = require 'path'
-{$$, Point, SelectListView} = require 'atom'
+{Point} = require 'atom'
+{$$, SelectListView} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
 module.exports =
@@ -13,26 +14,27 @@ class FuzzyFinderView extends SelectListView
     @addClass('fuzzy-finder overlay from-top')
     @setMaxItems(10)
 
-    @subscribe this, 'pane:split-left', =>
-      @splitOpenPath (pane, session) -> pane.splitLeft(session)
-    @subscribe this, 'pane:split-right', =>
-      @splitOpenPath (pane, session) -> pane.splitRight(session)
-    @subscribe this, 'pane:split-down', =>
-      @splitOpenPath (pane, session) -> pane.splitDown(session)
-    @subscribe this, 'pane:split-up', =>
-      @splitOpenPath (pane, session) -> pane.splitUp(session)
+    atom.commands.add @element,
+      'pane:split-left': =>
+        @splitOpenPath (pane, item) -> pane.splitLeft(items: [item])
+      'pane:split-right': =>
+        @splitOpenPath (pane, item) -> pane.splitRight(items: [item])
+      'pane:split-down': =>
+        @splitOpenPath (pane, item) -> pane.splitDown(items: [item])
+      'pane:split-up': =>
+        @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
 
   getFilterKey: ->
     'projectRelativePath'
 
   destroy: ->
     @cancel()
-    @remove()
+    @panel?.destroy()
 
   viewForItem: ({filePath, projectRelativePath}) ->
     $$ ->
       @li class: 'two-lines', =>
-        repo = atom.project.getRepo()
+        [repo] = atom.project.getRepositories()
         if repo?
           status = repo.getCachedPathStatus(filePath)
           if repo.isStatusNew(status)
@@ -61,28 +63,28 @@ class FuzzyFinderView extends SelectListView
 
   openPath: (filePath, lineNumber) ->
     if filePath
-      atom.workspaceView.open(filePath).done => @moveToLine(lineNumber)
+      atom.workspace.open(filePath).done => @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
 
-    if editorView = atom.workspaceView.getActiveView()
+    if textEditor = atom.workspace.getActiveTextEditor()
       position = new Point(lineNumber)
-      editorView.scrollToBufferPosition(position, center: true)
-      editorView.editor.setCursorBufferPosition(position)
-      editorView.editor.moveCursorToFirstCharacterOfLine()
+      textEditor.scrollToBufferPosition(position, center: true)
+      textEditor.setCursorBufferPosition(position)
+      textEditor.moveToFirstCharacterOfLine()
 
   splitOpenPath: (fn) ->
     {filePath} = @getSelectedItem() ? {}
 
-    if @isQueryALineJump() and editor = atom.workspace.getActiveEditor()
+    if @isQueryALineJump() and editor = atom.workspace.getActiveTextEditor()
       lineNumber = @getLineNumber()
-      pane = atom.workspaceView.getActivePaneView()
+      pane = atom.workspace.getActivePane()
       fn(pane, pane.copyActiveItem())
       @moveToLine(lineNumber)
     else if not filePath
       return
-    else if pane = atom.workspaceView.getActivePaneView()
+    else if pane = atom.workspace.getActivePane()
       atom.project.open(filePath).done (editor) =>
         fn(pane, editor)
         @moveToLine(lineNumber)
@@ -101,7 +103,7 @@ class FuzzyFinderView extends SelectListView
     @confirmed(item)
 
   confirmed: ({filePath}={}) ->
-    if atom.workspace.getActiveEditor() and @isQueryALineJump()
+    if atom.workspace.getActiveTextEditor() and @isQueryALineJump()
       lineNumber = @getLineNumber()
       @cancel()
       @moveToLine(lineNumber)
@@ -116,7 +118,7 @@ class FuzzyFinderView extends SelectListView
       @openPath(filePath, lineNumber)
 
   isQueryALineJump: ->
-    query = @filterEditorView.getEditor().getText()
+    query = @filterEditorView.getModel().getText()
     colon = query.indexOf(':')
     trimmedPath = @getFilterQuery().trim()
 
@@ -151,7 +153,14 @@ class FuzzyFinderView extends SelectListView
 
     @projectRelativePaths
 
-  attach: ->
+  show: ->
     @storeFocusedElement()
-    atom.workspaceView.append(this)
+    @panel ?= atom.workspace.addModalPanel(item: this)
+    @panel.show()
     @focusFilterEditor()
+
+  hide: ->
+    @panel?.hide()
+
+  cancelled: ->
+    @hide()

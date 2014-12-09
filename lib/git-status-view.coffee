@@ -5,11 +5,11 @@ FuzzyFinderView = require './fuzzy-finder-view'
 module.exports =
 class GitStatusView extends FuzzyFinderView
   toggle: ->
-    if @hasParent()
+    if @panel?.isVisible()
       @cancel()
-    else if atom.project.getRepo()?
+    else if atom.project.getRepositories()[0]?
       @populate()
-      @attach()
+      @show()
 
   getEmptyMessage: (itemCount) ->
     if itemCount is 0
@@ -19,8 +19,9 @@ class GitStatusView extends FuzzyFinderView
 
   populate: ->
     paths = []
-    workingDirectory = atom.project.getRepo().getWorkingDirectory()
-    for filePath, status of atom.project.getRepo().statuses
+    [repo] = atom.project.getRepositories()
+    workingDirectory = repo.getWorkingDirectory()
+    for filePath, status of repo.statuses
       filePath = path.join(workingDirectory, filePath)
       paths.push(filePath) if fs.isFileSync(filePath)
 

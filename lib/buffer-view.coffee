@@ -4,11 +4,11 @@ FuzzyFinderView = require './fuzzy-finder-view'
 module.exports =
 class BufferView extends FuzzyFinderView
   toggle: ->
-    if @hasParent()
+    if @panel?.isVisible()
       @cancel()
     else
       @populate()
-      @attach() if @paths?.length > 0
+      @show() if @paths?.length > 0
 
   getEmptyMessage: (itemCount) ->
     if itemCount is 0
@@ -17,8 +17,8 @@ class BufferView extends FuzzyFinderView
       super
 
   populate: ->
-    editors = atom.workspace.getEditors().filter (editor) -> editor.getPath()?
-    activeEditor = atom.workspace.getActiveEditor()
+    editors = atom.workspace.getTextEditors().filter (editor) -> editor.getPath()?
+    activeEditor = atom.workspace.getActiveTextEditor()
     editors = _.sortBy editors, (editor) ->
       if editor is activeEditor
         0
