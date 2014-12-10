@@ -11,7 +11,7 @@ class FuzzyFinderView extends SelectListView
   initialize: ->
     super
 
-    @addClass('fuzzy-finder overlay from-top')
+    @addClass('fuzzy-finder')
     @setMaxItems(10)
 
     atom.commands.add @element,
