@@ -73,7 +73,7 @@ class PathLoader
         done
       )
 
-module.exports = (rootPaths, traverseIntoSymlinkDirectories, ignoreVcsIgnores, ignores=[]) ->
+module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
   for ignore in ignores when ignore
     try
@@ -87,7 +87,7 @@ module.exports = (rootPaths, traverseIntoSymlinkDirectories, ignoreVcsIgnores, i
       new PathLoader(
         rootPath,
         ignoreVcsIgnores,
-        traverseIntoSymlinkDirectories,
+        followSymlinks,
         ignoredNames
       ).load(next)
     @async()
