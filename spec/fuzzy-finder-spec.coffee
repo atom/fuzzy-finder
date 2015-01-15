@@ -109,8 +109,8 @@ describe 'FuzzyFinder', ->
 
         describe "symlinks on #darwin or #linux", ->
           beforeEach ->
-            fs.symlinkSync(atom.project.resolve('sample.txt'), atom.project.resolve('symlink-to-file'))
-            fs.symlinkSync(atom.project.resolve('dir'), atom.project.resolve('symlink-to-dir'))
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-file'))
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-dir'))
 
           it "includes symlinked file paths", ->
             jasmine.attachToDOM(workspaceElement)
@@ -167,7 +167,7 @@ describe 'FuzzyFinder', ->
         editor2 = atom.workspace.getActiveTextEditor()
         atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
 
-        expectedPath = atom.project.resolve('dir/a')
+        expectedPath = atom.project.getDirectories()[0].resolve('dir/a')
         projectView.confirmed({filePath: expectedPath})
 
         waitsFor ->
@@ -186,7 +186,7 @@ describe 'FuzzyFinder', ->
           jasmine.attachToDOM(workspaceElement)
           editorPath = atom.workspace.getActiveTextEditor().getPath()
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-          projectView.confirmed({filePath: atom.project.resolve('dir')})
+          projectView.confirmed({filePath: atom.project.getDirectories()[0].resolve('dir')})
           expect(projectView.hasParent()).toBeTruthy()
           expect(atom.workspace.getActiveTextEditor().getPath()).toBe editorPath
           expect(projectView.error.text().length).toBeGreaterThan 0
@@ -316,7 +316,7 @@ describe 'FuzzyFinder', ->
 
       describe "when the active pane has an item for the selected path", ->
         it "switches to the item for the selected path", ->
-          expectedPath = atom.project.resolve('sample.txt')
+          expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
           bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
@@ -337,7 +337,7 @@ describe 'FuzzyFinder', ->
 
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
-          expectedPath = atom.project.resolve('sample.txt')
+          expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
           bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
@@ -487,7 +487,7 @@ describe 'FuzzyFinder', ->
       runs ->
         [leftPane, rightPane] = atom.workspace.getPanes()
         expect(atom.workspace.getActivePane()).toBe leftPane
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
       expect(atom.workspace.getPanes().length).toBe 1
@@ -503,7 +503,7 @@ describe 'FuzzyFinder', ->
       runs ->
         [leftPane, rightPane] = atom.workspace.getPanes()
         expect(atom.workspace.getActivePane()).toBe rightPane
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
       expect(atom.workspace.getPanes().length).toBe 1
@@ -519,7 +519,7 @@ describe 'FuzzyFinder', ->
       runs ->
         [topPane, bottomPane] = atom.workspace.getPanes()
         expect(atom.workspace.getActivePane()).toBe topPane
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
       expect(atom.workspace.getPanes().length).toBe 1
@@ -535,7 +535,7 @@ describe 'FuzzyFinder', ->
       runs ->
         [topPane, bottomPane] = atom.workspace.getPanes()
         expect(atom.workspace.getActivePane()).toBe bottomPane
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.resolve(filePath)
+        expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
   describe "when the filter text contains a colon followed by a number", ->
     beforeEach ->
@@ -560,7 +560,7 @@ describe 'FuzzyFinder', ->
         bufferView.filterEditorView.getModel().setText('sample.js:4')
         bufferView.populateList()
         {filePath} = bufferView.getSelectedItem()
-        expect(atom.project.resolve(filePath)).toBe editor1.getPath()
+        expect(atom.project.getDirectories()[0].resolve(filePath)).toBe editor1.getPath()
 
         spyOn(bufferView, 'moveToLine').andCallThrough()
         atom.commands.dispatch bufferView.element, 'core:confirm'
@@ -631,7 +631,7 @@ describe 'FuzzyFinder', ->
     [projectPath] = []
 
     beforeEach ->
-      projectPath = atom.project.resolve('git/working-dir')
+      projectPath = atom.project.getDirectories()[0].resolve('git/working-dir')
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
       atom.project.setPaths([projectPath])
 
@@ -649,7 +649,7 @@ describe 'FuzzyFinder', ->
           fs.writeFileSync(originalPath, 'making a change for the better')
           atom.project.getRepositories()[0].getPathStatus(originalPath)
 
-          newPath = atom.project.resolve('newsample.js')
+          newPath = atom.project.getDirectories()[0].resolve('newsample.js')
           fs.writeFileSync(newPath, '')
           atom.project.getRepositories()[0].getPathStatus(newPath)
 
@@ -676,7 +676,7 @@ describe 'FuzzyFinder', ->
           editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
-          newPath = atom.project.resolve('newsample.js')
+          newPath = atom.project.getDirectories()[0].resolve('newsample.js')
           fs.writeFileSync(newPath, '')
 
       describe "when a modified file is shown in the list", ->
@@ -731,7 +731,7 @@ describe 'FuzzyFinder', ->
         [ignoreFile] = []
 
         beforeEach ->
-          atom.project.setPaths([atom.project.resolve('dir')])
+          atom.project.setPaths([atom.project.getDirectories()[0].resolve('dir')])
           ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
           fs.writeFileSync(ignoreFile, 'b.txt')
 
