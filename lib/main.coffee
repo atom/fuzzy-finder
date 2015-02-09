@@ -6,6 +6,10 @@ module.exports =
     traverseIntoSymlinkDirectories:
       type: 'boolean'
       default: false
+    searchAllPanes:
+      description: "Whether to search through all open panes or just the active one. Holding shift inverts this setting."
+      type: 'boolean'
+      default: false
 
   activate: (state) ->
     atom.commands.add 'atom-workspace',
