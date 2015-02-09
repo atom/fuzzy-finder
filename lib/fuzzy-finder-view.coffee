@@ -65,8 +65,10 @@ class FuzzyFinderView extends SelectListView
 
   openPath: (filePath, lineNumber, searchAllPanes) ->
     if filePath
-      if not atom.workspace.getActivePane().activateItemForURI(filePath)
-          atom.workspace.open(filePath, searchAllPanes: searchAllPanes ).done => @moveToLine(lineNumber)
+      if atom.workspace.getActivePane().activateItemForURI(filePath)
+        @moveToLine(lineNumber)
+      else
+        atom.workspace.open(filePath, searchAllPanes: searchAllPanes ).done => @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
