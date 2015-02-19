@@ -12,15 +12,22 @@ describe 'FuzzyFinder', ->
   [projectView, bufferView, gitStatusView, workspaceElement] = []
 
   beforeEach ->
-    tempPath = fs.realpathSync(temp.mkdirSync('atom'))
+    rootDir = fs.realpathSync(temp.mkdirSync('root-dir1'))
+
     fixturesPath = atom.project.getPaths()[0]
-    wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
-    atom.project.setPaths([path.join(tempPath, 'fuzzy-finder')])
+
+    wrench.copyDirSyncRecursive(
+      path.join(fixturesPath, "root-dir1"),
+      rootDir,
+      forceDelete: true
+    )
+
+    atom.project.setPaths([rootDir])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
     waitsForPromise ->
-      atom.workspace.open('sample.js')
+      atom.workspace.open(path.join(rootDir1, 'sample.js'))
 
     waitsForPromise ->
       atom.packages.activatePackage('fuzzy-finder').then (pack) ->
