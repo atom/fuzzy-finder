@@ -9,20 +9,28 @@ wrench = require 'wrench'
 PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
+  [rootDir1, rootDir2] = []
   [projectView, bufferView, gitStatusView, workspaceElement] = []
 
   beforeEach ->
-    rootDir = fs.realpathSync(temp.mkdirSync('root-dir1'))
+    rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
+    rootDir2 = fs.realpathSync(temp.mkdirSync('root-dir2'))
 
     fixturesPath = atom.project.getPaths()[0]
 
     wrench.copyDirSyncRecursive(
       path.join(fixturesPath, "root-dir1"),
-      rootDir,
+      rootDir1,
       forceDelete: true
     )
 
-    atom.project.setPaths([rootDir])
+    wrench.copyDirSyncRecursive(
+      path.join(fixturesPath, "root-dir2"),
+      rootDir2,
+      forceDelete: true
+    )
+
+    atom.project.setPaths([rootDir1, rootDir2])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
@@ -64,26 +72,26 @@ describe 'FuzzyFinder', ->
           jasmine.attachToDOM(workspaceElement)
           projectView.setMaxItems(Infinity)
           atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-          paths = null
           expect(projectView.find(".loading")).toBeVisible()
           expect(projectView.find(".loading").text().length).toBeGreaterThan 0
 
           waitsFor "all project paths to load", 5000, ->
-            {paths} = projectView
-            paths?.length > 0
+            projectView.list.children("li").length > 0
 
           runs ->
-            expect(paths.length).toBeGreaterThan 0
-            expect(projectView.list.children('li').length).toBe paths.length
-            for filePath in paths
-              expect(projectView.list.find("li:contains(#{path.basename(filePath)})")).toExist()
-            firstChild = projectView.list.children().first()
-            firstChildName = firstChild.find('div:first-child')
-            firstChildPath = firstChild.find('div:last-child')
+            for filePath in wrench.readdirSyncRecursive(rootDir1)
+              expect(projectView.list.find("li:contains(#{filePath})")).toExist()
 
-            expect(firstChild).toHaveClass 'selected'
-            expect(firstChildName).toHaveAttr('data-name', firstChildName.text())
-            expect(firstChildName).toHaveAttr('data-path', firstChildPath.text())
+            for filePath in wrench.readdirSyncRecursive(rootDir2)
+              expect(projectView.list.find("li:contains(#{filePath})")).toExist()
+
+            firstItem = projectView.list.children().first()
+            firstItemName = firstItem.find('div:first-child')
+            firstItemPath = firstItem.find('div:last-child')
+
+            expect(firstItem).toHaveClass 'selected'
+            expect(firstItemName).toHaveAttr('data-name', firstItemName.text())
+            expect(firstItemName).toHaveAttr('data-path', firstItemPath.text())
             expect(projectView.find(".loading")).not.toBeVisible()
 
         it "only creates a single path loader task", ->
@@ -112,7 +120,7 @@ describe 'FuzzyFinder', ->
 
           runs ->
             expect(projectView.list.find("li:eq(0)").text()).toContain('sample.txt')
-            expect(projectView.list.find("li:eq(1)").text()).toContain('sample.js')
+            expect(projectView.list.find("li:eq(1)").text()).toContain('sample.html')
 
         describe "symlinks on #darwin or #linux", ->
           beforeEach ->
