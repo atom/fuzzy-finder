@@ -1,7 +1,7 @@
 fs = require 'fs'
 path = require 'path'
 _ = require 'underscore-plus'
-{Git} = require 'atom'
+{GitRepository} = require 'atom'
 {Minimatch} = require 'minimatch'
 
 asyncCallsInProgress = 0
@@ -69,5 +69,5 @@ module.exports = (rootPath, traverseIntoSymlinkDirectories, ignoreVcsIgnores, ig
       console.warn "Error parsing ignore pattern (#{ignore}): #{error.message}"
 
   callback = @async()
-  repo = Git.open(rootPath, refreshOnWindowFocus: false) if ignoreVcsIgnores
+  repo = GitRepository.open(rootPath, refreshOnWindowFocus: false) if ignoreVcsIgnores
   loadFolder(rootPath)
