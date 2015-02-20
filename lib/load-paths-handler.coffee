@@ -10,10 +10,11 @@ PathsChunkSize = 100
 class PathLoader
   constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
     @paths = []
+    @repo = null
     if ignoreVcsIgnores
-      @repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
-    else
-      @repo = null
+      repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
+      if repo?.getWorkingDirectory() is @rootPath
+        @repo = repo
 
   load: (done) ->
     @loadPath @rootPath, =>
