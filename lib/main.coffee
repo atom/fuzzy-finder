@@ -16,7 +16,7 @@ module.exports =
       'fuzzy-finder:toggle-git-status-finder': =>
         @createGitStatusView().toggle()
 
-    if atom.project.getPaths()[0]?
+    if atom.project.getPaths().length > 0
       PathLoader = require './path-loader'
       @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
 
