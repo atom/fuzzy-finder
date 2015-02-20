@@ -92,15 +92,11 @@ class ProjectView extends FuzzyFinderView
     projectRelativePaths = super
 
     if lastOpenedPath = @getLastOpenedPath()
-      lastOpenedProjectRelativePath = atom.project.relativize(lastOpenedPath)
-      for {projectRelativePath}, index in projectRelativePaths
-        if lastOpenedProjectRelativePath is projectRelativePath
-          projectRelativePaths.splice(index, 1)
+      for {filePath}, index in projectRelativePaths
+        if filePath is lastOpenedPath
+          [entry] = projectRelativePaths.splice(index, 1)
+          projectRelativePaths.unshift(entry)
           break
-
-      projectRelativePaths.unshift
-        filePath: lastOpenedPath
-        projectRelativePath: lastOpenedProjectRelativePath
 
     projectRelativePaths
 

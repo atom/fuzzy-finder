@@ -1,5 +1,4 @@
 path = require 'path'
-
 _ = require 'underscore-plus'
 {$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
@@ -51,12 +50,21 @@ describe 'FuzzyFinder', ->
     waitsFor "paths to display", 5000, ->
       fuzzyFinderView.list.children("li").length > 0
 
+  eachFilePath = (dirPaths, fn) ->
+    for dirPath in dirPaths
+      findings = for filePath in wrench.readdirSyncRecursive(dirPath)
+        fullPath = path.join(dirPath, filePath)
+        if fs.isFileSync(fullPath)
+          fn(filePath)
+          true
+      expect(findings).toContain(true)
+
   describe "file-finder behavior", ->
     beforeEach ->
       projectView.setMaxItems(Infinity)
 
     describe "toggling", ->
-      describe "when the project has a path", ->
+      describe "when the project has multiple paths", ->
         it "shows or hides the fuzzy-finder and returns focus to the active editor if it is already showing", ->
           jasmine.attachToDOM(workspaceElement)
 
@@ -77,30 +85,41 @@ describe 'FuzzyFinder', ->
           dispatchCommand('toggle-file-finder')
           expect(projectView.filterEditorView.getText()).toBe ''
 
-        it "shows all relative file paths for the current project and selects the first", ->
+        it "shows all files for the current project and selects the first", ->
           jasmine.attachToDOM(workspaceElement)
 
           dispatchCommand('toggle-file-finder')
+
           expect(projectView.find(".loading")).toBeVisible()
           expect(projectView.find(".loading").text().length).toBeGreaterThan 0
 
           waitForPathsToDisplay(projectView)
 
           runs ->
-            for filePath in wrench.readdirSyncRecursive(rootDir1)
-              expect(projectView.list.find("li:contains(#{filePath})")).toExist()
+            eachFilePath [rootDir1, rootDir2], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              nameDiv = item.find("div:first-child")
+              expect(nameDiv).toHaveAttr("data-name", path.basename(filePath))
+              expect(nameDiv).toHaveText(path.basename(filePath))
 
-            for filePath in wrench.readdirSyncRecursive(rootDir2)
-              expect(projectView.list.find("li:contains(#{filePath})")).toExist()
-
-            firstItem = projectView.list.children().first()
-            firstItemName = firstItem.find('div:first-child')
-            firstItemPath = firstItem.find('div:last-child')
-
-            expect(firstItem).toHaveClass 'selected'
-            expect(firstItemName).toHaveAttr('data-name', firstItemName.text())
-            expect(firstItemName).toHaveAttr('data-path', firstItemPath.text())
             expect(projectView.find(".loading")).not.toBeVisible()
+
+        it "shows each file's path, including which root directory it's in", ->
+          dispatchCommand('toggle-file-finder')
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            eachFilePath [rootDir1], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              expect(item.find("div").eq(1)).toHaveText(path.join(path.basename(rootDir1), filePath))
+
+            eachFilePath [rootDir2], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              expect(item.find("div").eq(1)).toHaveText(path.join(path.basename(rootDir2), filePath))
 
         it "only creates a single path loader task", ->
           spyOn(PathLoader, 'startTask').andCallThrough()
@@ -166,6 +185,23 @@ describe 'FuzzyFinder', ->
             expect(projectView.list.find("li:contains(sample.js)")).not.toExist()
             expect(projectView.list.find("li:contains(sample.txt)")).not.toExist()
             expect(projectView.list.find("li:contains(a)")).toExist()
+
+      describe "when the project only has one path", ->
+        beforeEach ->
+          atom.project.setPaths([rootDir1])
+
+        it "doesn't show the name of each file's root directory", ->
+          dispatchCommand('toggle-file-finder')
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            eachFilePath [rootDir1], (filePath) ->
+              console.log 'filePath', filePath
+
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              expect(item).not.toHaveText(path.basename(rootDir1))
 
       describe "when the project has no path", ->
         beforeEach ->
