@@ -64,7 +64,7 @@ class ProjectView extends FuzzyFinderView
   populate: ->
     @setItems(@paths) if @paths?
 
-    unless atom.project.getPaths()[0]?
+    if atom.project.getPaths().length is 0
       @setItems([])
       return
 
