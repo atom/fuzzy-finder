@@ -665,30 +665,33 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual [3, 4]
 
   describe "Git integration", ->
-    [projectPath] = []
+    [projectPath, gitRepository, gitDirectory] = []
 
     beforeEach ->
       projectPath = atom.project.getDirectories()[0].resolve('git/working-dir')
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
-      atom.project.setPaths([projectPath])
+      atom.project.setPaths([rootDir2, projectPath])
+
+      gitDirectory = atom.project.getDirectories()[1]
+      gitRepository = atom.project.getRepositories()[1]
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
         waitsForPromise ->
-          atom.workspace.open('a.txt')
+          atom.workspace.open(path.join(projectPath, 'a.txt'))
 
         runs ->
           editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
-          atom.project.getRepositories()[0].getPathStatus(originalPath)
+          gitRepository.getPathStatus(originalPath)
 
-          newPath = atom.project.getDirectories()[0].resolve('newsample.js')
+          newPath = atom.project.getDirectories()[1].resolve('newsample.js')
           fs.writeFileSync(newPath, '')
-          atom.project.getRepositories()[0].getPathStatus(newPath)
+          gitRepository.getPathStatus(newPath)
 
       it "displays all new and modified paths", ->
         expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
@@ -707,20 +710,20 @@ describe 'FuzzyFinder', ->
         jasmine.attachToDOM(workspaceElement)
 
         waitsForPromise ->
-          atom.workspace.open('a.txt')
+          atom.workspace.open(path.join(projectPath, 'a.txt'))
 
         runs ->
           editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
-          newPath = atom.project.getDirectories()[0].resolve('newsample.js')
+          newPath = gitDirectory.resolve('newsample.js')
           fs.writeFileSync(newPath, '')
 
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
           editor.setText('modified')
           editor.save()
-          atom.project.getRepositories()[0].getPathStatus(editor.getPath())
+          gitRepository.getPathStatus(editor.getPath())
 
           dispatchCommand('toggle-buffer-finder')
           expect(bufferView.find('.status.status-modified').length).toBe 1
@@ -729,10 +732,10 @@ describe 'FuzzyFinder', ->
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
           waitsForPromise ->
-            atom.workspace.open('newsample.js')
+            atom.workspace.open(path.join(projectPath, 'newsample.js'))
 
           runs ->
-            atom.project.getRepositories()[0].getPathStatus(editor.getPath())
+            gitRepository.getPathStatus(editor.getPath())
 
             dispatchCommand('toggle-buffer-finder')
             expect(bufferView.find('.status.status-added').length).toBe 1
@@ -746,7 +749,7 @@ describe 'FuzzyFinder', ->
         [ignoreFile, ignoredFile] = []
 
         beforeEach ->
-          ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
+          ignoreFile = path.join(projectPath, '.gitignore')
           fs.writeFileSync(ignoreFile, 'ignored.txt')
 
           ignoredFile = path.join(projectPath, 'ignored.txt')
@@ -767,8 +770,8 @@ describe 'FuzzyFinder', ->
         [ignoreFile] = []
 
         beforeEach ->
-          atom.project.setPaths([atom.project.getDirectories()[0].resolve('dir')])
-          ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
+          atom.project.setPaths([gitDirectory.resolve('dir')])
+          ignoreFile = path.join(projectPath, '.gitignore')
           fs.writeFileSync(ignoreFile, 'b.txt')
 
         it "does not exclude paths that are git ignored", ->

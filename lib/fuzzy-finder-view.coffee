@@ -1,7 +1,7 @@
 path = require 'path'
 {Point} = require 'atom'
 {$$, SelectListView} = require 'atom-space-pen-views'
-{splitProjectPath} = require './helpers'
+{splitProjectPath, repositoryForPath} = require './helpers'
 fs = require 'fs-plus'
 
 module.exports =
@@ -35,8 +35,7 @@ class FuzzyFinderView extends SelectListView
   viewForItem: ({filePath, projectRelativePath}) ->
     $$ ->
       @li class: 'two-lines', =>
-        [repo] = atom.project.getRepositories()
-        if repo?
+        if (repo = repositoryForPath(filePath))?
           status = repo.getCachedPathStatus(filePath)
           if repo.isStatusNew(status)
             @div class: 'status status-added icon icon-diff-added'
