@@ -1,3 +1,4 @@
+net = require "net"
 path = require 'path'
 _ = require 'underscore-plus'
 {$, $$} = require 'atom-space-pen-views'
@@ -173,6 +174,22 @@ describe 'FuzzyFinder', ->
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).toExist()
+
+        describe "socket files on #darwin or #linux", ->
+          [socketServer, socketPath] = []
+
+          beforeEach ->
+            socketServer = net.createServer ->
+            socketPath = path.join(rootDir1, "some.sock")
+            waitsFor (done) -> socketServer.listen(socketPath, done)
+
+          afterEach ->
+            waitsFor (done) -> socketServer.close(done)
+
+          it "ignores them", ->
+            dispatchCommand('toggle-file-finder')
+            waitForPathsToDisplay(projectView)
+            expect(projectView.list.find("li:contains(some.sock)")).not.toExist()
 
         it "ignores paths that match entries in config.fuzzy-finder.ignoredNames", ->
           atom.config.set("fuzzy-finder.ignoredNames", ["sample.js", "*.txt"])

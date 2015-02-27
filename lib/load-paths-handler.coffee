@@ -57,6 +57,8 @@ class PathLoader
         @loadFolder(pathToLoad, done)
       else if stats.isFile()
         @pathLoaded(pathToLoad, done)
+      else
+        done()
 
   loadFolder: (folderPath, done) ->
     fs.readdir folderPath, (error, children=[]) =>
