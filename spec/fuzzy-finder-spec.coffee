@@ -214,8 +214,6 @@ describe 'FuzzyFinder', ->
 
           runs ->
             eachFilePath [rootDir1], (filePath) ->
-              console.log 'filePath', filePath
-
               item = projectView.list.find("li:contains(#{filePath})").eq(0)
               expect(item).toExist()
               expect(item).not.toHaveText(path.basename(rootDir1))
@@ -763,16 +761,12 @@ describe 'FuzzyFinder', ->
         atom.config.set("core.excludeVcsIgnoredPaths", true)
 
       describe "when the project's path is the repository's working directory", ->
-        [ignoreFile, ignoredFile] = []
-
         beforeEach ->
           ignoreFile = path.join(projectPath, '.gitignore')
           fs.writeFileSync(ignoreFile, 'ignored.txt')
 
           ignoredFile = path.join(projectPath, 'ignored.txt')
           fs.writeFileSync(ignoredFile, 'ignored text')
-
-          atom.config.set("core.excludeVcsIgnoredPaths", true)
 
         it "excludes paths that are git ignored", ->
           dispatchCommand('toggle-file-finder')
@@ -784,8 +778,6 @@ describe 'FuzzyFinder', ->
             expect(projectView.list.find("li:contains(ignored.txt)")).not.toExist()
 
       describe "when the project's path is a subfolder of the repository's working directory", ->
-        [ignoreFile] = []
-
         beforeEach ->
           atom.project.setPaths([gitDirectory.resolve('dir')])
           ignoreFile = path.join(projectPath, '.gitignore')
@@ -799,3 +791,17 @@ describe 'FuzzyFinder', ->
 
           runs ->
             expect(projectView.list.find("li:contains(b.txt)")).toExist()
+
+      describe "when the .gitignore matches parts of the path to the root folder", ->
+        beforeEach ->
+          ignoreFile = path.join(projectPath, '.gitignore')
+          fs.writeFileSync(ignoreFile, path.basename(projectPath))
+
+        it "only applies the .gitignore patterns to relative paths within the root folder", ->
+          dispatchCommand('toggle-file-finder')
+          projectView.setMaxItems(Infinity)
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            expect(projectView.list.find("li:contains(file.txt)")).toExist()

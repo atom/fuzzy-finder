@@ -23,11 +23,12 @@ class PathLoader
       done()
 
   isIgnored: (loadedPath) ->
-    if @repo?.isPathIgnored(loadedPath)
+    relativePath = path.relative(@rootPath, loadedPath)
+    if @repo?.isPathIgnored(relativePath)
       true
     else
       for ignoredName in @ignoredNames
-        return true if ignoredName.match(loadedPath)
+        return true if ignoredName.match(relativePath)
 
   pathLoaded: (loadedPath, done) ->
     @paths.push(loadedPath) unless @isIgnored(loadedPath)
