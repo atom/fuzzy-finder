@@ -1,7 +1,7 @@
 path = require 'path'
 {Point} = require 'atom'
 {$$, SelectListView} = require 'atom-space-pen-views'
-{splitProjectPath, repositoryForPath} = require './helpers'
+{repositoryForPath} = require './helpers'
 fs = require 'fs-plus'
 
 module.exports =
@@ -150,7 +150,7 @@ class FuzzyFinderView extends SelectListView
 
       @filePaths = filePaths
       @projectRelativePaths = @filePaths.map (filePath) ->
-        [rootPath, projectRelativePath] = splitProjectPath(filePath)
+        [rootPath, projectRelativePath] = atom.project.relativizePath(filePath)
         if rootPath and projectHasMultipleDirectories
           projectRelativePath = path.join(path.basename(rootPath), projectRelativePath)
         {filePath, projectRelativePath}
