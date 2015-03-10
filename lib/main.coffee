@@ -17,8 +17,7 @@ module.exports =
         @createGitStatusView().toggle()
 
     if atom.project.getPaths().length > 0
-      PathLoader = require './path-loader'
-      @loadPathsTask = PathLoader.startTask (paths) => @projectPaths = paths
+      @createProjectView().runLoadPathsTask()
 
     for editor in atom.workspace.getTextEditors()
       editor.lastOpened = state[editor.getPath()]
@@ -27,9 +26,6 @@ module.exports =
       pane.observeActiveItem (item) -> item?.lastOpened = Date.now()
 
   deactivate: ->
-    if @loadPathsTask?
-      @loadPathsTask.terminate()
-      @loadPathsTask = null
     if @projectView?
       @projectView.destroy()
       @projectView = null
@@ -50,10 +46,8 @@ module.exports =
 
   createProjectView:  ->
     unless @projectView?
-      @loadPathsTask?.terminate()
       ProjectView  = require './project-view'
-      @projectView = new ProjectView(@projectPaths)
-      @projectPaths = null
+      @projectView = new ProjectView()
     @projectView
 
   createGitStatusView:  ->
