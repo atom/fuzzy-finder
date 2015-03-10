@@ -11,12 +11,10 @@ class ProjectView extends FuzzyFinderView
   reloadPaths: true
   reloadAfterFirstLoad: false
 
-  initialize: (@paths) ->
+  initialize: ->
     super
 
     @disposables = new CompositeDisposable
-
-    @reloadPaths = false if @paths?.length > 0
 
     windowFocused = =>
       if @paths?
@@ -70,12 +68,11 @@ class ProjectView extends FuzzyFinderView
 
     if @reloadPaths
       @reloadPaths = false
-      @loadPathsTask?.terminate()
-      @loadPathsTask = PathLoader.startTask (@paths) =>
+
+      task = @runLoadPathsTask =>
         if @reloadAfterFirstLoad
           @reloadPaths = true
           @reloadAfterFirstLoad = false
-
         @populate()
 
       if @paths?
@@ -84,7 +81,7 @@ class ProjectView extends FuzzyFinderView
         @setLoading("Indexing project\u2026")
         @loadingBadge.text('0')
         pathsFound = 0
-        @loadPathsTask.on 'load-paths:paths-found', (paths) =>
+        task.on 'load-paths:paths-found', (paths) =>
           pathsFound += paths.length
           @loadingBadge.text(humanize.intComma(pathsFound))
 
@@ -120,3 +117,9 @@ class ProjectView extends FuzzyFinderView
     @loadPathsTask?.terminate()
     @disposables.dispose()
     super
+
+  runLoadPathsTask: (fn) ->
+    @loadPathsTask?.terminate()
+    @loadPathsTask = PathLoader.startTask (@paths) =>
+      @reloadPaths = false
+      fn?()
