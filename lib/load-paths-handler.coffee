@@ -54,6 +54,8 @@ class PathLoader
               @loadFolder(pathToLoad, done)
             else
               done()
+          else
+            done()
       else if stats.isDirectory()
         @loadFolder(pathToLoad, done)
       else if stats.isFile()
