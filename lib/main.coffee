@@ -6,6 +6,9 @@ module.exports =
     traverseIntoSymlinkDirectories:
       type: 'boolean'
       default: false
+    preserveLastSearch:
+      type: 'boolean'
+      default: false
 
   activate: (state) ->
     atom.commands.add 'atom-workspace',
