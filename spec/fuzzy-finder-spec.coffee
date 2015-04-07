@@ -679,6 +679,33 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor().getPath()).toBe editor1.getPath()
           expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual [3, 4]
 
+  describe "Preserve last search", ->
+    it "does not preserve last search by default", ->
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      projectView.filterEditorView.getModel().insertText('this should not show up next time we open finder')
+
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      expect(projectView.filterEditorView.getText()).toBe ''
+
+    it "preserves last search when config is set", ->
+      atom.config.set("fuzzy-finder.preserveLastSearch", true)
+
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      projectView.filterEditorView.getModel().insertText('this should show up next time we open finder')
+
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
+
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
