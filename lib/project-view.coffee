@@ -37,7 +37,7 @@ class ProjectView extends FuzzyFinderView
     @disposables.add atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
       @reloadPaths = true
 
-    @disposables.add atom.config.onDidChange 'fuzzy-finder.traverseIntoSymlinkDirectories', =>
+    @disposables.add atom.config.onDidChange 'core.followSymlinks', =>
       @reloadPaths = true
 
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>

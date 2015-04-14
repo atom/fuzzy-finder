@@ -10,7 +10,7 @@ PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
-  [projectView, bufferView, gitStatusView, workspaceElement] = []
+  [projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
 
   beforeEach ->
     rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
@@ -142,9 +142,18 @@ describe 'FuzzyFinder', ->
             expect(projectView.list.find("li:eq(1)").text()).toContain('sample.html')
 
         describe "symlinks on #darwin or #linux", ->
+          [junkDirPath, junkFilePath] = []
           beforeEach ->
-            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-file'))
-            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            junkDirPath = fs.realpathSync(temp.mkdirSync('junk-1'))
+            junkFilePath = path.join(junkDirPath, 'file.txt')
+            fs.writeFileSync(junkFilePath, 'txt')
+            fs.writeFileSync(path.join(junkDirPath, 'a'), 'txt')
+
+            fs.symlinkSync(junkFilePath, atom.project.getDirectories()[0].resolve('symlink-to-file'))
+            fs.symlinkSync(junkDirPath, atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-internal-file'))
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
 
           it "includes symlinked file paths", ->
             dispatchCommand('toggle-file-finder')
@@ -153,9 +162,10 @@ describe 'FuzzyFinder', ->
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-file)")).not.toExist()
 
-          it "excludes symlinked folder paths if traverseIntoSymlinkDirectories is false", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', false)
+          it "excludes symlinked folder paths if followSymlinks is false", ->
+            atom.config.set('core.followSymlinks', false)
 
             dispatchCommand('toggle-file-finder')
 
@@ -165,8 +175,11 @@ describe 'FuzzyFinder', ->
               expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).not.toExist()
 
-          it "includes symlinked folder paths if traverseIntoSymlinkDirectories is true", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', true)
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir)")).not.toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
+
+          it "includes symlinked folder paths if followSymlinks is true", ->
+            atom.config.set('core.followSymlinks', true)
 
             dispatchCommand('toggle-file-finder')
 
@@ -174,6 +187,7 @@ describe 'FuzzyFinder', ->
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
 
         describe "socket files on #darwin or #linux", ->
           [socketServer, socketPath] = []

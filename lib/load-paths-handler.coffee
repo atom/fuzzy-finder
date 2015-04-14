@@ -45,6 +45,7 @@ class PathLoader
     fs.lstat pathToLoad, (error, stats) =>
       return done() if error?
       if stats.isSymbolicLink()
+        return done() if fs.realpathSync(pathToLoad).search(@rootPath) is 0
         fs.stat pathToLoad, (error, stats) =>
           return done() if error?
           if stats.isFile()
@@ -72,7 +73,7 @@ class PathLoader
         done
       )
 
-module.exports = (rootPaths, traverseIntoSymlinkDirectories, ignoreVcsIgnores, ignores=[]) ->
+module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
   for ignore in ignores when ignore
     try
@@ -86,7 +87,7 @@ module.exports = (rootPaths, traverseIntoSymlinkDirectories, ignoreVcsIgnores, i
       new PathLoader(
         rootPath,
         ignoreVcsIgnores,
-        traverseIntoSymlinkDirectories,
+        followSymlinks,
         ignoredNames
       ).load(next)
     @async()

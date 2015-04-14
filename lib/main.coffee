@@ -3,9 +3,6 @@ module.exports =
     ignoredNames:
       type: 'array'
       default: []
-    traverseIntoSymlinkDirectories:
-      type: 'boolean'
-      default: false
     preserveLastSearch:
       type: 'boolean'
       default: false
