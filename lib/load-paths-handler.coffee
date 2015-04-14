@@ -45,6 +45,7 @@ class PathLoader
     fs.lstat pathToLoad, (error, stats) =>
       return done() if error?
       if stats.isSymbolicLink()
+        return done() if fs.realpathSync(pathToLoad).search(@rootPath) is 0
         fs.stat pathToLoad, (error, stats) =>
           return done() if error?
           if stats.isFile()
