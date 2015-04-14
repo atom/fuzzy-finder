@@ -164,8 +164,8 @@ describe 'FuzzyFinder', ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
               expect(projectView.list.find("li:contains(symlink-to-internal-file)")).not.toExist()
 
-          it "excludes symlinked folder paths if traverseIntoSymlinkDirectories is false", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', false)
+          it "excludes symlinked folder paths if followSymlinks is false", ->
+            atom.config.set('core.followSymlinks', false)
 
             dispatchCommand('toggle-file-finder')
 
@@ -178,8 +178,8 @@ describe 'FuzzyFinder', ->
               expect(projectView.list.find("li:contains(symlink-to-internal-dir)")).not.toExist()
               expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
 
-          it "includes symlinked folder paths if traverseIntoSymlinkDirectories is true", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', true)
+          it "includes symlinked folder paths if followSymlinks is true", ->
+            atom.config.set('core.followSymlinks', true)
 
             dispatchCommand('toggle-file-finder')
 
