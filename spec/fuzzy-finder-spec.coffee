@@ -149,11 +149,17 @@ describe 'FuzzyFinder', ->
             fs.writeFileSync(junkFilePath, 'txt')
             fs.writeFileSync(path.join(junkDirPath, 'a'), 'txt')
 
+            brokenFilePath = path.join(junkDirPath, 'delete.txt')
+            fs.writeFileSync(brokenFilePath, 'delete-me')
+
             fs.symlinkSync(junkFilePath, atom.project.getDirectories()[0].resolve('symlink-to-file'))
             fs.symlinkSync(junkDirPath, atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            fs.symlinkSync(brokenFilePath, atom.project.getDirectories()[0].resolve('broken-symlink'))
 
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-internal-file'))
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
+
+            fs.unlinkSync(brokenFilePath)
 
           it "includes symlinked file paths", ->
             dispatchCommand('toggle-file-finder')
