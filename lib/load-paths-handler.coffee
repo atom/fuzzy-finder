@@ -45,12 +45,7 @@ class PathLoader
     fs.lstat pathToLoad, (error, stats) =>
       return done() if error?
       if stats.isSymbolicLink()
-        realPath = null
-        try
-          realPath = fs.realpathSync(pathToLoad)
-        catch err
-          ; # ignore a broken symlink
-        return done() if realPath?.search(@rootPath) is 0
+        return done() if @isInternalSymlink(pathToLoad)
 
         fs.stat pathToLoad, (error, stats) =>
           return done() if error?
@@ -78,6 +73,14 @@ class PathLoader
           @loadPath(path.join(folderPath, childName), next)
         done
       )
+
+  isInternalSymlink: (pathToLoad) ->
+    realPath = null
+    try
+      realPath = fs.realpathSync(pathToLoad)
+    catch err
+      ; # ignore a broken symlink
+    realPath?.search(@rootPath) is 0
 
 module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
