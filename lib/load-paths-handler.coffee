@@ -80,7 +80,7 @@ class PathLoader
       if err
         done(false)
       else
-        done(realPath?.search(@rootPath) is 0)
+        done(realPath.search(@rootPath) is 0)
 
 module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
