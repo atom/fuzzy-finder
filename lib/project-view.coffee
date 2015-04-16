@@ -11,10 +11,11 @@ class ProjectView extends FuzzyFinderView
   reloadPaths: true
   reloadAfterFirstLoad: false
 
-  initialize: ->
+  initialize: (@paths) ->
     super
 
     @disposables = new CompositeDisposable
+    @reloadPaths = false if @paths?.length > 0
 
     windowFocused = =>
       if @paths?

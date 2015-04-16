@@ -13,8 +13,7 @@ module.exports =
       'fuzzy-finder:toggle-git-status-finder': =>
         @createGitStatusView().toggle()
 
-    if atom.project.getPaths().length > 0
-      @createProjectView().runLoadPathsTask()
+    @startLoadPathsTask() if atom.project.getPaths().length > 0
 
     for editor in atom.workspace.getTextEditors()
       editor.lastOpened = state[editor.getPath()]
@@ -33,6 +32,7 @@ module.exports =
       @gitStatusView.destroy()
       @gitStatusView = null
     @projectPaths = null
+    @stopLoadPathsTask()
 
   serialize: ->
     paths = {}
@@ -42,9 +42,11 @@ module.exports =
     paths
 
   createProjectView:  ->
+    @stopLoadPathsTask()
+
     unless @projectView?
       ProjectView  = require './project-view'
-      @projectView = new ProjectView()
+      @projectView = new ProjectView(@projectPaths)
     @projectView
 
   createGitStatusView:  ->
@@ -58,3 +60,13 @@ module.exports =
       BufferView = require './buffer-view'
       @bufferView = new BufferView()
     @bufferView
+
+  startLoadPathsTask: ->
+    @stopLoadPathsTask()
+
+    PathLoader = require './path-loader'
+    @loadPathsTask = PathLoader.startTask (@projectPaths) =>
+
+  stopLoadPathsTask: ->
+    @loadPathsTask?.terminate()
+    @loadPathsTask = null
