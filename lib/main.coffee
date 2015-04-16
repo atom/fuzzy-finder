@@ -5,6 +5,8 @@ module.exports =
       default: []
 
   activate: (state) ->
+    @active = true
+
     atom.commands.add 'atom-workspace',
       'fuzzy-finder:toggle-file-finder': =>
         @createProjectView().toggle()
@@ -13,7 +15,8 @@ module.exports =
       'fuzzy-finder:toggle-git-status-finder': =>
         @createGitStatusView().toggle()
 
-    @startLoadPathsTask() if atom.project.getPaths().length > 0
+    if atom.project.getPaths().length > 0
+      process.nextTick => @startLoadPathsTask()
 
     for editor in atom.workspace.getTextEditors()
       editor.lastOpened = state[editor.getPath()]
@@ -33,6 +36,7 @@ module.exports =
       @gitStatusView = null
     @projectPaths = null
     @stopLoadPathsTask()
+    @active = false
 
   serialize: ->
     paths = {}
@@ -64,6 +68,7 @@ module.exports =
   startLoadPathsTask: ->
     @stopLoadPathsTask()
 
+    return unless @active
     PathLoader = require './path-loader'
     @loadPathsTask = PathLoader.startTask (@projectPaths) =>
 
