@@ -10,7 +10,7 @@ PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
-  [projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
+  [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
 
   beforeEach ->
     rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
@@ -543,6 +543,32 @@ describe 'FuzzyFinder', ->
         dispatchCommand('toggle-file-finder')
         expect(PathLoader.startTask).toHaveBeenCalled()
         expect(projectView.list.children('li').length).toBe 0
+
+    describe "the initial load paths task started during package activation", ->
+      beforeEach ->
+        fuzzyFinder.projectView.destroy()
+        fuzzyFinder.projectView = null
+        fuzzyFinder.startLoadPathsTask()
+
+        waitsFor ->
+          fuzzyFinder.projectPaths
+
+      it "passes the indexed paths into the project view when it is created", ->
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths.length).toBe 18
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe projectPaths
+        expect(projectView.reloadPaths).toBe false
+
+      it "busts the cached paths when the project paths change", ->
+        atom.project.setPaths([])
+
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths).toBe null
+
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe null
+        expect(projectView.reloadPaths).toBe true
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
