@@ -15,8 +15,7 @@ module.exports =
       'fuzzy-finder:toggle-git-status-finder': =>
         @createGitStatusView().toggle()
 
-    if atom.project.getPaths().length > 0
-      process.nextTick => @startLoadPathsTask()
+    process.nextTick => @startLoadPathsTask()
 
     for editor in atom.workspace.getTextEditors()
       editor.lastOpened = state[editor.getPath()]
@@ -69,9 +68,15 @@ module.exports =
     @stopLoadPathsTask()
 
     return unless @active
+    return if atom.project.getPaths().length is 0
+
     PathLoader = require './path-loader'
     @loadPathsTask = PathLoader.startTask (@projectPaths) =>
+    @projectPathsSubscription = atom.project.onDidChangePaths =>
+      @projectPaths = null
+      @stopLoadPathsTask()
 
   stopLoadPathsTask: ->
+    @projectPathsSubscription?.dispose()
     @loadPathsTask?.terminate()
     @loadPathsTask = null
