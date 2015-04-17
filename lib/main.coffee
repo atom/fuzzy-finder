@@ -79,5 +79,6 @@ module.exports =
 
   stopLoadPathsTask: ->
     @projectPathsSubscription?.dispose()
+    @projectPathsSubscription = null
     @loadPathsTask?.terminate()
     @loadPathsTask = null
