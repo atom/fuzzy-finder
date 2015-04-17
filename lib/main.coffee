@@ -50,6 +50,7 @@ module.exports =
     unless @projectView?
       ProjectView  = require './project-view'
       @projectView = new ProjectView(@projectPaths)
+      @projectPaths = null
     @projectView
 
   createGitStatusView:  ->
