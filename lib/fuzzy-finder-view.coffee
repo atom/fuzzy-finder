@@ -43,14 +43,16 @@ class FuzzyFinderView extends SelectListView
 
       highlighter = (path, matches, offsetIndex) =>
         lastIndex = 0
+        matchedChars = [] # Build up a set of matched chars to be more semantic
         for matchIndex in matches
           matchIndex -= offsetIndex
           continue if matchIndex < 0 # If marking up the basename, omit path matches
           unmatched = path.substring(lastIndex, matchIndex)
-          matchedChar = path[matchIndex]
-
-          @text unmatched if unmatched
-          @span matchedChar, class: 'matching'
+          if unmatched
+            @span matchedChars.join(''), class: 'matching' if matchedChars.length
+            matchedChars = []
+            @text unmatched
+          matchedChars.push(path[matchIndex])
           lastIndex = matchIndex + 1
 
         # Remaining characters are plain text
