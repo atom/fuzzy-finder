@@ -55,6 +55,8 @@ class FuzzyFinderView extends SelectListView
           matchedChars.push(path[matchIndex])
           lastIndex = matchIndex + 1
 
+        @span matchedChars.join(''), class: 'matching' if matchedChars.length
+        
         # Remaining characters are plain text
         @text path.substring(lastIndex)
 
