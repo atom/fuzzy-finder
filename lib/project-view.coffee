@@ -11,10 +11,11 @@ class ProjectView extends FuzzyFinderView
   reloadPaths: true
   reloadAfterFirstLoad: false
 
-  initialize: ->
+  initialize: (@paths) ->
     super
 
     @disposables = new CompositeDisposable
+    @reloadPaths = false if @paths?.length > 0
 
     windowFocused = =>
       if @paths?
@@ -37,7 +38,7 @@ class ProjectView extends FuzzyFinderView
     @disposables.add atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
       @reloadPaths = true
 
-    @disposables.add atom.config.onDidChange 'fuzzy-finder.traverseIntoSymlinkDirectories', =>
+    @disposables.add atom.config.onDidChange 'core.followSymlinks', =>
       @reloadPaths = true
 
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>

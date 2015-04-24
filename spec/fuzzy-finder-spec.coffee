@@ -10,7 +10,7 @@ PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
-  [projectView, bufferView, gitStatusView, workspaceElement] = []
+  [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
 
   beforeEach ->
     rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
@@ -142,9 +142,24 @@ describe 'FuzzyFinder', ->
             expect(projectView.list.find("li:eq(1)").text()).toContain('sample.html')
 
         describe "symlinks on #darwin or #linux", ->
+          [junkDirPath, junkFilePath] = []
           beforeEach ->
-            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-file'))
-            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            junkDirPath = fs.realpathSync(temp.mkdirSync('junk-1'))
+            junkFilePath = path.join(junkDirPath, 'file.txt')
+            fs.writeFileSync(junkFilePath, 'txt')
+            fs.writeFileSync(path.join(junkDirPath, 'a'), 'txt')
+
+            brokenFilePath = path.join(junkDirPath, 'delete.txt')
+            fs.writeFileSync(brokenFilePath, 'delete-me')
+
+            fs.symlinkSync(junkFilePath, atom.project.getDirectories()[0].resolve('symlink-to-file'))
+            fs.symlinkSync(junkDirPath, atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            fs.symlinkSync(brokenFilePath, atom.project.getDirectories()[0].resolve('broken-symlink'))
+
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-internal-file'))
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
+
+            fs.unlinkSync(brokenFilePath)
 
           it "includes symlinked file paths", ->
             dispatchCommand('toggle-file-finder')
@@ -153,9 +168,10 @@ describe 'FuzzyFinder', ->
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-file)")).not.toExist()
 
-          it "excludes symlinked folder paths if traverseIntoSymlinkDirectories is false", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', false)
+          it "excludes symlinked folder paths if followSymlinks is false", ->
+            atom.config.set('core.followSymlinks', false)
 
             dispatchCommand('toggle-file-finder')
 
@@ -165,8 +181,11 @@ describe 'FuzzyFinder', ->
               expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).not.toExist()
 
-          it "includes symlinked folder paths if traverseIntoSymlinkDirectories is true", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', true)
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir)")).not.toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
+
+          it "includes symlinked folder paths if followSymlinks is true", ->
+            atom.config.set('core.followSymlinks', true)
 
             dispatchCommand('toggle-file-finder')
 
@@ -174,6 +193,7 @@ describe 'FuzzyFinder', ->
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
 
         describe "socket files on #darwin or #linux", ->
           [socketServer, socketPath] = []
@@ -523,6 +543,32 @@ describe 'FuzzyFinder', ->
         dispatchCommand('toggle-file-finder')
         expect(PathLoader.startTask).toHaveBeenCalled()
         expect(projectView.list.children('li').length).toBe 0
+
+    describe "the initial load paths task started during package activation", ->
+      beforeEach ->
+        fuzzyFinder.projectView.destroy()
+        fuzzyFinder.projectView = null
+        fuzzyFinder.startLoadPathsTask()
+
+        waitsFor ->
+          fuzzyFinder.projectPaths
+
+      it "passes the indexed paths into the project view when it is created", ->
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths.length).toBe 18
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe projectPaths
+        expect(projectView.reloadPaths).toBe false
+
+      it "busts the cached paths when the project paths change", ->
+        atom.project.setPaths([])
+
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths).toBe null
+
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe null
+        expect(projectView.reloadPaths).toBe true
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
