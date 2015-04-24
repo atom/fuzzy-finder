@@ -670,7 +670,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
           expect(editor1.getCursorBufferPosition()).toEqual [3, 4]
 
-  describe "highlights matches", ->
+  describe "match highlighting", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
       dispatchCommand('toggle-buffer-finder')
