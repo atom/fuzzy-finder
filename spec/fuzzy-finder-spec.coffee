@@ -404,6 +404,9 @@ describe 'FuzzyFinder', ->
           dispatchCommand('toggle-buffer-finder')
 
       describe "when the active pane has an item for the selected path", ->
+        beforeEach ->
+          atom.config.set("fuzzy-finder.searchAllPanes", false)
+
         it "switches to the item for the selected path", ->
           expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
           bufferView.confirmed({filePath: expectedPath})
@@ -418,8 +421,11 @@ describe 'FuzzyFinder', ->
             expect(editor3.getPath()).toBe expectedPath
             expect(atom.views.getView(editor3)).toHaveFocus()
 
-      describe "when the active pane does not have an item for the selected path", ->
-        it "adds a new item to the active pane for the selcted path", ->
+      describe "when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is false", ->
+        beforeEach ->
+          atom.config.set("fuzzy-finder.searchAllPanes", false)
+
+        it "adds a new item to the active pane for the selected path", ->
           dispatchCommand('toggle-buffer-finder')
 
           atom.views.getView(editor1).focus()
@@ -429,7 +435,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
           expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-          bufferView.confirmed({filePath: expectedPath})
+          bufferView.confirmed({filePath: expectedPath}, atom.config.get 'fuzzy-finder.searchAllPanes')
 
           waitsFor ->
             atom.workspace.getActivePane().getItems().length is 2
@@ -445,6 +451,33 @@ describe 'FuzzyFinder', ->
 
             expect(editor4.getPath()).toBe expectedPath
             expect(atom.views.getView(editor4)).toHaveFocus()
+
+      describe "when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is true", ->
+        beforeEach ->
+          atom.config.set("fuzzy-finder.searchAllPanes", true)
+
+        it "switches to the pane with the item for the selected path", ->
+          dispatchCommand('toggle-buffer-finder')
+
+          atom.views.getView(editor1).focus()
+
+          dispatchCommand('toggle-buffer-finder')
+
+          expect(atom.workspace.getActiveTextEditor()).toBe editor1
+
+          originalPane = atom.workspace.getActivePane()
+
+          expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
+          bufferView.confirmed({filePath: expectedPath}, atom.config.get 'fuzzy-finder.searchAllPanes')
+
+          waitsFor ->
+            atom.workspace.getActiveTextEditor().getPath() is expectedPath
+
+          runs ->
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
+            expect(atom.workspace.getActivePane()).not.toBe originalPane
+            expect(atom.workspace.getActiveTextEditor()).toBe editor3
+            expect(atom.workspace.getPaneItems().length).toBe 3
 
   describe "common behavior between file and buffer finder", ->
     describe "when the fuzzy finder is cancelled", ->
