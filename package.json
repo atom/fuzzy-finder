@@ -1,16 +1,17 @@
 {
   "name": "fuzzy-finder",
-  "version": "0.65.0",
+  "version": "0.81.0",
   "main": "./lib/main",
   "description": "Open an editor to a file in the project with `cmd-t`.",
   "repository": "https://github.com/atom/fuzzy-finder",
   "license": "MIT",
   "dependencies": {
+    "async": "0.2.6",
     "atom-space-pen-views": "^2.0.0",
     "fs-plus": "^2.0.0",
     "humanize-plus": "~1.4.2",
     "minimatch": "~0.3.0",
-    "temp": "~0.6.0",
+    "temp": "~0.8.1",
     "underscore-plus": "^1.0.0",
     "wrench": "^1.5"
   },

@@ -1,66 +1,88 @@
+async = require 'async'
 fs = require 'fs'
 path = require 'path'
 _ = require 'underscore-plus'
-{Git} = require 'atom'
+{GitRepository} = require 'atom'
 {Minimatch} = require 'minimatch'
 
-asyncCallsInProgress = 0
-pathsChunkSize = 100
-paths = []
-repo = null
-ignoredNames = null
-traverseSymlinkDirectories = false
-callback = null
+PathsChunkSize = 100
 
-isIgnored = (loadedPath) ->
-  if repo?.isPathIgnored(loadedPath)
-    true
-  else
-    for ignoredName in ignoredNames
-      return true if ignoredName.match(loadedPath)
+class PathLoader
+  constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
+    @paths = []
+    @realPathCache = {}
+    @repo = null
+    if ignoreVcsIgnores
+      repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
+      if repo?.getWorkingDirectory() is @rootPath
+        @repo = repo
 
-asyncCallStarting = ->
-  asyncCallsInProgress++
+  load: (done) ->
+    @loadPath @rootPath, =>
+      @flushPaths()
+      @repo?.destroy()
+      done()
 
-asyncCallDone = ->
-  if --asyncCallsInProgress is 0
-    repo?.destroy()
-    emit('load-paths:paths-found', paths)
-    callback()
+  isIgnored: (loadedPath) ->
+    relativePath = path.relative(@rootPath, loadedPath)
+    if @repo?.isPathIgnored(relativePath)
+      true
+    else
+      for ignoredName in @ignoredNames
+        return true if ignoredName.match(relativePath)
 
-pathLoaded = (path) ->
-  paths.push(path) unless isIgnored(path)
-  if paths.length is pathsChunkSize
-    emit('load-paths:paths-found', paths)
-    paths = []
+  pathLoaded: (loadedPath, done) ->
+    @paths.push(loadedPath) unless @isIgnored(loadedPath)
+    if @paths.length is PathsChunkSize
+      @flushPaths()
+    done()
 
-loadPath = (path) ->
-  asyncCallStarting()
-  fs.lstat path, (error, stats) ->
-    unless error?
+  flushPaths: ->
+    emit('load-paths:paths-found', @paths)
+    @paths = []
+
+  loadPath: (pathToLoad, done) ->
+    return done() if @isIgnored(pathToLoad)
+    fs.lstat pathToLoad, (error, stats) =>
+      return done() if error?
       if stats.isSymbolicLink()
-        asyncCallStarting()
-        fs.stat path, (error, stats) ->
-          unless error?
+        @isInternalSymlink pathToLoad, (isInternal) =>
+          return done() if isInternal
+          fs.stat pathToLoad, (error, stats) =>
+            return done() if error?
             if stats.isFile()
-              pathLoaded(path)
-            else if stats.isDirectory() and traverseSymlinkDirectories
-              loadFolder(path) unless isIgnored(path)
-          asyncCallDone()
+              @pathLoaded(pathToLoad, done)
+            else if stats.isDirectory()
+              if @traverseSymlinkDirectories
+                @loadFolder(pathToLoad, done)
+              else
+                done()
+            else
+              done()
       else if stats.isDirectory()
-        loadFolder(path) unless isIgnored(path)
+        @loadFolder(pathToLoad, done)
       else if stats.isFile()
-        pathLoaded(path)
-    asyncCallDone()
+        @pathLoaded(pathToLoad, done)
+      else
+        done()
 
-loadFolder = (folderPath) ->
-  asyncCallStarting()
-  fs.readdir folderPath, (error, children=[]) ->
-    loadPath(path.join(folderPath, childName)) for childName in children
-    asyncCallDone()
+  loadFolder: (folderPath, done) ->
+    fs.readdir folderPath, (error, children=[]) =>
+      async.each(
+        children,
+        (childName, next) =>
+          @loadPath(path.join(folderPath, childName), next)
+        done
+      )
 
-module.exports = (rootPath, traverseIntoSymlinkDirectories, ignoreVcsIgnores, ignores=[]) ->
-  traverseSymlinkDirectories = traverseIntoSymlinkDirectories
+  isInternalSymlink: (pathToLoad, done) ->
+    fs.realpath pathToLoad, @realPathCache, (err, realPath) =>
+      if err
+        done(false)
+      else
+        done(realPath.search(@rootPath) is 0)
+
+module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
   for ignore in ignores when ignore
     try
@@ -68,6 +90,14 @@ module.exports = (rootPath, traverseIntoSymlinkDirectories, ignoreVcsIgnores, ig
     catch error
       console.warn "Error parsing ignore pattern (#{ignore}): #{error.message}"
 
-  callback = @async()
-  repo = Git.open(rootPath, refreshOnWindowFocus: false) if ignoreVcsIgnores
-  loadFolder(rootPath)
+  async.each(
+    rootPaths,
+    (rootPath, next) ->
+      new PathLoader(
+        rootPath,
+        ignoreVcsIgnores,
+        followSymlinks,
+        ignoredNames
+      ).load(next)
+    @async()
+  )

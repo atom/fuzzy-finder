@@ -1,5 +1,5 @@
+net = require "net"
 path = require 'path'
-
 _ = require 'underscore-plus'
 {$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
@@ -9,18 +9,33 @@ wrench = require 'wrench'
 PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
-  [projectView, bufferView, gitStatusView, workspaceElement] = []
+  [rootDir1, rootDir2] = []
+  [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
 
   beforeEach ->
-    tempPath = fs.realpathSync(temp.mkdirSync('atom'))
+    rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
+    rootDir2 = fs.realpathSync(temp.mkdirSync('root-dir2'))
+
     fixturesPath = atom.project.getPaths()[0]
-    wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
-    atom.project.setPaths([path.join(tempPath, 'fuzzy-finder')])
+
+    wrench.copyDirSyncRecursive(
+      path.join(fixturesPath, "root-dir1"),
+      rootDir1,
+      forceDelete: true
+    )
+
+    wrench.copyDirSyncRecursive(
+      path.join(fixturesPath, "root-dir2"),
+      rootDir2,
+      forceDelete: true
+    )
+
+    atom.project.setPaths([rootDir1, rootDir2])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
     waitsForPromise ->
-      atom.workspace.open('sample.js')
+      atom.workspace.open(path.join(rootDir1, 'sample.js'))
 
     waitsForPromise ->
       atom.packages.activatePackage('fuzzy-finder').then (pack) ->
@@ -29,133 +44,206 @@ describe 'FuzzyFinder', ->
         bufferView = fuzzyFinder.createBufferView()
         gitStatusView = fuzzyFinder.createGitStatusView()
 
+  dispatchCommand = (command) ->
+    atom.commands.dispatch(workspaceElement, "fuzzy-finder:#{command}")
+
+  waitForPathsToDisplay = (fuzzyFinderView) ->
+    waitsFor "paths to display", 5000, ->
+      fuzzyFinderView.list.children("li").length > 0
+
+  eachFilePath = (dirPaths, fn) ->
+    for dirPath in dirPaths
+      findings = for filePath in wrench.readdirSyncRecursive(dirPath)
+        fullPath = path.join(dirPath, filePath)
+        if fs.isFileSync(fullPath)
+          fn(filePath)
+          true
+      expect(findings).toContain(true)
+
   describe "file-finder behavior", ->
+    beforeEach ->
+      projectView.setMaxItems(Infinity)
+
     describe "toggling", ->
-      describe "when the root view's project has a path", ->
-        it "shows the FuzzyFinder or hides it and returns focus to the active editor if it already showing", ->
+      describe "when the project has multiple paths", ->
+        it "shows or hides the fuzzy-finder and returns focus to the active editor if it is already showing", ->
           jasmine.attachToDOM(workspaceElement)
 
           expect(atom.workspace.panelForItem(projectView)).toBeNull()
           atom.workspace.getActivePane().splitRight(copyActiveItem: true)
           [editor1, editor2] = atom.workspace.getTextEditors()
 
-          expect(atom.workspace.panelForItem(projectView)).toBeNull()
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
           expect(projectView.filterEditorView).toHaveFocus()
           projectView.filterEditorView.getModel().insertText('this should not show up next time we toggle')
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           expect(atom.views.getView(editor1)).not.toHaveFocus()
           expect(atom.views.getView(editor2)).toHaveFocus()
           expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           expect(projectView.filterEditorView.getText()).toBe ''
 
-        it "shows all relative file paths for the current project and selects the first", ->
+        it "shows all files for the current project and selects the first", ->
           jasmine.attachToDOM(workspaceElement)
-          projectView.setMaxItems(Infinity)
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-          paths = null
+
+          dispatchCommand('toggle-file-finder')
+
           expect(projectView.find(".loading")).toBeVisible()
           expect(projectView.find(".loading").text().length).toBeGreaterThan 0
 
-          waitsFor "all project paths to load", 5000, ->
-            {paths} = projectView
-            paths?.length > 0
+          waitForPathsToDisplay(projectView)
 
           runs ->
-            expect(paths.length).toBeGreaterThan 0
-            expect(projectView.list.children('li').length).toBe paths.length
-            for filePath in paths
-              expect(projectView.list.find("li:contains(#{path.basename(filePath)})")).toExist()
-            firstChild = projectView.list.children().first()
-            firstChildName = firstChild.find('div:first-child')
-            firstChildPath = firstChild.find('div:last-child')
+            eachFilePath [rootDir1, rootDir2], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              nameDiv = item.find("div:first-child")
+              expect(nameDiv).toHaveAttr("data-name", path.basename(filePath))
+              expect(nameDiv).toHaveText(path.basename(filePath))
 
-            expect(firstChild).toHaveClass 'selected'
-            expect(firstChildName).toHaveAttr('data-name', firstChildName.text())
-            expect(firstChildName).toHaveAttr('data-path', firstChildPath.text())
             expect(projectView.find(".loading")).not.toBeVisible()
 
+        it "shows each file's path, including which root directory it's in", ->
+          dispatchCommand('toggle-file-finder')
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            eachFilePath [rootDir1], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              expect(item.find("div").eq(1)).toHaveText(path.join(path.basename(rootDir1), filePath))
+
+            eachFilePath [rootDir2], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              expect(item.find("div").eq(1)).toHaveText(path.join(path.basename(rootDir2), filePath))
+
         it "only creates a single path loader task", ->
-          jasmine.attachToDOM(workspaceElement)
           spyOn(PathLoader, 'startTask').andCallThrough()
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder' # Show
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder' # Hide
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder' # Show again
+          dispatchCommand('toggle-file-finder') # Show
+          dispatchCommand('toggle-file-finder') # Hide
+          dispatchCommand('toggle-file-finder') # Show again
           expect(PathLoader.startTask.callCount).toBe 1
 
         it "puts the last active path first", ->
-          jasmine.attachToDOM(workspaceElement)
+          waitsForPromise -> atom.workspace.open 'sample.txt'
+          waitsForPromise -> atom.workspace.open 'sample.js'
 
-          waitsForPromise ->
-            atom.workspace.open 'sample.txt'
+          runs -> dispatchCommand('toggle-file-finder')
 
-          waitsForPromise ->
-            atom.workspace.open 'sample.js'
-
-          runs ->
-            projectView.setMaxItems(Infinity)
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-
-          waitsFor "all project paths to load", 5000, ->
-            projectView.paths?.length > 0
+          waitForPathsToDisplay(projectView)
 
           runs ->
             expect(projectView.list.find("li:eq(0)").text()).toContain('sample.txt')
-            expect(projectView.list.find("li:eq(1)").text()).toContain('sample.js')
+            expect(projectView.list.find("li:eq(1)").text()).toContain('sample.html')
 
         describe "symlinks on #darwin or #linux", ->
+          [junkDirPath, junkFilePath] = []
           beforeEach ->
-            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-file'))
-            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            junkDirPath = fs.realpathSync(temp.mkdirSync('junk-1'))
+            junkFilePath = path.join(junkDirPath, 'file.txt')
+            fs.writeFileSync(junkFilePath, 'txt')
+            fs.writeFileSync(path.join(junkDirPath, 'a'), 'txt')
+
+            brokenFilePath = path.join(junkDirPath, 'delete.txt')
+            fs.writeFileSync(brokenFilePath, 'delete-me')
+
+            fs.symlinkSync(junkFilePath, atom.project.getDirectories()[0].resolve('symlink-to-file'))
+            fs.symlinkSync(junkDirPath, atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            fs.symlinkSync(brokenFilePath, atom.project.getDirectories()[0].resolve('broken-symlink'))
+
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-internal-file'))
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
+
+            fs.unlinkSync(brokenFilePath)
 
           it "includes symlinked file paths", ->
-            jasmine.attachToDOM(workspaceElement)
-            projectView.setMaxItems(Infinity)
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+            dispatchCommand('toggle-file-finder')
 
-            waitsFor "all project paths to load", 5000, ->
-              projectView.paths?.length > 0
+            waitForPathsToDisplay(projectView)
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-file)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-file)")).not.toExist()
 
-          it "excludes symlinked folder paths if traverseIntoSymlinkDirectories is false", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', false)
+          it "excludes symlinked folder paths if followSymlinks is false", ->
+            atom.config.set('core.followSymlinks', false)
 
-            jasmine.attachToDOM(workspaceElement)
-            projectView.setMaxItems(Infinity)
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+            dispatchCommand('toggle-file-finder')
 
-            waitsFor "all project paths to load", 5000, ->
-              not projectView.reloadPaths
+            waitForPathsToDisplay(projectView)
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir)")).not.toExist()
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).not.toExist()
 
-          it "includes symlinked folder paths if traverseIntoSymlinkDirectories is true", ->
-            atom.config.set('fuzzy-finder.traverseIntoSymlinkDirectories', true)
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir)")).not.toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
 
-            jasmine.attachToDOM(workspaceElement)
-            projectView.setMaxItems(Infinity)
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          it "includes symlinked folder paths if followSymlinks is true", ->
+            atom.config.set('core.followSymlinks', true)
 
-            waitsFor "all project paths to load", 5000, ->
-              projectView.paths?.length > 0
+            dispatchCommand('toggle-file-finder')
+
+            waitForPathsToDisplay(projectView)
 
             runs ->
               expect(projectView.list.find("li:contains(symlink-to-dir/a)")).toExist()
+              expect(projectView.list.find("li:contains(symlink-to-internal-dir/a)")).not.toExist()
+
+        describe "socket files on #darwin or #linux", ->
+          [socketServer, socketPath] = []
+
+          beforeEach ->
+            socketServer = net.createServer ->
+            socketPath = path.join(rootDir1, "some.sock")
+            waitsFor (done) -> socketServer.listen(socketPath, done)
+
+          afterEach ->
+            waitsFor (done) -> socketServer.close(done)
+
+          it "ignores them", ->
+            dispatchCommand('toggle-file-finder')
+            waitForPathsToDisplay(projectView)
+            expect(projectView.list.find("li:contains(some.sock)")).not.toExist()
+
+        it "ignores paths that match entries in config.fuzzy-finder.ignoredNames", ->
+          atom.config.set("fuzzy-finder.ignoredNames", ["sample.js", "*.txt"])
+
+          dispatchCommand('toggle-file-finder')
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            expect(projectView.list.find("li:contains(sample.js)")).not.toExist()
+            expect(projectView.list.find("li:contains(sample.txt)")).not.toExist()
+            expect(projectView.list.find("li:contains(a)")).toExist()
+
+      describe "when the project only has one path", ->
+        beforeEach ->
+          atom.project.setPaths([rootDir1])
+
+        it "doesn't show the name of each file's root directory", ->
+          dispatchCommand('toggle-file-finder')
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            eachFilePath [rootDir1], (filePath) ->
+              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              expect(item).toExist()
+              expect(item).not.toHaveText(path.basename(rootDir1))
 
       describe "when the project has no path", ->
         beforeEach ->
           atom.project.setPaths([])
 
         it "shows an empty message with no files in the list", ->
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           expect(projectView.error.text()).toBe 'Project is empty'
           expect(projectView.list.children('li').length).toBe 0
 
@@ -165,7 +253,8 @@ describe 'FuzzyFinder', ->
         editor1 = atom.workspace.getActiveTextEditor()
         atom.workspace.getActivePane().splitRight(copyActiveItem: true)
         editor2 = atom.workspace.getActiveTextEditor()
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+
+        dispatchCommand('toggle-file-finder')
 
         expectedPath = atom.project.getDirectories()[0].resolve('dir/a')
         projectView.confirmed({filePath: expectedPath})
@@ -185,7 +274,7 @@ describe 'FuzzyFinder', ->
         it "leaves the the tree view open, doesn't open the path in the editor, and displays an error", ->
           jasmine.attachToDOM(workspaceElement)
           editorPath = atom.workspace.getActiveTextEditor().getPath()
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           projectView.confirmed({filePath: atom.project.getDirectories()[0].resolve('dir')})
           expect(projectView.hasParent()).toBeTruthy()
           expect(atom.workspace.getActiveTextEditor().getPath()).toBe editorPath
@@ -210,16 +299,16 @@ describe 'FuzzyFinder', ->
 
           expect(atom.views.getView(editor3)).toHaveFocus()
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
           expect(workspaceElement.querySelector('.fuzzy-finder')).toHaveFocus()
           bufferView.filterEditorView.getModel().insertText('this should not show up next time we toggle')
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(atom.views.getView(editor3)).toHaveFocus()
           expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(bufferView.filterEditorView.getText()).toBe ''
 
         it "lists the paths of the current items, sorted by most recently opened but with the current item last", ->
@@ -227,17 +316,17 @@ describe 'FuzzyFinder', ->
             atom.workspace.open 'sample-with-tabs.coffee'
 
           runs ->
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
             expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
 
           waitsForPromise ->
             atom.workspace.open 'sample.txt'
 
           runs ->
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
             expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
             expect(bufferView.list.children().first()).toHaveClass 'selected'
@@ -247,13 +336,13 @@ describe 'FuzzyFinder', ->
             atom.workspace.open 'sample-with-tabs.coffee'
 
           runs ->
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
 
           waitsForPromise ->
             atom.workspace.open 'sample.js'
 
           runs ->
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
 
           waitsForPromise ->
             atom.workspace.open()
@@ -277,13 +366,13 @@ describe 'FuzzyFinder', ->
             atom.workspace.open()
 
           runs ->
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView)).toBeNull()
 
       describe "when there are no pane items", ->
         it "does not open", ->
           atom.workspace.getActivePane().destroy()
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(atom.workspace.panelForItem(bufferView)).toBeNull()
 
       describe "when multiple sessions are opened on the same path", ->
@@ -293,7 +382,7 @@ describe 'FuzzyFinder', ->
 
           runs ->
             atom.workspace.getActivePane().splitRight(copyActiveItem: true)
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
             expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
 
     describe "when a path selection is confirmed", ->
@@ -312,7 +401,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor3
 
           atom.commands.dispatch atom.views.getView(editor2), 'pane:show-previous-item'
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
 
       describe "when the active pane has an item for the selected path", ->
         it "switches to the item for the selected path", ->
@@ -320,7 +409,7 @@ describe 'FuzzyFinder', ->
           bufferView.confirmed({filePath: expectedPath})
 
           waitsFor ->
-            atom.workspace.getActiveTextEditor().getPath() == expectedPath
+            atom.workspace.getActiveTextEditor().getPath() is expectedPath
 
           runs ->
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
@@ -331,9 +420,11 @@ describe 'FuzzyFinder', ->
 
       describe "when the active pane does not have an item for the selected path", ->
         it "adds a new item to the active pane for the selcted path", ->
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
+
           atom.views.getView(editor1).focus()
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+
+          dispatchCommand('toggle-buffer-finder')
 
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
@@ -362,7 +453,7 @@ describe 'FuzzyFinder', ->
           jasmine.attachToDOM(workspaceElement)
           activeEditor = atom.workspace.getActiveTextEditor()
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           expect(projectView.hasParent()).toBeTruthy()
           expect(projectView.filterEditorView).toHaveFocus()
 
@@ -380,7 +471,7 @@ describe 'FuzzyFinder', ->
           workspaceElement.appendChild(inputView[0])
           inputView.focus()
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           expect(projectView.hasParent()).toBeTruthy()
           expect(projectView.filterEditorView).toHaveFocus()
 
@@ -390,94 +481,101 @@ describe 'FuzzyFinder', ->
           expect(inputView).toHaveFocus()
 
   describe "cached file paths", ->
-    it "caches file paths after first time", ->
+    beforeEach ->
       spyOn(PathLoader, "startTask").andCallThrough()
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+      spyOn(atom.workspace, "getTextEditors").andCallThrough()
 
-      waitsFor ->
-        projectView.list.children('li').length > 0
+    it "caches file paths after first time", ->
+      dispatchCommand('toggle-file-finder')
+
+      waitForPathsToDisplay(projectView)
 
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         PathLoader.startTask.reset()
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+        dispatchCommand('toggle-file-finder')
+        dispatchCommand('toggle-file-finder')
 
-      waitsFor ->
-        projectView.list.children('li').length > 0
+      waitForPathsToDisplay(projectView)
 
       runs ->
         expect(PathLoader.startTask).not.toHaveBeenCalled()
 
     it "doesn't cache buffer paths", ->
-      spyOn(atom.workspace, "getTextEditors").andCallThrough()
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+      dispatchCommand('toggle-buffer-finder')
 
-      waitsFor ->
-        bufferView.list.children('li').length > 0
+      waitForPathsToDisplay(bufferView)
 
       runs ->
         expect(atom.workspace.getTextEditors).toHaveBeenCalled()
         atom.workspace.getTextEditors.reset()
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+        dispatchCommand('toggle-buffer-finder')
+        dispatchCommand('toggle-buffer-finder')
 
-      waitsFor ->
-        bufferView.list.children('li').length > 0
+      waitForPathsToDisplay(bufferView)
 
       runs ->
         expect(atom.workspace.getTextEditors).toHaveBeenCalled()
 
     it "busts the cache when the window gains focus", ->
-      spyOn(PathLoader, "startTask").andCallThrough()
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+      dispatchCommand('toggle-file-finder')
 
-      waitsFor ->
-        projectView.list.children('li').length > 0
+      waitForPathsToDisplay(projectView)
 
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         PathLoader.startTask.reset()
         window.dispatchEvent new CustomEvent('focus')
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+        dispatchCommand('toggle-file-finder')
+        dispatchCommand('toggle-file-finder')
         expect(PathLoader.startTask).toHaveBeenCalled()
 
     it "busts the cache when the project path changes", ->
-      spyOn(PathLoader, "startTask").andCallThrough()
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+      dispatchCommand('toggle-file-finder')
 
-      waitsFor ->
-        projectView.list.children('li').length > 0
+      waitForPathsToDisplay(projectView)
 
       runs ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         PathLoader.startTask.reset()
         atom.project.setPaths([temp.mkdirSync('atom')])
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+        dispatchCommand('toggle-file-finder')
+        dispatchCommand('toggle-file-finder')
         expect(PathLoader.startTask).toHaveBeenCalled()
         expect(projectView.list.children('li').length).toBe 0
 
-  it "ignores paths that match entries in config.fuzzy-finder.ignoredNames", ->
-    atom.config.set("fuzzy-finder.ignoredNames", ["sample.js", "*.txt"])
-    atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
-    projectView.setMaxItems(Infinity)
+    describe "the initial load paths task started during package activation", ->
+      beforeEach ->
+        fuzzyFinder.projectView.destroy()
+        fuzzyFinder.projectView = null
+        fuzzyFinder.startLoadPathsTask()
 
-    waitsFor ->
-      projectView.list.children('li').length > 0
+        waitsFor ->
+          fuzzyFinder.projectPaths
 
-    runs ->
-      expect(projectView.list.find("li:contains(sample.js)")).not.toExist()
-      expect(projectView.list.find("li:contains(sample.txt)")).not.toExist()
-      expect(projectView.list.find("li:contains(a)")).toExist()
+      it "passes the indexed paths into the project view when it is created", ->
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths.length).toBe 18
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe projectPaths
+        expect(projectView.reloadPaths).toBe false
+
+      it "busts the cached paths when the project paths change", ->
+        atom.project.setPaths([])
+
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths).toBe null
+
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe null
+        expect(projectView.reloadPaths).toBe true
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
       expect(atom.workspace.getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
 
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+      dispatchCommand('toggle-buffer-finder')
       {filePath} = bufferView.getSelectedItem()
       atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
 
@@ -493,7 +591,7 @@ describe 'FuzzyFinder', ->
       expect(atom.workspace.getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
 
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+      dispatchCommand('toggle-buffer-finder')
       {filePath} = bufferView.getSelectedItem()
       atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-right'
 
@@ -509,7 +607,7 @@ describe 'FuzzyFinder', ->
       expect(atom.workspace.getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
 
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+      dispatchCommand('toggle-buffer-finder')
       {filePath} = bufferView.getSelectedItem()
       atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-up'
 
@@ -525,7 +623,7 @@ describe 'FuzzyFinder', ->
       expect(atom.workspace.getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
 
-      atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+      dispatchCommand('toggle-buffer-finder')
       {filePath} = bufferView.getSelectedItem()
       atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-down'
 
@@ -554,7 +652,7 @@ describe 'FuzzyFinder', ->
       it "opens the selected path to that line number", ->
         [editor1, editor2] = atom.workspace.getTextEditors()
 
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+        dispatchCommand('toggle-buffer-finder')
         expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
 
         bufferView.filterEditorView.getModel().setText('sample.js:4')
@@ -582,7 +680,7 @@ describe 'FuzzyFinder', ->
         runs ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
 
           bufferView.filterEditorView.getModel().insertText(':4')
@@ -609,7 +707,7 @@ describe 'FuzzyFinder', ->
         runs ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
 
           bufferView.filterEditorView.getModel().insertText(':4')
@@ -628,34 +726,37 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual [3, 4]
 
   describe "Git integration", ->
-    [projectPath] = []
+    [projectPath, gitRepository, gitDirectory] = []
 
     beforeEach ->
       projectPath = atom.project.getDirectories()[0].resolve('git/working-dir')
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
-      atom.project.setPaths([projectPath])
+      atom.project.setPaths([rootDir2, projectPath])
+
+      gitDirectory = atom.project.getDirectories()[1]
+      gitRepository = atom.project.getRepositories()[1]
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
         waitsForPromise ->
-          atom.workspace.open('a.txt')
+          atom.workspace.open(path.join(projectPath, 'a.txt'))
 
         runs ->
           editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
-          atom.project.getRepositories()[0].getPathStatus(originalPath)
+          gitRepository.getPathStatus(originalPath)
 
-          newPath = atom.project.getDirectories()[0].resolve('newsample.js')
+          newPath = atom.project.getDirectories()[1].resolve('newsample.js')
           fs.writeFileSync(newPath, '')
-          atom.project.getRepositories()[0].getPathStatus(newPath)
+          gitRepository.getPathStatus(newPath)
 
       it "displays all new and modified paths", ->
         expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
-        atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-git-status-finder'
+        dispatchCommand('toggle-git-status-finder')
         expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
 
         expect(gitStatusView.find('.file').length).toBe 2
@@ -670,34 +771,34 @@ describe 'FuzzyFinder', ->
         jasmine.attachToDOM(workspaceElement)
 
         waitsForPromise ->
-          atom.workspace.open('a.txt')
+          atom.workspace.open(path.join(projectPath, 'a.txt'))
 
         runs ->
           editor = atom.workspace.getActiveTextEditor()
           originalText = editor.getText()
           originalPath = editor.getPath()
-          newPath = atom.project.getDirectories()[0].resolve('newsample.js')
+          newPath = gitDirectory.resolve('newsample.js')
           fs.writeFileSync(newPath, '')
 
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
           editor.setText('modified')
           editor.save()
-          atom.project.getRepositories()[0].getPathStatus(editor.getPath())
+          gitRepository.getPathStatus(editor.getPath())
 
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+          dispatchCommand('toggle-buffer-finder')
           expect(bufferView.find('.status.status-modified').length).toBe 1
           expect(bufferView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
 
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
           waitsForPromise ->
-            atom.workspace.open('newsample.js')
+            atom.workspace.open(path.join(projectPath, 'newsample.js'))
 
           runs ->
-            atom.project.getRepositories()[0].getPathStatus(editor.getPath())
+            gitRepository.getPathStatus(editor.getPath())
 
-            atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-buffer-finder'
+            dispatchCommand('toggle-buffer-finder')
             expect(bufferView.find('.status.status-added').length).toBe 1
             expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
 
@@ -706,41 +807,47 @@ describe 'FuzzyFinder', ->
         atom.config.set("core.excludeVcsIgnoredPaths", true)
 
       describe "when the project's path is the repository's working directory", ->
-        [ignoreFile, ignoredFile] = []
-
         beforeEach ->
-          ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
+          ignoreFile = path.join(projectPath, '.gitignore')
           fs.writeFileSync(ignoreFile, 'ignored.txt')
 
           ignoredFile = path.join(projectPath, 'ignored.txt')
           fs.writeFileSync(ignoredFile, 'ignored text')
 
-          atom.config.set("core.excludeVcsIgnoredPaths", true)
-
         it "excludes paths that are git ignored", ->
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           projectView.setMaxItems(Infinity)
 
-          waitsFor ->
-            projectView.list.children('li').length > 0
+          waitForPathsToDisplay(projectView)
 
           runs ->
             expect(projectView.list.find("li:contains(ignored.txt)")).not.toExist()
 
       describe "when the project's path is a subfolder of the repository's working directory", ->
-        [ignoreFile] = []
-
         beforeEach ->
-          atom.project.setPaths([atom.project.getDirectories()[0].resolve('dir')])
-          ignoreFile = path.join(atom.project.getPaths()[0], '.gitignore')
+          atom.project.setPaths([gitDirectory.resolve('dir')])
+          ignoreFile = path.join(projectPath, '.gitignore')
           fs.writeFileSync(ignoreFile, 'b.txt')
 
         it "does not exclude paths that are git ignored", ->
-          atom.commands.dispatch workspaceElement, 'fuzzy-finder:toggle-file-finder'
+          dispatchCommand('toggle-file-finder')
           projectView.setMaxItems(Infinity)
 
-          waitsFor ->
-            projectView.list.children('li').length > 0
+          waitForPathsToDisplay(projectView)
 
           runs ->
             expect(projectView.list.find("li:contains(b.txt)")).toExist()
+
+      describe "when the .gitignore matches parts of the path to the root folder", ->
+        beforeEach ->
+          ignoreFile = path.join(projectPath, '.gitignore')
+          fs.writeFileSync(ignoreFile, path.basename(projectPath))
+
+        it "only applies the .gitignore patterns to relative paths within the root folder", ->
+          dispatchCommand('toggle-file-finder')
+          projectView.setMaxItems(Infinity)
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            expect(projectView.list.find("li:contains(file.txt)")).toExist()

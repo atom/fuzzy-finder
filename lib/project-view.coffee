@@ -15,7 +15,6 @@ class ProjectView extends FuzzyFinderView
     super
 
     @disposables = new CompositeDisposable
-
     @reloadPaths = false if @paths?.length > 0
 
     windowFocused = =>
@@ -39,7 +38,7 @@ class ProjectView extends FuzzyFinderView
     @disposables.add atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
       @reloadPaths = true
 
-    @disposables.add atom.config.onDidChange 'fuzzy-finder.traverseIntoSymlinkDirectories', =>
+    @disposables.add atom.config.onDidChange 'core.followSymlinks', =>
       @reloadPaths = true
 
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
@@ -64,18 +63,17 @@ class ProjectView extends FuzzyFinderView
   populate: ->
     @setItems(@paths) if @paths?
 
-    unless atom.project.getPaths()[0]?
+    if atom.project.getPaths().length is 0
       @setItems([])
       return
 
     if @reloadPaths
       @reloadPaths = false
-      @loadPathsTask?.terminate()
-      @loadPathsTask = PathLoader.startTask (@paths) =>
+
+      task = @runLoadPathsTask =>
         if @reloadAfterFirstLoad
           @reloadPaths = true
           @reloadAfterFirstLoad = false
-
         @populate()
 
       if @paths?
@@ -84,7 +82,7 @@ class ProjectView extends FuzzyFinderView
         @setLoading("Indexing project\u2026")
         @loadingBadge.text('0')
         pathsFound = 0
-        @loadPathsTask.on 'load-paths:paths-found', (paths) =>
+        task.on 'load-paths:paths-found', (paths) =>
           pathsFound += paths.length
           @loadingBadge.text(humanize.intComma(pathsFound))
 
@@ -92,15 +90,11 @@ class ProjectView extends FuzzyFinderView
     projectRelativePaths = super
 
     if lastOpenedPath = @getLastOpenedPath()
-      lastOpenedProjectRelativePath = atom.project.relativize(lastOpenedPath)
-      for {projectRelativePath}, index in projectRelativePaths
-        if lastOpenedProjectRelativePath is projectRelativePath
-          projectRelativePaths.splice(index, 1)
+      for {filePath}, index in projectRelativePaths
+        if filePath is lastOpenedPath
+          [entry] = projectRelativePaths.splice(index, 1)
+          projectRelativePaths.unshift(entry)
           break
-
-      projectRelativePaths.unshift
-        filePath: lastOpenedPath
-        projectRelativePath: lastOpenedProjectRelativePath
 
     projectRelativePaths
 
@@ -124,3 +118,9 @@ class ProjectView extends FuzzyFinderView
     @loadPathsTask?.terminate()
     @disposables.dispose()
     super
+
+  runLoadPathsTask: (fn) ->
+    @loadPathsTask?.terminate()
+    @loadPathsTask = PathLoader.startTask (@paths) =>
+      @reloadPaths = false
+      fn?()
