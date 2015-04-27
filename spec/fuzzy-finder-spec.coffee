@@ -404,9 +404,6 @@ describe 'FuzzyFinder', ->
           dispatchCommand('toggle-buffer-finder')
 
       describe "when the active pane has an item for the selected path", ->
-        beforeEach ->
-          atom.config.set("fuzzy-finder.searchAllPanes", false)
-
         it "switches to the item for the selected path", ->
           expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
           bufferView.confirmed({filePath: expectedPath})
