@@ -3,18 +3,18 @@
   'cmd-p': 'fuzzy-finder:toggle-file-finder'
   'cmd-b': 'fuzzy-finder:toggle-buffer-finder'
   'cmd-B': 'fuzzy-finder:toggle-git-status-finder'
-  'shift-enter': 'fuzzy-finder:alternate-confirm'
+  'shift-enter': 'fuzzy-finder:invert-confirm'
 
 '.platform-win32':
   'ctrl-t': 'fuzzy-finder:toggle-file-finder'
   'ctrl-p': 'fuzzy-finder:toggle-file-finder'
   'ctrl-b': 'fuzzy-finder:toggle-buffer-finder'
   'ctrl-B': 'fuzzy-finder:toggle-git-status-finder'
-  'shift-enter': 'fuzzy-finder:alternate-confirm'
+  'shift-enter': 'fuzzy-finder:invert-confirm'
 
 '.platform-linux':
   'ctrl-t': 'fuzzy-finder:toggle-file-finder'
   'ctrl-p': 'fuzzy-finder:toggle-file-finder'
   'ctrl-b': 'fuzzy-finder:toggle-buffer-finder'
   'ctrl-B': 'fuzzy-finder:toggle-git-status-finder'
-  'shift-enter': 'fuzzy-finder:alternate-confirm'
+  'shift-enter': 'fuzzy-finder:invert-confirm'

@@ -24,8 +24,8 @@ class FuzzyFinderView extends SelectListView
         @splitOpenPath (pane, item) -> pane.splitDown(items: [item])
       'pane:split-up': =>
         @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
-      'fuzzy-finder:alternate-confirm': =>
-        @confirmAlternateSelection()
+      'fuzzy-finder:invert-confirm': =>
+        @confirmInvertedSelection()
 
   getFilterKey: ->
     'projectRelativePath'
@@ -65,10 +65,7 @@ class FuzzyFinderView extends SelectListView
 
   openPath: (filePath, lineNumber, searchAllPanes) ->
     if filePath
-      if atom.workspace.getActivePane().activateItemForURI(filePath)
-        @moveToLine(lineNumber)
-      else
-        atom.workspace.open(filePath, searchAllPanes: searchAllPanes ).done => @moveToLine(lineNumber)
+      atom.workspace.open(filePath, searchAllPanes: searchAllPanes ).done => @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
@@ -107,7 +104,7 @@ class FuzzyFinderView extends SelectListView
     item = @getSelectedItem()
     @confirmed(item, atom.config.get 'fuzzy-finder.searchAllPanes')
 
-  confirmAlternateSelection: ->
+  confirmInvertedSelection: ->
     item = @getSelectedItem()
     @confirmed(item, !atom.config.get 'fuzzy-finder.searchAllPanes')
 

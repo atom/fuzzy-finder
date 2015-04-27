@@ -422,9 +422,6 @@ describe 'FuzzyFinder', ->
             expect(atom.views.getView(editor3)).toHaveFocus()
 
       describe "when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is false", ->
-        beforeEach ->
-          atom.config.set("fuzzy-finder.searchAllPanes", false)
-
         it "adds a new item to the active pane for the selected path", ->
           dispatchCommand('toggle-buffer-finder')
 
