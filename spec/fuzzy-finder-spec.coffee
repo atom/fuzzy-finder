@@ -10,7 +10,7 @@ PathLoader = require '../lib/path-loader'
 
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
-  [projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
+  [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
 
   beforeEach ->
     rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
@@ -149,11 +149,17 @@ describe 'FuzzyFinder', ->
             fs.writeFileSync(junkFilePath, 'txt')
             fs.writeFileSync(path.join(junkDirPath, 'a'), 'txt')
 
+            brokenFilePath = path.join(junkDirPath, 'delete.txt')
+            fs.writeFileSync(brokenFilePath, 'delete-me')
+
             fs.symlinkSync(junkFilePath, atom.project.getDirectories()[0].resolve('symlink-to-file'))
             fs.symlinkSync(junkDirPath, atom.project.getDirectories()[0].resolve('symlink-to-dir'))
+            fs.symlinkSync(brokenFilePath, atom.project.getDirectories()[0].resolve('broken-symlink'))
 
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-internal-file'))
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
+
+            fs.unlinkSync(brokenFilePath)
 
           it "includes symlinked file paths", ->
             dispatchCommand('toggle-file-finder')
@@ -412,8 +418,8 @@ describe 'FuzzyFinder', ->
             expect(editor3.getPath()).toBe expectedPath
             expect(atom.views.getView(editor3)).toHaveFocus()
 
-      describe "when the active pane does not have an item for the selected path", ->
-        it "adds a new item to the active pane for the selcted path", ->
+      describe "when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is false", ->
+        it "adds a new item to the active pane for the selected path", ->
           dispatchCommand('toggle-buffer-finder')
 
           atom.views.getView(editor1).focus()
@@ -423,7 +429,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
           expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-          bufferView.confirmed({filePath: expectedPath})
+          bufferView.confirmed({filePath: expectedPath}, atom.config.get 'fuzzy-finder.searchAllPanes')
 
           waitsFor ->
             atom.workspace.getActivePane().getItems().length is 2
@@ -439,6 +445,33 @@ describe 'FuzzyFinder', ->
 
             expect(editor4.getPath()).toBe expectedPath
             expect(atom.views.getView(editor4)).toHaveFocus()
+
+      describe "when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is true", ->
+        beforeEach ->
+          atom.config.set("fuzzy-finder.searchAllPanes", true)
+
+        it "switches to the pane with the item for the selected path", ->
+          dispatchCommand('toggle-buffer-finder')
+
+          atom.views.getView(editor1).focus()
+
+          dispatchCommand('toggle-buffer-finder')
+
+          expect(atom.workspace.getActiveTextEditor()).toBe editor1
+
+          originalPane = atom.workspace.getActivePane()
+
+          expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
+          bufferView.confirmed({filePath: expectedPath}, atom.config.get 'fuzzy-finder.searchAllPanes')
+
+          waitsFor ->
+            atom.workspace.getActiveTextEditor().getPath() is expectedPath
+
+          runs ->
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
+            expect(atom.workspace.getActivePane()).not.toBe originalPane
+            expect(atom.workspace.getActiveTextEditor()).toBe editor3
+            expect(atom.workspace.getPaneItems().length).toBe 3
 
   describe "common behavior between file and buffer finder", ->
     describe "when the fuzzy finder is cancelled", ->
@@ -537,6 +570,32 @@ describe 'FuzzyFinder', ->
         dispatchCommand('toggle-file-finder')
         expect(PathLoader.startTask).toHaveBeenCalled()
         expect(projectView.list.children('li').length).toBe 0
+
+    describe "the initial load paths task started during package activation", ->
+      beforeEach ->
+        fuzzyFinder.projectView.destroy()
+        fuzzyFinder.projectView = null
+        fuzzyFinder.startLoadPathsTask()
+
+        waitsFor ->
+          fuzzyFinder.projectPaths
+
+      it "passes the indexed paths into the project view when it is created", ->
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths.length).toBe 18
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe projectPaths
+        expect(projectView.reloadPaths).toBe false
+
+      it "busts the cached paths when the project paths change", ->
+        atom.project.setPaths([])
+
+        {projectPaths} = fuzzyFinder
+        expect(projectPaths).toBe null
+
+        projectView = fuzzyFinder.createProjectView()
+        expect(projectView.paths).toBe null
+        expect(projectView.reloadPaths).toBe true
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->

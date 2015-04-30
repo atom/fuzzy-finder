@@ -10,11 +10,11 @@ PathsChunkSize = 100
 class PathLoader
   constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
     @paths = []
+    @realPathCache = {}
     @repo = null
     if ignoreVcsIgnores
       repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
-      if repo?.getWorkingDirectory() is @rootPath
-        @repo = repo
+      @repo = repo if repo?.relativize(path.join(@rootPath, 'test')) is 'test'
 
   load: (done) ->
     @loadPath @rootPath, =>
@@ -45,18 +45,19 @@ class PathLoader
     fs.lstat pathToLoad, (error, stats) =>
       return done() if error?
       if stats.isSymbolicLink()
-        return done() if fs.realpathSync(pathToLoad).search(@rootPath) is 0
-        fs.stat pathToLoad, (error, stats) =>
-          return done() if error?
-          if stats.isFile()
-            @pathLoaded(pathToLoad, done)
-          else if stats.isDirectory()
-            if @traverseSymlinkDirectories
-              @loadFolder(pathToLoad, done)
+        @isInternalSymlink pathToLoad, (isInternal) =>
+          return done() if isInternal
+          fs.stat pathToLoad, (error, stats) =>
+            return done() if error?
+            if stats.isFile()
+              @pathLoaded(pathToLoad, done)
+            else if stats.isDirectory()
+              if @traverseSymlinkDirectories
+                @loadFolder(pathToLoad, done)
+              else
+                done()
             else
               done()
-          else
-            done()
       else if stats.isDirectory()
         @loadFolder(pathToLoad, done)
       else if stats.isFile()
@@ -72,6 +73,13 @@ class PathLoader
           @loadPath(path.join(folderPath, childName), next)
         done
       )
+
+  isInternalSymlink: (pathToLoad, done) ->
+    fs.realpath pathToLoad, @realPathCache, (err, realPath) =>
+      if err
+        done(false)
+      else
+        done(realPath.search(@rootPath) is 0)
 
 module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []

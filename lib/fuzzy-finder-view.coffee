@@ -24,6 +24,8 @@ class FuzzyFinderView extends SelectListView
         @splitOpenPath (pane, item) -> pane.splitDown(items: [item])
       'pane:split-up': =>
         @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
+      'fuzzy-finder:invert-confirm': =>
+        @confirmInvertedSelection()
 
   getFilterKey: ->
     'projectRelativePath'
@@ -71,9 +73,9 @@ class FuzzyFinderView extends SelectListView
         @div fileBasename, class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath
         @div projectRelativePath, class: 'secondary-line path no-icon'
 
-  openPath: (filePath, lineNumber) ->
+  openPath: (filePath, lineNumber, searchAllPanes) ->
     if filePath
-      atom.workspace.open(filePath).done => @moveToLine(lineNumber)
+      atom.workspace.open(filePath, searchAllPanes: searchAllPanes ).done => @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
@@ -110,9 +112,13 @@ class FuzzyFinderView extends SelectListView
 
   confirmSelection: ->
     item = @getSelectedItem()
-    @confirmed(item)
+    @confirmed(item, atom.config.get 'fuzzy-finder.searchAllPanes')
 
-  confirmed: ({filePath}={}) ->
+  confirmInvertedSelection: ->
+    item = @getSelectedItem()
+    @confirmed(item, !atom.config.get 'fuzzy-finder.searchAllPanes')
+
+  confirmed: ({filePath}={}, searchAllPanes) ->
     if atom.workspace.getActiveTextEditor() and @isQueryALineJump()
       lineNumber = @getLineNumber()
       @cancel()
@@ -125,7 +131,7 @@ class FuzzyFinderView extends SelectListView
     else
       lineNumber = @getLineNumber()
       @cancel()
-      @openPath(filePath, lineNumber)
+      @openPath(filePath, lineNumber, searchAllPanes)
 
   isQueryALineJump: ->
     query = @filterEditorView.getModel().getText()

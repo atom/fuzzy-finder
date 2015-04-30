@@ -3,11 +3,17 @@ module.exports =
     ignoredNames:
       type: 'array'
       default: []
+    searchAllPanes:
+      description: "Whether to search through all open panes or just the active one. Holding shift inverts this setting."
+      type: 'boolean'
+      default: false
     preserveLastSearch:
       type: 'boolean'
       default: false
 
   activate: (state) ->
+    @active = true
+
     atom.commands.add 'atom-workspace',
       'fuzzy-finder:toggle-file-finder': =>
         @createProjectView().toggle()
@@ -16,8 +22,7 @@ module.exports =
       'fuzzy-finder:toggle-git-status-finder': =>
         @createGitStatusView().toggle()
 
-    if atom.project.getPaths().length > 0
-      @createProjectView().runLoadPathsTask()
+    process.nextTick => @startLoadPathsTask()
 
     for editor in atom.workspace.getTextEditors()
       editor.lastOpened = state[editor.getPath()]
@@ -36,6 +41,8 @@ module.exports =
       @gitStatusView.destroy()
       @gitStatusView = null
     @projectPaths = null
+    @stopLoadPathsTask()
+    @active = false
 
   serialize: ->
     paths = {}
@@ -45,9 +52,12 @@ module.exports =
     paths
 
   createProjectView:  ->
+    @stopLoadPathsTask()
+
     unless @projectView?
       ProjectView  = require './project-view'
-      @projectView = new ProjectView()
+      @projectView = new ProjectView(@projectPaths)
+      @projectPaths = null
     @projectView
 
   createGitStatusView:  ->
@@ -61,3 +71,21 @@ module.exports =
       BufferView = require './buffer-view'
       @bufferView = new BufferView()
     @bufferView
+
+  startLoadPathsTask: ->
+    @stopLoadPathsTask()
+
+    return unless @active
+    return if atom.project.getPaths().length is 0
+
+    PathLoader = require './path-loader'
+    @loadPathsTask = PathLoader.startTask (@projectPaths) =>
+    @projectPathsSubscription = atom.project.onDidChangePaths =>
+      @projectPaths = null
+      @stopLoadPathsTask()
+
+  stopLoadPathsTask: ->
+    @projectPathsSubscription?.dispose()
+    @projectPathsSubscription = null
+    @loadPathsTask?.terminate()
+    @loadPathsTask = null
