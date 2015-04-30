@@ -30,6 +30,16 @@ class FuzzyFinderView extends SelectListView
   getFilterKey: ->
     'projectRelativePath'
 
+  cancel: ->
+    if atom.config.get('fuzzy-finder.preserveLastSearch')
+      lastSearch = @getFilterQuery()
+      super
+
+      @filterEditorView.setText(lastSearch)
+      @filterEditorView.getModel().selectAll()
+    else
+      super
+
   destroy: ->
     @cancel()
     @panel?.destroy()
