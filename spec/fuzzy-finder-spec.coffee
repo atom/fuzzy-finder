@@ -462,7 +462,7 @@ describe 'FuzzyFinder', ->
           originalPane = atom.workspace.getActivePane()
 
           expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-          bufferView.confirmed({filePath: expectedPath}, atom.config.get 'fuzzy-finder.searchAllPanes')
+          bufferView.confirmed({filePath: expectedPath}, searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'))
 
           waitsFor ->
             atom.workspace.getActiveTextEditor().getPath() is expectedPath
