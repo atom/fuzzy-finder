@@ -752,7 +752,7 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor().getPath()).toBe editor1.getPath()
           expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual [3, 4]
 
-  describe "Preserve last search", ->
+  describe "preserve last search", ->
     it "does not preserve last search by default", ->
       dispatchCommand('toggle-file-finder')
       expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
@@ -765,7 +765,7 @@ describe 'FuzzyFinder', ->
       expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
       expect(projectView.filterEditorView.getText()).toBe ''
 
-    it "preserves last search when config is set", ->
+    it "preserves last search when the config is set", ->
       atom.config.set("fuzzy-finder.preserveLastSearch", true)
 
       dispatchCommand('toggle-file-finder')
@@ -778,6 +778,7 @@ describe 'FuzzyFinder', ->
       dispatchCommand('toggle-file-finder')
       expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
+      expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
