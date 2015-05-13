@@ -61,14 +61,14 @@ class FuzzyFinderView extends SelectListView
           continue if matchIndex < 0 # If marking up the basename, omit path matches
           unmatched = path.substring(lastIndex, matchIndex)
           if unmatched
-            @span matchedChars.join(''), class: 'matching' if matchedChars.length
+            @span matchedChars.join(''), class: 'character-match' if matchedChars.length
             matchedChars = []
             @text unmatched
           matchedChars.push(path[matchIndex])
           lastIndex = matchIndex + 1
 
-        @span matchedChars.join(''), class: 'matching' if matchedChars.length
-        
+        @span matchedChars.join(''), class: 'character-match' if matchedChars.length
+
         # Remaining characters are plain text
         @text path.substring(lastIndex)
 

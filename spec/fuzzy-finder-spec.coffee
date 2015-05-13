@@ -707,8 +707,8 @@ describe 'FuzzyFinder', ->
       bufferView.populateList()
       resultView = bufferView.getSelectedItemView()
 
-      primaryMatches = resultView.find('.primary-line .matching')
-      secondaryMatches = resultView.find('.secondary-line .matching')
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
       expect(primaryMatches.length).toBe 1
       expect(primaryMatches.last().text()).toBe 'sample.js'
       # Use `toBeGreaterThan` because dir may have some characters in it
@@ -720,8 +720,8 @@ describe 'FuzzyFinder', ->
       bufferView.populateList()
       resultView = bufferView.getSelectedItemView()
 
-      primaryMatches = resultView.find('.primary-line .matching')
-      secondaryMatches = resultView.find('.secondary-line .matching')
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
       expect(primaryMatches.length).toBe 1
       expect(primaryMatches.last().text()).toBe 'sample'
       # Use `toBeGreaterThan` because dir may have some characters in it
@@ -733,8 +733,8 @@ describe 'FuzzyFinder', ->
       bufferView.populateList()
       resultView = bufferView.getSelectedItemView()
 
-      primaryMatches = resultView.find('.primary-line .matching')
-      secondaryMatches = resultView.find('.secondary-line .matching')
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
       expect(primaryMatches.length).toBe 2
       expect(primaryMatches.first().text()).toBe 'sample'
       expect(primaryMatches.last().text()).toBe 'js'
@@ -747,8 +747,8 @@ describe 'FuzzyFinder', ->
       bufferView.populateList()
       resultView = bufferView.getSelectedItemView()
 
-      primaryMatches = resultView.find('.primary-line .matching')
-      secondaryMatches = resultView.find('.secondary-line .matching')
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
       expect(primaryMatches.length).toBe 1
       expect(primaryMatches.last().text()).toBe 'sample'
       # Use `toBeGreaterThan` because dir may have some characters in it
