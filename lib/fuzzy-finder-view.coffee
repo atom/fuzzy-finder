@@ -3,6 +3,7 @@ path = require 'path'
 {$$, SelectListView} = require 'atom-space-pen-views'
 {repositoryForPath} = require './helpers'
 fs = require 'fs-plus'
+{match} = require 'fuzzaldrin'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
@@ -45,7 +46,33 @@ class FuzzyFinderView extends SelectListView
     @panel?.destroy()
 
   viewForItem: ({filePath, projectRelativePath}) ->
+
+    # Style matched characters in search results
+    filterQuery = @getFilterQuery()
+    matches = match(projectRelativePath, filterQuery)
+
     $$ ->
+
+      highlighter = (path, matches, offsetIndex) =>
+        lastIndex = 0
+        matchedChars = [] # Build up a set of matched chars to be more semantic
+        for matchIndex in matches
+          matchIndex -= offsetIndex
+          continue if matchIndex < 0 # If marking up the basename, omit path matches
+          unmatched = path.substring(lastIndex, matchIndex)
+          if unmatched
+            @span matchedChars.join(''), class: 'matching' if matchedChars.length
+            matchedChars = []
+            @text unmatched
+          matchedChars.push(path[matchIndex])
+          lastIndex = matchIndex + 1
+
+        @span matchedChars.join(''), class: 'matching' if matchedChars.length
+        
+        # Remaining characters are plain text
+        @text path.substring(lastIndex)
+
+
       @li class: 'two-lines', =>
         if (repo = repositoryForPath(filePath))?
           status = repo.getCachedPathStatus(filePath)
@@ -69,9 +96,10 @@ class FuzzyFinderView extends SelectListView
           typeClass = 'icon-file-text'
 
         fileBasename = path.basename(filePath)
+        baseOffset = projectRelativePath.length - fileBasename.length
 
-        @div fileBasename, class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath
-        @div projectRelativePath, class: 'secondary-line path no-icon'
+        @div class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath, -> highlighter(fileBasename, matches, baseOffset)
+        @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches, 0)
 
   openPath: (filePath, lineNumber, openOptions) ->
     if filePath

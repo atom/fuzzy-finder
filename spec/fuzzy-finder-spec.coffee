@@ -697,6 +697,65 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
           expect(editor1.getCursorBufferPosition()).toEqual [3, 4]
 
+  describe "match highlighting", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+      dispatchCommand('toggle-buffer-finder')
+
+    it "highlights an exact match", ->
+      bufferView.filterEditorView.getModel().setText('sample.js')
+      bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
+
+      primaryMatches = resultView.find('.primary-line .matching')
+      secondaryMatches = resultView.find('.secondary-line .matching')
+      expect(primaryMatches.length).toBe 1
+      expect(primaryMatches.last().text()).toBe 'sample.js'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 0
+      expect(secondaryMatches.last().text()).toBe 'sample.js'
+
+    it "highlights a partial match", ->
+      bufferView.filterEditorView.getModel().setText('sample')
+      bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
+
+      primaryMatches = resultView.find('.primary-line .matching')
+      secondaryMatches = resultView.find('.secondary-line .matching')
+      expect(primaryMatches.length).toBe 1
+      expect(primaryMatches.last().text()).toBe 'sample'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 0
+      expect(secondaryMatches.last().text()).toBe 'sample'
+
+    it "highlights multiple matches in the file name", ->
+      bufferView.filterEditorView.getModel().setText('samplejs')
+      bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
+
+      primaryMatches = resultView.find('.primary-line .matching')
+      secondaryMatches = resultView.find('.secondary-line .matching')
+      expect(primaryMatches.length).toBe 2
+      expect(primaryMatches.first().text()).toBe 'sample'
+      expect(primaryMatches.last().text()).toBe 'js'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 1
+      expect(secondaryMatches.last().text()).toBe 'js'
+
+    it "highlights matches in the directory and file name", ->
+      bufferView.filterEditorView.getModel().setText('root-dirsample')
+      bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
+
+      primaryMatches = resultView.find('.primary-line .matching')
+      secondaryMatches = resultView.find('.secondary-line .matching')
+      expect(primaryMatches.length).toBe 1
+      expect(primaryMatches.last().text()).toBe 'sample'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 1
+      expect(secondaryMatches.first().text()).toBe 'root-dir'
+      expect(secondaryMatches.last().text()).toBe 'sample'
+
     describe "when the filter text doesn't have a file path", ->
       it "moves the cursor in the active editor to that line number", ->
         [editor1, editor2] = atom.workspace.getTextEditors()
