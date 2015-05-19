@@ -743,16 +743,23 @@ describe 'FuzzyFinder', ->
       expect(secondaryMatches.last().text()).toBe 'js'
 
     it "highlights matches in the directory and file name", ->
+      spyOn(bufferView, 'setItems').andReturn [
+        {
+          filePath: '/test/root-dir1/sample.js'
+          projectRelativePath: 'root-dir1/sample.js'
+        }
+      ]
+
       bufferView.filterEditorView.getModel().setText('root-dirsample')
       bufferView.populateList()
       resultView = bufferView.getSelectedItemView()
 
       primaryMatches = resultView.find('.primary-line .character-match')
-      secondaryMatches = resultView.find('.secondary-line .character-match')
       expect(primaryMatches.length).toBe 1
       expect(primaryMatches.last().text()).toBe 'sample'
-      # Use `toBeGreaterThan` because dir may have some characters in it
-      expect(secondaryMatches.length).toBeGreaterThan 1
+
+      secondaryMatches = resultView.find('.secondary-line .character-match')
+      expect(secondaryMatches.length).toBe 2
       expect(secondaryMatches.first().text()).toBe 'root-dir'
       expect(secondaryMatches.last().text()).toBe 'sample'
 
