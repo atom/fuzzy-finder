@@ -743,13 +743,12 @@ describe 'FuzzyFinder', ->
       expect(secondaryMatches.last().text()).toBe 'js'
 
     it "highlights matches in the directory and file name", ->
-      spyOn(bufferView, 'setItems').andReturn [
+      bufferView.items = [
         {
           filePath: '/test/root-dir1/sample.js'
           projectRelativePath: 'root-dir1/sample.js'
         }
       ]
-
       bufferView.filterEditorView.getModel().setText('root-dirsample')
       bufferView.populateList()
       resultView = bufferView.getSelectedItemView()
