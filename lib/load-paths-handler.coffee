@@ -9,8 +9,6 @@ PathsChunkSize = 100
 
 class PathLoader
   constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
-    @paths = []
-    @realPathCache = {}
     @repo = null
     if ignoreVcsIgnores
       repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
@@ -18,68 +16,66 @@ class PathLoader
 
   load: (done) ->
     @loadPath @rootPath, =>
-      @flushPaths()
       @repo?.destroy()
       done()
 
-  isIgnored: (loadedPath) ->
-    relativePath = path.relative(@rootPath, loadedPath)
-    if @repo?.isPathIgnored(relativePath)
-      true
-    else
-      for ignoredName in @ignoredNames
-        return true if ignoredName.match(relativePath)
+  emitPaths: (paths) ->
+    emit('load-paths:paths-found', paths)
 
-  pathLoaded: (loadedPath, done) ->
-    @paths.push(loadedPath) unless @isIgnored(loadedPath)
-    if @paths.length is PathsChunkSize
-      @flushPaths()
-    done()
-
-  flushPaths: ->
-    emit('load-paths:paths-found', @paths)
-    @paths = []
+  isFilenameIgnored: (filename) ->
+    for matcher in @ignoredNames
+      return true if matcher.match filename
 
   loadPath: (pathToLoad, done) ->
-    return done() if @isIgnored(pathToLoad)
-    fs.lstat pathToLoad, (error, stats) =>
-      return done() if error?
-      if stats.isSymbolicLink()
-        @isInternalSymlink pathToLoad, (isInternal) =>
-          return done() if isInternal
-          fs.stat pathToLoad, (error, stats) =>
-            return done() if error?
-            if stats.isFile()
-              @pathLoaded(pathToLoad, done)
-            else if stats.isDirectory()
-              if @traverseSymlinkDirectories
-                @loadFolder(pathToLoad, done)
-              else
-                done()
-            else
-              done()
-      else if stats.isDirectory()
-        @loadFolder(pathToLoad, done)
-      else if stats.isFile()
-        @pathLoaded(pathToLoad, done)
-      else
-        done()
+    visitedDirs = {};
+    paths = [];
+    counter = 0;
 
-  loadFolder: (folderPath, done) ->
-    fs.readdir folderPath, (error, children=[]) =>
-      async.each(
-        children,
-        (childName, next) =>
-          @loadPath(path.join(folderPath, childName), next)
-        done
-      )
+    statOrLstatSync = if @traverseSymlinkDirectories then fs.statSync else fs.lstatSync
 
-  isInternalSymlink: (pathToLoad, done) ->
-    fs.realpath pathToLoad, @realPathCache, (err, realPath) =>
-      if err
-        done(false)
-      else
-        done(realPath.search(@rootPath) is 0)
+    appendPath = (path) =>
+      paths[counter] = path
+      counter = (counter + 1) % PathsChunkSize
+      @emitPaths paths if counter == 0
+      return
+
+    traverseRecursively = (root) =>
+      try
+        children = fs.readdirSync root
+      catch error
+        return
+      for child in children
+        if @isFilenameIgnored child
+          continue
+        childPath = path.join root, child
+        try
+          fileStat = statOrLstatSync childPath
+        catch error
+          continue
+        if fileStat.isSymbolicLink()
+          symlinkTargetStat = fs.statSync childPath
+          appendPath childPath if symlinkTargetStat.isFile()
+        else if fileStat.isDirectory()
+          try
+            childRealPath = fs.realpathSync childPath
+          catch error
+            continue
+          if childRealPath of visitedDirs
+            continue
+          else
+            visitedDirs[childRealPath] = true
+            traverseRecursively childPath
+        else if fileStat.isFile()
+          appendPath childPath
+      return
+
+    traverseRecursively pathToLoad
+
+    paths.length = counter
+    @emitPaths paths if paths.length
+
+    return done()
+
 
 module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
