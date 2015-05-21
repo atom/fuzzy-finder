@@ -22,9 +22,13 @@ class PathLoader
   emitPaths: (paths) ->
     emit('load-paths:paths-found', paths)
 
-  isFilenameIgnored: (filename) ->
-    for matcher in @ignoredNames
-      return true if matcher.match filename
+  isPathIgnored: (path) ->
+    relativePath = path.relative(@rootPath, path)
+    if @repo?.isPathIgnored(relativePath)
+      return true
+    else
+      for ignoredName in @ignoredNames
+        return true if ignoredName.match(relativePath)
 
   loadPath: (pathToLoad, done) ->
     visitedDirs = {};
@@ -45,9 +49,9 @@ class PathLoader
       catch error
         return
       for child in children
-        if @isFilenameIgnored child
-          continue
         childPath = path.join root, child
+        if @isPathIgnored childPath
+          continue
         try
           fileStat = statOrLstatSync childPath
         catch error
