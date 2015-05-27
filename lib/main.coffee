@@ -51,7 +51,7 @@ module.exports =
       paths[path] = editor.lastOpened if path?
     paths
 
-  createProjectView:  ->
+  createProjectView: ->
     @stopLoadPathsTask()
 
     unless @projectView?
@@ -60,7 +60,7 @@ module.exports =
       @projectPaths = null
     @projectView
 
-  createGitStatusView:  ->
+  createGitStatusView: ->
     unless @gitStatusView?
       GitStatusView  = require './git-status-view'
       @gitStatusView = new GitStatusView()
