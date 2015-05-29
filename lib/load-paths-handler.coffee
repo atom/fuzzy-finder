@@ -22,8 +22,8 @@ class PathLoader
   emitPaths: (paths) ->
     emit('load-paths:paths-found', paths)
 
-  isPathIgnored: (path) ->
-    relativePath = path.relative(@rootPath, path)
+  isPathIgnored: (pathStr) ->
+    relativePath = path.relative(@rootPath, pathStr)
     if @repo?.isPathIgnored(relativePath)
       return true
     else
