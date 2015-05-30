@@ -31,14 +31,14 @@ class PathLoader
         return true if ignoredName.match(relativePath)
 
   loadPath: (pathToLoad, done) ->
-    visitedDirs = {};
-    paths = [];
-    counter = 0;
+    visitedDirs = {}
+    paths = []
+    counter = 0
 
     appendPath = (path) =>
       paths[counter] = path
       counter = (counter + 1) % PathsChunkSize
-      @emitPaths paths if counter == 0
+      @emitPaths paths if counter is 0
       return
 
     traverseRecursively = (root, realRoot) =>
@@ -63,9 +63,9 @@ class PathLoader
             childRealPath = fs.realpathSync childPath
           catch error
             continue
-          if symlinkTargetStat.isFile() && childRealPath.startsWith(realPathToLoad)
+          if symlinkTargetStat.isFile() and childRealPath.startsWith(realPathToLoad)
             continue
-          else if symlinkTargetStat.isDirectory() && !@traverseSymlinkDirectories
+          else if symlinkTargetStat.isDirectory() and not @traverseSymlinkDirectories
             continue
           fileStat = symlinkTargetStat
         else
