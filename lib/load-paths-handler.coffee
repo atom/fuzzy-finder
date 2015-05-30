@@ -69,13 +69,13 @@ class PathLoader
             continue
           fileStat = symlinkTargetStat
         else
-          childRealPath = childPath
+          childRealPath = path.join realRoot, child
         if fileStat.isDirectory()
           if childRealPath of visitedDirs
             continue
           else
             visitedDirs[childRealPath] = true
-            traverseRecursively childPath
+            traverseRecursively childPath, childRealPath
         else if fileStat.isFile()
           appendPath childPath
       return
