@@ -35,15 +35,13 @@ class PathLoader
     paths = [];
     counter = 0;
 
-    statOrLstatSync = if @traverseSymlinkDirectories then fs.statSync else fs.lstatSync
-
     appendPath = (path) =>
       paths[counter] = path
       counter = (counter + 1) % PathsChunkSize
       @emitPaths paths if counter == 0
       return
 
-    traverseRecursively = (root) =>
+    traverseRecursively = (root, realRoot) =>
       try
         children = fs.readdirSync root
       catch error
@@ -53,17 +51,26 @@ class PathLoader
         if @isPathIgnored childPath
           continue
         try
-          fileStat = statOrLstatSync childPath
+          fileStat = fs.lstatSync childPath
         catch error
           continue
         if fileStat.isSymbolicLink()
-          symlinkTargetStat = fs.statSync childPath
-          appendPath childPath if symlinkTargetStat.isFile()
-        else if fileStat.isDirectory()
+          try
+            symlinkTargetStat = fs.statSync childPath
+          catch error
+            continue
           try
             childRealPath = fs.realpathSync childPath
           catch error
             continue
+          if symlinkTargetStat.isFile() && childRealPath.startsWith(realPathToLoad)
+            continue
+          else if symlinkTargetStat.isDirectory() && !@traverseSymlinkDirectories
+            continue
+          fileStat = symlinkTargetStat
+        else
+          childRealPath = childPath
+        if fileStat.isDirectory()
           if childRealPath of visitedDirs
             continue
           else
@@ -73,7 +80,8 @@ class PathLoader
           appendPath childPath
       return
 
-    traverseRecursively pathToLoad
+    realPathToLoad = fs.realpathSync pathToLoad
+    traverseRecursively pathToLoad, realPathToLoad
 
     paths.length = counter
     @emitPaths paths if paths.length
@@ -90,7 +98,7 @@ module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
       console.warn "Error parsing ignore pattern (#{ignore}): #{error.message}"
 
   async.each(
-    rootPaths,
+    rootPaths.reverse(),
     (rootPath, next) ->
       new PathLoader(
         rootPath,
