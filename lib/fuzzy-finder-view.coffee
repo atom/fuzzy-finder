@@ -28,6 +28,12 @@ class FuzzyFinderView extends SelectListView
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
 
+    atom.commands.add '.fuzzy-finder',
+      'core:move-down': =>
+        @previewSelection()
+      'core:move-up': =>
+        @previewSelection()
+
   getFilterKey: ->
     'projectRelativePath'
 
@@ -138,6 +144,11 @@ class FuzzyFinderView extends SelectListView
       @setError('Jump to line in active editor')
     else
       super
+
+  previewSelection: ->
+    {filePath} = @getSelectedItem() ? {}
+    lineNumber = @getLineNumber()
+    @openPath(filePath, lineNumber, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'), activatePane: false})
 
   confirmSelection: ->
     item = @getSelectedItem()
