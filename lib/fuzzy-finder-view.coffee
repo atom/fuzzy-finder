@@ -144,6 +144,7 @@ class FuzzyFinderView extends SelectListView
       @setError('Jump to line in active editor')
     else
       super
+    @previewSelection()
 
   previewSelection: ->
     if atom.config.get('fuzzy-finder.previewSelection')
