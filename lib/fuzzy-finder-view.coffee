@@ -146,9 +146,10 @@ class FuzzyFinderView extends SelectListView
       super
 
   previewSelection: ->
-    {filePath} = @getSelectedItem() ? {}
-    lineNumber = @getLineNumber()
-    @openPath(filePath, lineNumber, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'), activatePane: false})
+    if atom.config.get('fuzzy-finder.previewSelection')
+      {filePath} = @getSelectedItem() ? {}
+      lineNumber = @getLineNumber()
+      @openPath(filePath, lineNumber, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'), activatePane: false})
 
   confirmSelection: ->
     item = @getSelectedItem()

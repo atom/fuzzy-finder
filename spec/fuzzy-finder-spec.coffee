@@ -476,7 +476,8 @@ describe 'FuzzyFinder', ->
   describe "common behavior between file and buffer finder", ->
 
     describe "when a path is selected", ->
-      it "previews the file associated with that path", ->
+      it "previews the file associated with that path if option is set", ->
+        atom.config.set("fuzzy-finder.previewSelection", true)
         jasmine.attachToDOM(workspaceElement)
 
         dispatchCommand('toggle-file-finder')

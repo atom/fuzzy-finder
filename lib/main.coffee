@@ -10,6 +10,9 @@ module.exports =
     preserveLastSearch:
       type: 'boolean'
       default: false
+    previewSelection:
+      type: 'boolean'
+      default: false
 
   activate: (state) ->
     @active = true
