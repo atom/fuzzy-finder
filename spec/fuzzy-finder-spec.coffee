@@ -476,7 +476,7 @@ describe 'FuzzyFinder', ->
   describe "common behavior between file and buffer finder", ->
 
     describe "when a path is selected", ->
-      fit "previews the file associated with that path if option is set", ->
+      it "previews the file associated with that path if option is set", ->
         atom.config.set("fuzzy-finder.previewSelection", true)
         projectView.setMaxItems(Infinity)
         spyOn(projectView, 'previewSelection')
