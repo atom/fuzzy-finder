@@ -476,27 +476,28 @@ describe 'FuzzyFinder', ->
   describe "common behavior between file and buffer finder", ->
 
     describe "when a path is selected", ->
-      it "previews the file associated with that path if option is set", ->
+      fit "previews the file associated with that path if option is set", ->
         atom.config.set("fuzzy-finder.previewSelection", true)
+        projectView.setMaxItems(Infinity)
+        spyOn(projectView, 'previewSelection')
         jasmine.attachToDOM(workspaceElement)
 
         dispatchCommand('toggle-file-finder')
 
-        projectView.setMaxItems(Infinity)
         waitForPathsToDisplay(projectView)
         runs ->
           editor = atom.workspace.getActiveTextEditor()
           projectViewElement = workspaceElement.querySelector('.fuzzy-finder')
-          spyOn(projectView, 'previewSelection')
           expect(projectView.getSelectedItem().filePath).toBe projectView.filePaths[0]
+          expect(projectView.previewSelection.callCount).toBe 1
 
           atom.commands.dispatch(projectViewElement, 'core:move-down')
           expect(projectView.getSelectedItem().filePath).toBe projectView.filePaths[1]
-          expect(projectView.previewSelection.callCount).toBe 1
+          expect(projectView.previewSelection.callCount).toBe 2
 
           atom.commands.dispatch(projectViewElement, 'core:move-up')
           expect(projectView.getSelectedItem().filePath).toBe projectView.filePaths[0]
-          expect(projectView.previewSelection.callCount).toBe 2
+          expect(projectView.previewSelection.callCount).toBe 3
 
     describe "when the fuzzy finder is cancelled", ->
       describe "when an editor is open", ->
