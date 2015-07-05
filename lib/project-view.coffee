@@ -67,8 +67,6 @@ class ProjectView extends FuzzyFinderView
       @setItems([])
       return
 
-    @previewSelection()
-
     if @reloadPaths
       @reloadPaths = false
 

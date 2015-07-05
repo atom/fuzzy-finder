@@ -9,6 +9,7 @@ module.exports =
 class FuzzyFinderView extends SelectListView
   filePaths: null
   projectRelativePaths: null
+  lastSearch: ''
 
   initialize: ->
     super
@@ -39,13 +40,9 @@ class FuzzyFinderView extends SelectListView
 
   cancel: ->
     if atom.config.get('fuzzy-finder.preserveLastSearch')
-      lastSearch = @getFilterQuery()
-      super
-
-      @filterEditorView.setText(lastSearch)
-      @filterEditorView.getModel().selectAll()
-    else
-      super
+      @lastSearch = @getFilterQuery()
+    super
+    @cancelling = true
 
   destroy: ->
     @cancel()
@@ -150,6 +147,7 @@ class FuzzyFinderView extends SelectListView
       @setError('Jump to line in active editor')
     else
       super
+      @previewSelection() if not @reloadPaths
 
   previewSelection: ->
     if atom.config.get('fuzzy-finder.previewSelection')
@@ -222,6 +220,9 @@ class FuzzyFinderView extends SelectListView
     @projectRelativePaths
 
   show: ->
+    if atom.config.get('fuzzy-finder.preserveLastSearch')
+      @filterEditorView.setText(@lastSearch)
+      @filterEditorView.getModel().selectAll()
     @storeFocusedElement()
     @panel ?= atom.workspace.addModalPanel(item: this)
     @panel.show()
