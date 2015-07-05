@@ -108,9 +108,15 @@ class FuzzyFinderView extends SelectListView
         @div class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath, -> highlighter(fileBasename, matches, baseOffset)
         @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches, 0)
 
-  openPath: (filePath, lineNumber, openOptions) ->
+  openPath: (filePath, lineNumber, openOptions, preview=false) ->
     if filePath
-      atom.workspace.open(filePath, openOptions).done => @moveToLine(lineNumber)
+      if preview
+        atom.workspace.open(filePath, openOptions).done => @moveToLine(lineNumber)
+      else
+        atom.workspace.open(filePath, openOptions).done (editor) =>
+          editorElement = atom.views.getView(editor)
+          atom.commands.dispatch(editorElement, 'tabs:keep-preview-tab')
+          @moveToLine(lineNumber)
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
@@ -144,13 +150,13 @@ class FuzzyFinderView extends SelectListView
       @setError('Jump to line in active editor')
     else
       super
-    @previewSelection()
 
   previewSelection: ->
     if atom.config.get('fuzzy-finder.previewSelection')
       {filePath} = @getSelectedItem() ? {}
-      lineNumber = @getLineNumber()
-      @openPath(filePath, lineNumber, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'), activatePane: false})
+      if filePath
+        lineNumber = @getLineNumber()
+        @openPath(filePath, lineNumber, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'), activatePane: false}, true)
 
   confirmSelection: ->
     item = @getSelectedItem()
