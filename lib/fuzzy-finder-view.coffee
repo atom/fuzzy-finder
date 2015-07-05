@@ -111,9 +111,12 @@ class FuzzyFinderView extends SelectListView
         atom.workspace.open(filePath, openOptions).done => @moveToLine(lineNumber)
       else
         atom.workspace.open(filePath, openOptions).done (editor) =>
-          editorElement = atom.views.getView(editor)
-          atom.commands.dispatch(editorElement, 'tabs:keep-preview-tab')
+          @clearPreview(editor)
           @moveToLine(lineNumber)
+
+  clearPreview: (editor) ->
+    editorElement = atom.views.getView(editor)
+    atom.commands.dispatch(editorElement, 'tabs:keep-preview-tab')
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
