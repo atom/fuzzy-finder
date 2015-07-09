@@ -5,10 +5,10 @@ Quickly find and open files using `cmd-t`.
   * `cmd-t` or `cmd-p` to open the file finder
   * `cmd-b` to open the list of open buffers
   * `cmd-shift-b` to open the list of Git modified and untracked files
-  * `enter` opens the selected file without leaving the current pane [[*]](#searchAllPanes)
-  * `shift-enter` opens the file, switching to another pane if it's already open there. [[*]](#searchAllPanes)
+  * `enter` opens the selected file without leaving the current pane (depending on the Search All Panes setting)
+  * `shift-enter` opens the file, switching to another pane if it's already open there. (depending on the Search All Panes setting)
 
-<a name="myfootnote1">[*]</a>: The "Search All Panes" setting reverses this, so enter opens the file in any pane and shift-enter creates a new tab in the current pane.
+The "Search All Panes" setting reverses the keypress to select a file, so enter opens the file in any pane and shift-enter creates a new tab in the current pane.
 
 This package uses both the `core.ignoredNames` and `fuzzy-finder.ignoredNames`
 config settings to filter out files and folders that will not be shown.
