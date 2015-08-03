@@ -9,8 +9,6 @@ PathsChunkSize = 100
 
 class PathLoader
   constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
-    @paths = []
-    @realPathCache = {}
     @repo = null
     if ignoreVcsIgnores
       repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
@@ -18,68 +16,78 @@ class PathLoader
 
   load: (done) ->
     @loadPath @rootPath, =>
-      @flushPaths()
       @repo?.destroy()
       done()
 
-  isIgnored: (loadedPath) ->
-    relativePath = path.relative(@rootPath, loadedPath)
+  emitPaths: (paths) ->
+    emit('load-paths:paths-found', paths)
+
+  isPathIgnored: (pathStr) ->
+    relativePath = path.relative(@rootPath, pathStr)
     if @repo?.isPathIgnored(relativePath)
-      true
+      return true
     else
       for ignoredName in @ignoredNames
         return true if ignoredName.match(relativePath)
 
-  pathLoaded: (loadedPath, done) ->
-    @paths.push(loadedPath) unless @isIgnored(loadedPath)
-    if @paths.length is PathsChunkSize
-      @flushPaths()
-    done()
-
-  flushPaths: ->
-    emit('load-paths:paths-found', @paths)
-    @paths = []
-
   loadPath: (pathToLoad, done) ->
-    return done() if @isIgnored(pathToLoad)
-    fs.lstat pathToLoad, (error, stats) =>
-      return done() if error?
-      if stats.isSymbolicLink()
-        @isInternalSymlink pathToLoad, (isInternal) =>
-          return done() if isInternal
-          fs.stat pathToLoad, (error, stats) =>
-            return done() if error?
-            if stats.isFile()
-              @pathLoaded(pathToLoad, done)
-            else if stats.isDirectory()
-              if @traverseSymlinkDirectories
-                @loadFolder(pathToLoad, done)
-              else
-                done()
-            else
-              done()
-      else if stats.isDirectory()
-        @loadFolder(pathToLoad, done)
-      else if stats.isFile()
-        @pathLoaded(pathToLoad, done)
-      else
-        done()
+    visitedDirs = {}
+    paths = []
+    counter = 0
 
-  loadFolder: (folderPath, done) ->
-    fs.readdir folderPath, (error, children=[]) =>
-      async.each(
-        children,
-        (childName, next) =>
-          @loadPath(path.join(folderPath, childName), next)
-        done
-      )
+    appendPath = (path) =>
+      paths[counter] = path
+      counter = (counter + 1) % PathsChunkSize
+      @emitPaths paths if counter is 0
+      return
 
-  isInternalSymlink: (pathToLoad, done) ->
-    fs.realpath pathToLoad, @realPathCache, (err, realPath) =>
-      if err
-        done(false)
-      else
-        done(realPath.search(@rootPath) is 0)
+    traverseRecursively = (root, realRoot) =>
+      try
+        children = fs.readdirSync root
+      catch error
+        return
+      for child in children
+        childPath = path.join root, child
+        if @isPathIgnored childPath
+          continue
+        try
+          fileStat = fs.lstatSync childPath
+        catch error
+          continue
+        if fileStat.isSymbolicLink()
+          try
+            symlinkTargetStat = fs.statSync childPath
+          catch error
+            continue
+          try
+            childRealPath = fs.realpathSync childPath
+          catch error
+            continue
+          if symlinkTargetStat.isFile() and childRealPath.startsWith(realPathToLoad)
+            continue
+          else if symlinkTargetStat.isDirectory() and not @traverseSymlinkDirectories
+            continue
+          fileStat = symlinkTargetStat
+        else
+          childRealPath = path.join realRoot, child
+        if fileStat.isDirectory()
+          if childRealPath of visitedDirs
+            continue
+          else
+            visitedDirs[childRealPath] = true
+            traverseRecursively childPath, childRealPath
+        else if fileStat.isFile()
+          appendPath childPath
+      return
+
+    realPathToLoad = fs.realpathSync pathToLoad
+    traverseRecursively pathToLoad, realPathToLoad
+
+    paths.length = counter
+    @emitPaths paths if paths.length
+
+    return done()
+
 
 module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
   ignoredNames = []
@@ -90,7 +98,7 @@ module.exports = (rootPaths, followSymlinks, ignoreVcsIgnores, ignores=[]) ->
       console.warn "Error parsing ignore pattern (#{ignore}): #{error.message}"
 
   async.each(
-    rootPaths,
+    rootPaths.reverse(),
     (rootPath, next) ->
       new PathLoader(
         rootPath,
