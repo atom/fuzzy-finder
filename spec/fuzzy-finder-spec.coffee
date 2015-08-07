@@ -662,6 +662,27 @@ describe 'FuzzyFinder', ->
         expect(atom.workspace.getActivePane()).toBe bottomPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
+  describe "when the filter text starts with a dot followed by a slash", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+      expect(atom.workspace.panelForItem(projectView)).toBeNull()
+
+      waitsForPromise ->
+        atom.workspace.open('sample.txt')
+
+    describe "when the filter text has a file path", ->
+      it "removes leading './'", ->
+        debugger
+        [editor1, editor2] = atom.workspace.getTextEditors()
+
+        dispatchCommand('toggle-buffer-finder')
+        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+
+        bufferView.filterEditorView.getModel().setText('./sample.js')
+        bufferView.populateList()
+        {filePath} = bufferView.getSelectedItem()
+        expect(atom.project.getDirectories()[0].resolve(filePath)).toBe editor1.getPath()
+
   describe "when the filter text contains a colon followed by a number", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)

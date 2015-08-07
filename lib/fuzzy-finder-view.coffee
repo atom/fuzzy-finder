@@ -173,6 +173,8 @@ class FuzzyFinderView extends SelectListView
     query = super
     colon = query.indexOf(':')
     query = query[0...colon] if colon isnt -1
+    # Remove leading './'
+    query = query.replace(/^\.\//, '')
     # Normalize to backslashes on Windows
     query = query.replace(/\//g, '\\') if process.platform is 'win32'
     query
