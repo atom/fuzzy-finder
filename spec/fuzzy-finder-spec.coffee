@@ -223,6 +223,19 @@ describe 'FuzzyFinder', ->
             expect(projectView.list.find("li:contains(sample.txt)")).not.toExist()
             expect(projectView.list.find("li:contains(a)")).toExist()
 
+        it "only shows a given path once, even if it's within multiple root folders", ->
+          childDir1 = path.join(rootDir1, 'a-child')
+          childFile1 = path.join(childDir1, 'child-file.txt')
+          fs.mkdirSync(childDir1)
+          fs.writeFileSync(childFile1, 'stuff')
+          atom.project.addPath(childDir1)
+
+          dispatchCommand('toggle-file-finder')
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            expect(projectView.list.find("li:contains(child-file.txt)").length).toBe 1
+
       describe "when the project only has one path", ->
         beforeEach ->
           atom.project.setPaths([rootDir1])
