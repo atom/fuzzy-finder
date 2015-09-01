@@ -15,12 +15,12 @@ module.exports =
     @active = true
 
     atom.commands.add 'atom-workspace',
-      'fuzzy-finder:toggle-file-finder': =>
-        @createProjectView().toggle()
-      'fuzzy-finder:toggle-buffer-finder': =>
-        @createBufferView().toggle()
-      'fuzzy-finder:toggle-git-status-finder': =>
-        @createGitStatusView().toggle()
+      'fuzzy-finder:toggle-file-finder': (event) =>
+        @createProjectView().toggle(event.detail)
+      'fuzzy-finder:toggle-buffer-finder': (event) =>
+        @createBufferView().toggle(event.detail)
+      'fuzzy-finder:toggle-git-status-finder': (event) =>
+        @createGitStatusView().toggle(event.detail)
 
     process.nextTick => @startLoadPathsTask()
 

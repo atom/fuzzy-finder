@@ -3,11 +3,12 @@ FuzzyFinderView = require './fuzzy-finder-view'
 
 module.exports =
 class BufferView extends FuzzyFinderView
-  toggle: ->
+  toggle: (query) ->
     if @panel?.isVisible()
       @cancel()
     else
       @populate()
+      @setFilterQuery(query) if query?
       @show() if @paths?.length > 0
 
   getEmptyMessage: (itemCount) ->
