@@ -3,6 +3,10 @@ FuzzyFinderView = require './fuzzy-finder-view'
 
 module.exports =
 class BufferView extends FuzzyFinderView
+
+  initialize: (@closedBuffers) ->
+    super
+
   toggle: ->
     if @panel?.isVisible()
       @cancel()
@@ -19,11 +23,20 @@ class BufferView extends FuzzyFinderView
   populate: ->
     editors = atom.workspace.getTextEditors().filter (editor) -> editor.getPath()?
     activeEditor = atom.workspace.getActiveTextEditor()
-    editors = _.sortBy editors, (editor) ->
-      if editor is activeEditor
-        0
-      else
-        -(editor.lastOpened or 1)
 
-    @paths = editors.map (editor) -> editor.getPath()
-    @setItems(_.uniq(@paths))
+    # Create a list of closed editors, matching the item data structure of editors list
+    closedEditors = _.map @closedBuffers.items, (dateClosed, path) ->
+      lastOpened: dateClosed
+      getPath: -> path
+
+    @paths = _.chain(editors.concat(closedEditors))
+      .sortBy (editor) ->
+        if editor is activeEditor
+          0
+        else
+          -(editor.lastOpened or 1)
+      .map (editor) -> editor.getPath()
+      .uniq()
+      .value()
+
+    @setItems(@paths)

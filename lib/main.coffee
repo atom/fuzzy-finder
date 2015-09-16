@@ -1,3 +1,5 @@
+ClosedBuffers = require './closed-buffers'
+
 module.exports =
   config:
     ignoredNames:
@@ -10,9 +12,16 @@ module.exports =
     preserveLastSearch:
       type: 'boolean'
       default: false
+    maxClosedBuffersToRemember:
+      description: "The maximum count of closed buffers to show in the buffers list. Zero value means it's disabled"
+      type: 'number'
+      default: 0
+      minimum: 0
+      maximum: 100
 
   activate: (state) ->
     @active = true
+    @closedBuffers = new ClosedBuffers()
 
     atom.commands.add 'atom-workspace',
       'fuzzy-finder:toggle-file-finder': =>
@@ -41,6 +50,7 @@ module.exports =
       @gitStatusView.destroy()
       @gitStatusView = null
     @projectPaths = null
+    @closedBuffers.dispose()
     @stopLoadPathsTask()
     @active = false
 
@@ -69,7 +79,7 @@ module.exports =
   createBufferView: ->
     unless @bufferView?
       BufferView = require './buffer-view'
-      @bufferView = new BufferView()
+      @bufferView = new BufferView(@closedBuffers)
     @bufferView
 
   startLoadPathsTask: ->

@@ -344,6 +344,17 @@ describe 'FuzzyFinder', ->
             expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
             expect(bufferView.list.children().first()).toHaveClass 'selected'
 
+        it 'do not list any closed buffers', ->
+          waitsForPromise ->
+            atom.workspace.open 'sample.html'
+
+          runs ->
+            atom.workspace.getActivePane().destroyActiveItem()
+            dispatchCommand('toggle-buffer-finder')
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js', 'sample.txt']
+            expect(bufferView.list.children().first()).toHaveClass 'selected'
+
         it "serializes the list of paths and their last opened time", ->
           waitsForPromise ->
             atom.workspace.open 'sample-with-tabs.coffee'
@@ -371,6 +382,52 @@ describe 'FuzzyFinder', ->
             for [time, bufferPath] in states
               expect(_.last bufferPath.split path.sep).toBe paths.shift()
               expect(time).toBeGreaterThan 50000
+
+        describe 'when the maxClosedBuffersToRemember config is set to a non-zero value', ->
+          beforeEach ->
+            atom.config.set('fuzzy-finder.maxClosedBuffersToRemember', 3)
+
+          describe 'when there are a bunch of buffers that have been closed', ->
+            beforeEach ->
+              # sample.js and sample.txt are already opened (from parent beforeEach)
+              # open a bunch of new files but close them immediately
+              waitsForPromise ->
+                atom.workspace.getActivePane().destroyActiveItem()
+                advanceClock(10)
+                atom.workspace.open 'sample-with-tabs.coffee'
+              waitsForPromise ->
+                atom.workspace.getActivePane().destroyActiveItem()
+                advanceClock(10)
+                atom.workspace.open 'a'
+              waitsForPromise ->
+                atom.workspace.getActivePane().destroyActiveItem()
+                advanceClock(10)
+                atom.workspace.open 'b'
+              waitsForPromise ->
+                atom.workspace.getActivePane().destroyActiveItem()
+                advanceClock(10)
+                atom.workspace.open 'sample.html'
+
+              waitsForPromise ->
+                # re-open one of the closed buffer, new "current item"
+                atom.workspace.getActivePane().destroyActiveItem()
+                advanceClock(10)
+                atom.workspace.open 'sample.html'
+
+            it 'lists the paths of the current items+closed buffers within max limit, sorted by most recently opened but with the current item last', ->
+              dispatchCommand('toggle-buffer-finder')
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+              expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js', 'b', 'a', 'sample.html']
+
+            describe 'when modifies the config setting', ->
+              beforeEach ->
+                atom.config.set('fuzzy-finder.maxClosedBuffersToRemember', 1)
+
+              it 'limit the closed buffers list accordingly', ->
+                # should cut out 'a' and 'b' from above
+                dispatchCommand('toggle-buffer-finder')
+                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+                expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js', 'b', 'sample.html']
 
       describe "when there are only panes with anonymous items", ->
         it "does not open", ->
