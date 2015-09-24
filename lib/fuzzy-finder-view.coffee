@@ -4,7 +4,7 @@ path = require 'path'
 {repositoryForPath} = require './helpers'
 fs = require 'fs-plus'
 fuzzaldrin = require 'fuzzaldrin'
-fuzzaldrin_plus = require 'fuzzaldrin-plus'
+fuzzaldrinPlus = require 'fuzzaldrin-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
@@ -61,7 +61,7 @@ class FuzzyFinderView extends SelectListView
     filterQuery = @getFilterQuery()
 
     if @alternateScoring
-      matches = fuzzaldrin_plus.match(projectRelativePath, filterQuery)
+      matches = fuzzaldrinPlus.match(projectRelativePath, filterQuery)
     else
       matches = fuzzaldrin.match(projectRelativePath, filterQuery)
 
@@ -170,7 +170,7 @@ class FuzzyFinderView extends SelectListView
 
     filterQuery = @getFilterQuery()
     if filterQuery.length
-      filteredItems = fuzzaldrin_plus.filter(@items, filterQuery, key: @getFilterKey())
+      filteredItems = fuzzaldrinPlus.filter(@items, filterQuery, key: @getFilterKey())
     else
       filteredItems = @items
 
