@@ -1,20 +1,24 @@
 path = require 'path'
-{Point} = require 'atom'
-{$$, SelectListView} = require 'atom-space-pen-views'
+{Point, CompositeDisposable} = require 'atom'
+{$, $$, SelectListView} = require 'atom-space-pen-views'
 {repositoryForPath} = require './helpers'
 fs = require 'fs-plus'
-{match} = require 'fuzzaldrin'
+fuzzaldrin = require 'fuzzaldrin'
+fuzzaldrinPlus = require 'fuzzaldrin-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
   filePaths: null
   projectRelativePaths: null
+  subscriptions: null
+  alternateScoring: false
 
   initialize: ->
     super
 
     @addClass('fuzzy-finder')
     @setMaxItems(10)
+    @subscriptions = new CompositeDisposable
 
     atom.commands.add @element,
       'pane:split-left': =>
@@ -27,6 +31,10 @@ class FuzzyFinderView extends SelectListView
         @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
+
+    @alternateScoring = atom.config.get 'fuzzy-finder.useAlternateScoring'
+    @subscriptions.add atom.config.onDidChange 'fuzzy-finder.useAlternateScoring', ({newValue}) => @alternateScoring = newValue
+
 
   getFilterKey: ->
     'projectRelativePath'
@@ -44,12 +52,18 @@ class FuzzyFinderView extends SelectListView
   destroy: ->
     @cancel()
     @panel?.destroy()
+    @subscriptions?.dispose()
+    @subscriptions = null
 
   viewForItem: ({filePath, projectRelativePath}) ->
 
     # Style matched characters in search results
     filterQuery = @getFilterQuery()
-    matches = match(projectRelativePath, filterQuery)
+
+    if @alternateScoring
+      matches = fuzzaldrinPlus.match(projectRelativePath, filterQuery)
+    else
+      matches = fuzzaldrin.match(projectRelativePath, filterQuery)
 
     $$ ->
 
@@ -136,8 +150,45 @@ class FuzzyFinderView extends SelectListView
     if @isQueryALineJump()
       @list.empty()
       @setError('Jump to line in active editor')
+    else if @alternateScoring
+      @populateAlternateList()
     else
       super
+
+
+  # Unfortunately  SelectListView do not allow inheritor to handle their own filtering.
+  # That would be required to use external knowledge, for example: give a bonus to recent files.
+  #
+  # Or, in this case: test an alternate scoring algorithm.
+  #
+  # This is modified copy/paste from SelectListView#populateList, require jQuery!
+  # Should be temporary
+
+  populateAlternateList: ->
+
+    return unless @items?
+
+    filterQuery = @getFilterQuery()
+    if filterQuery.length
+      filteredItems = fuzzaldrinPlus.filter(@items, filterQuery, key: @getFilterKey())
+    else
+      filteredItems = @items
+
+    @list.empty()
+    if filteredItems.length
+      @setError(null)
+
+      for i in [0...Math.min(filteredItems.length, @maxItems)]
+        item = filteredItems[i]
+        itemView = $(@viewForItem(item))
+        itemView.data('select-list-item', item)
+        @list.append(itemView)
+
+      @selectItemView(@list.find('li:first'))
+    else
+      @setError(@getEmptyMessage(@items.length, filteredItems.length))
+
+
 
   confirmSelection: ->
     item = @getSelectedItem()
