@@ -10,6 +10,10 @@ module.exports =
     preserveLastSearch:
       type: 'boolean'
       default: false
+    useAlternateScoring:
+      description: "Prefers run of consecutive characters, acronyms and start of words. (Experimental)"
+      type: 'boolean'
+      default: false
 
   activate: (state) ->
     @active = true
