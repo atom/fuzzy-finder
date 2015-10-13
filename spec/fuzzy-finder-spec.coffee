@@ -622,6 +622,9 @@ describe 'FuzzyFinder', ->
       waitsFor ->
         atom.workspace.getPanes().length is 2
 
+      waitsFor ->
+        atom.workspace.getActiveTextEditor()
+
       runs ->
         [leftPane, rightPane] = atom.workspace.getPanes()
         expect(atom.workspace.getActivePane()).toBe leftPane
@@ -637,6 +640,9 @@ describe 'FuzzyFinder', ->
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
+
+      waitsFor ->
+        atom.workspace.getActiveTextEditor()
 
       runs ->
         [leftPane, rightPane] = atom.workspace.getPanes()
@@ -654,6 +660,9 @@ describe 'FuzzyFinder', ->
       waitsFor ->
         atom.workspace.getPanes().length is 2
 
+      waitsFor ->
+        atom.workspace.getActiveTextEditor()
+
       runs ->
         [topPane, bottomPane] = atom.workspace.getPanes()
         expect(atom.workspace.getActivePane()).toBe topPane
@@ -669,6 +678,9 @@ describe 'FuzzyFinder', ->
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
+
+      waitsFor ->
+        atom.workspace.getActiveTextEditor()
 
       runs ->
         [topPane, bottomPane] = atom.workspace.getPanes()

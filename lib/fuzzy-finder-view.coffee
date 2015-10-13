@@ -22,13 +22,13 @@ class FuzzyFinderView extends SelectListView
 
     atom.commands.add @element,
       'pane:split-left': =>
-        @splitOpenPath (pane, item) -> pane.splitLeft(items: [item])
+        @splitOpenPath (pane) -> pane.splitLeft.bind(pane)
       'pane:split-right': =>
-        @splitOpenPath (pane, item) -> pane.splitRight(items: [item])
+        @splitOpenPath (pane) -> pane.splitRight.bind(pane)
       'pane:split-down': =>
-        @splitOpenPath (pane, item) -> pane.splitDown(items: [item])
+        @splitOpenPath (pane) -> pane.splitDown.bind(pane)
       'pane:split-up': =>
-        @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
+        @splitOpenPath (pane) -> pane.splitUp.bind(pane)
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
 
@@ -129,20 +129,19 @@ class FuzzyFinderView extends SelectListView
       textEditor.setCursorBufferPosition(position)
       textEditor.moveToFirstCharacterOfLine()
 
-  splitOpenPath: (fn) ->
+  splitOpenPath: (splitFn) ->
     {filePath} = @getSelectedItem() ? {}
+    lineNumber = @getLineNumber()
 
     if @isQueryALineJump() and editor = atom.workspace.getActiveTextEditor()
-      lineNumber = @getLineNumber()
       pane = atom.workspace.getActivePane()
-      fn(pane, pane.copyActiveItem())
+      splitFn(pane)(copyActiveItem: true)
       @moveToLine(lineNumber)
     else if not filePath
       return
     else if pane = atom.workspace.getActivePane()
-      atom.project.open(filePath).then (editor) =>
-        fn(pane, editor)
-        @moveToLine(lineNumber)
+      splitFn(pane)()
+      @openPath(filePath, lineNumber)
     else
       @openPath(filePath, lineNumber)
 
