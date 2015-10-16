@@ -3,17 +3,19 @@ module.exports =
     ignoredNames:
       type: 'array'
       default: []
+      description: 'List of string glob patterns. Files and directories matching these patterns will be ignored. This list is merged with the list defined by the core `Ignored Names` config setting. Example: `.git, ._*, Thumbs.db`.'
     searchAllPanes:
-      description: "Whether to search through all open panes or just the active one. Holding shift inverts this setting."
       type: 'boolean'
       default: false
+      description: 'Search all panes when opening files. If disabled, only the active pane is searched. Holding `shift` inverts this setting.'
     preserveLastSearch:
       type: 'boolean'
       default: false
+      description: 'Remeber the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened.'
     useAlternateScoring:
-      description: "Prefers run of consecutive characters, acronyms and start of words. (Experimental)"
       type: 'boolean'
       default: false
+      description: 'Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)'
 
   activate: (state) ->
     @active = true
