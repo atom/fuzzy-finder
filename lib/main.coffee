@@ -64,18 +64,21 @@ module.exports =
       ProjectView  = require './project-view'
       @projectView = new ProjectView(@projectPaths)
       @projectPaths = null
+    @setTextToPrevious(@projectView)
     @projectView
 
   createGitStatusView: ->
     unless @gitStatusView?
       GitStatusView  = require './git-status-view'
       @gitStatusView = new GitStatusView()
+    @setTextToPrevious(@gitStatusView)
     @gitStatusView
 
   createBufferView: ->
     unless @bufferView?
       BufferView = require './buffer-view'
       @bufferView = new BufferView()
+    @setTextToPrevious(@bufferView)
     @bufferView
 
   startLoadPathsTask: ->
@@ -89,6 +92,13 @@ module.exports =
     @projectPathsSubscription = atom.project.onDidChangePaths =>
       @projectPaths = null
       @stopLoadPathsTask()
+
+
+  setTextToPrevious: (fuzzyFinderView)->
+    previous = @previous
+    @previous = fuzzyFinderView
+    return unless previous and previous isnt @previous
+    fuzzyFinderView.setText(previous.getText())
 
   stopLoadPathsTask: ->
     @projectPathsSubscription?.dispose()
