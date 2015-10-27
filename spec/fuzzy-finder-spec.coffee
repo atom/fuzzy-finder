@@ -870,6 +870,28 @@ describe 'FuzzyFinder', ->
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
+  describe "preserve search between finder views", ->
+    it "should preserve search between views", ->
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      projectView.filterEditorView.getModel().setText("i'll be back")
+
+      dispatchCommand('toggle-buffer-finder')
+      expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+      expect(bufferView.filterEditorView.getText()).toBe "i'll be back"
+    it "shouldn't preserve search if previous view is not being shown", ->
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      projectView.filterEditorView.getModel().setText("i'll be back")
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+
+      dispatchCommand('toggle-buffer-finder')
+      expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+      expect(bufferView.filterEditorView.getText()).toBe ""
+
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
