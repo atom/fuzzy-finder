@@ -16,6 +16,10 @@ module.exports =
       type: 'boolean'
       default: false
       description: 'Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)'
+    preserveSearchBetweenViews:
+      type: 'boolean'
+      default: false
+      description: 'Remember the typed query when switching between different file finder, buffer finder and git status finder.'
 
   activate: (state) ->
     @active = true
@@ -95,6 +99,7 @@ module.exports =
 
 
   setTextToPrevious: (fuzzyFinderView)->
+    return unless atom.config.get('fuzzy-finder.preserveSearchBetweenViews')
     previous = @previous
     @previous = fuzzyFinderView
     return unless previous and previous isnt @previous
