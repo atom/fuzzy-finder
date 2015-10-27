@@ -11,7 +11,7 @@ module.exports =
     preserveLastSearch:
       type: 'boolean'
       default: false
-      description: 'Remeber the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened.'
+      description: 'Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened.'
     useAlternateScoring:
       type: 'boolean'
       default: false
