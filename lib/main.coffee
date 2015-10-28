@@ -98,7 +98,7 @@ module.exports =
       @stopLoadPathsTask()
 
 
-  setTextToPrevious: (fuzzyFinderView)->
+  setTextToPrevious: (fuzzyFinderView) ->
     return unless atom.config.get('fuzzy-finder.preserveSearchBetweenViews')
     previous = @previous
     @previous = fuzzyFinderView

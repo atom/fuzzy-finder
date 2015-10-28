@@ -238,10 +238,10 @@ class FuzzyFinderView extends SelectListView
   setItems: (filePaths) ->
     super(@projectRelativePathsForFilePaths(filePaths))
 
-  setText: (searchText)->
+  setText: (searchText) ->
     @filterEditorView.setText(searchText)
 
-  getText: ()->
+  getText: ->
     @filterEditorView.getText()
 
   projectRelativePathsForFilePaths: (filePaths) ->
