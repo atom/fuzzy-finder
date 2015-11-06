@@ -130,6 +130,7 @@ describe 'FuzzyFinder', ->
           expect(PathLoader.startTask.callCount).toBe 1
 
         it "puts the last active path first", ->
+          waitsForPromise -> atom.workspace.open 'dir/a'
           waitsForPromise -> atom.workspace.open 'sample.txt'
           waitsForPromise -> atom.workspace.open 'sample.js'
 
@@ -139,7 +140,8 @@ describe 'FuzzyFinder', ->
 
           runs ->
             expect(projectView.list.find("li:eq(0)").text()).toContain('sample.txt')
-            expect(projectView.list.find("li:eq(1)").text()).toContain('sample.html')
+            expect(projectView.list.find("li:eq(1)").text()).toContain('dir/a')
+            expect(projectView.list.find("li:eq(2)").text()).toContain('sample.html')
 
         describe "symlinks on #darwin or #linux", ->
           [junkDirPath, junkFilePath] = []

@@ -87,32 +87,23 @@ class ProjectView extends FuzzyFinderView
           @loadingBadge.text(humanize.intComma(pathsFound))
 
   projectRelativePathsForFilePaths: ->
-    projectRelativePaths = super
+    @getLastOpenedPaths().concat super
 
-    if lastOpenedPath = @getLastOpenedPath()
-      for {filePath}, index in projectRelativePaths
-        if filePath is lastOpenedPath
-          [entry] = projectRelativePaths.splice(index, 1)
-          projectRelativePaths.unshift(entry)
-          break
-
-    projectRelativePaths
-
-  getLastOpenedPath: ->
+  getLastOpenedPaths: ->
     activePath = atom.workspace.getActivePaneItem()?.getPath?()
+    editors = atom.workspace.getTextEditors()
 
-    lastOpenedEditor = null
+    recentEditors = editors.filter (editor) -> activePath isnt editor.getPath()
 
-    for editor in atom.workspace.getTextEditors()
+    recentEditors.sort (editorA, editorB) ->
+      editorB.lastOpened - editorA.lastOpened
+
+    paths = recentEditors.map (editor) ->
       filePath = editor.getPath()
-      continue unless filePath
-      continue if activePath is filePath
+      [rootPath, projectRelativePath] = atom.project.relativizePath(filePath)
+      {filePath, projectRelativePath}
 
-      lastOpenedEditor ?= editor
-      if editor.lastOpened > lastOpenedEditor.lastOpened
-        lastOpenedEditor = editor
-
-    lastOpenedEditor?.getPath()
+    paths
 
   destroy: ->
     @loadPathsTask?.terminate()
