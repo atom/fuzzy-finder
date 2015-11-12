@@ -4,18 +4,20 @@ module.exports =
   startTask: (callback) ->
     projectPaths = []
     taskPath = require.resolve('./load-paths-handler')
-    followSymlinks = atom.config.get 'core.followSymlinks'
+
     ignoredNames = atom.config.get('fuzzy-finder.ignoredNames') ? []
     ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
-    ignoreVcsIgnores = atom.config.get('core.excludeVcsIgnoredPaths')
+
+    options =
+      excludeVcsIgnores: atom.config.get 'core.excludeVcsIgnoredPaths',
+      exclusions: ignoredNames,
+      follow: atom.config.get 'core.followSymlinks',
 
     task = Task.once(
       taskPath,
       atom.project.getPaths(),
-      followSymlinks,
-      ignoreVcsIgnores,
-      ignoredNames, ->
-        callback(projectPaths)
+      options,
+      -> callback(projectPaths)
     )
 
     task.on 'load-paths:paths-found', (paths) ->
