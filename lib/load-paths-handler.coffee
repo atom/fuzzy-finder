@@ -1,6 +1,7 @@
 async = require 'async'
 path = require 'path'
 _ = require 'underscore-plus'
+GitUtils = require 'git-utils'
 {PathSearcher, PathScanner, search} = require 'scandal'
 
 module.exports = (rootPaths, options={}) ->
@@ -14,6 +15,11 @@ module.exports = (rootPaths, options={}) ->
       options2 = _.extend {}, options,
         inclusions: processPaths(rootPath, options.inclusions)
         globalExclusions: processPaths(rootPath, options.globalExclusions)
+
+      if options.ignoreProjectParentVcsIgnores
+        repo = GitUtils.open(rootPath)
+        if repo and '' != repo.relativize(rootPath)
+          options2.excludeVcsIgnores = false
 
       scanner = new PathScanner(rootPath, options2)
 
