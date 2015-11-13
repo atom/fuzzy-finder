@@ -5,7 +5,8 @@ _ = require 'underscore-plus'
 
 module.exports = (rootPaths, options={}) ->
   pathsSearched = 0
-  PATHS_COUNTER_SEARCHED_CHUNK = 50
+  PATHS_COUNTER_SEARCHED_CHUNK = 100
+  emittedPaths = new Set
 
   async.each(
     rootPaths,
@@ -19,8 +20,10 @@ module.exports = (rootPaths, options={}) ->
       paths = []
 
       scanner.on 'path-found', (path) ->
-        paths.push path
-        pathsSearched++
+        unless emittedPaths.has(path)
+          paths.push path
+          emittedPaths.add(path)
+          pathsSearched++
         if pathsSearched % PATHS_COUNTER_SEARCHED_CHUNK is 0
           emit('load-paths:paths-found', paths)
           paths = []
