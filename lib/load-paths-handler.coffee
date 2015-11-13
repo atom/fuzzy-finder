@@ -18,7 +18,7 @@ module.exports = (rootPaths, options={}) ->
 
       if options.ignoreProjectParentVcsIgnores
         repo = GitUtils.open(rootPath)
-        if repo and '' != repo.relativize(rootPath)
+        if repo and '' isnt repo.relativize(rootPath)
           options2.excludeVcsIgnores = false
 
       scanner = new PathScanner(rootPath, options2)
