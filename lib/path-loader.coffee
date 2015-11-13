@@ -12,6 +12,7 @@ module.exports =
       excludeVcsIgnores: atom.config.get 'core.excludeVcsIgnoredPaths'
       exclusions: ignoredNames
       follow: atom.config.get 'core.followSymlinks'
+      includeHidden: true
       ignoreProjectParentVcsIgnores: true
 
     task = Task.once(
