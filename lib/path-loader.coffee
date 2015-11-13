@@ -9,9 +9,9 @@ module.exports =
     ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
 
     options =
-      excludeVcsIgnores: atom.config.get 'core.excludeVcsIgnoredPaths',
-      exclusions: ignoredNames,
-      follow: atom.config.get 'core.followSymlinks',
+      excludeVcsIgnores: atom.config.get 'core.excludeVcsIgnoredPaths'
+      exclusions: ignoredNames
+      follow: atom.config.get 'core.followSymlinks'
 
     task = Task.once(
       taskPath,
