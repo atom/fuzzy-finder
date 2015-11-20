@@ -18,3 +18,8 @@
 
 '.fuzzy-finder atom-text-editor[mini]':
   'shift-enter': 'fuzzy-finder:invert-confirm'
+
+'.vim-mode:not(.insert-mode)':
+  ', f f': 'fuzzy-finder:toggle-file-finder'
+  ', f b': 'fuzzy-finder:toggle-buffer-finder'
+  ', f g': 'fuzzy-finder:toggle-git-status-finder'
