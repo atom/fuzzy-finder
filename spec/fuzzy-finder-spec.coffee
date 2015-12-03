@@ -595,7 +595,7 @@ describe 'FuzzyFinder', ->
 
       it "passes the indexed paths into the project view when it is created", ->
         {projectPaths} = fuzzyFinder
-        expect(projectPaths.length).toBe 18
+        expect(projectPaths.length).toBe 30
         projectView = fuzzyFinder.createProjectView()
         expect(projectView.paths).toBe projectPaths
         expect(projectView.reloadPaths).toBe false
@@ -876,6 +876,7 @@ describe 'FuzzyFinder', ->
     beforeEach ->
       projectPath = atom.project.getDirectories()[0].resolve('git/working-dir')
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+      fs.moveSync(path.join(projectPath, 'another-repo', 'git.git'), path.join(projectPath, 'another-repo', '.git'))
       atom.project.setPaths([rootDir2, projectPath])
 
       gitDirectory = atom.project.getDirectories()[1]
@@ -996,3 +997,30 @@ describe 'FuzzyFinder', ->
 
           runs ->
             expect(projectView.list.find("li:contains(file.txt)")).toExist()
+
+      describe "when the project's path is a repository inside another repository", ->
+        beforeEach ->
+          ignoreFile = path.join(projectPath, '.gitignore')
+          fs.writeFileSync(ignoreFile, '*')
+          atom.project.setPaths([gitDirectory.resolve('another-repo')])
+
+          ignoreFile = path.join(gitDirectory.resolve('another-repo'), '.gitignore')
+          fs.writeFileSync(ignoreFile, 'd.txt')
+
+        it "excludes paths that are git ignored in the child repository", ->
+          dispatchCommand('toggle-file-finder')
+          projectView.setMaxItems(Infinity)
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            expect(projectView.list.find("li:contains(d.txt)")).not.toExist()
+
+        it "does not exclude the entire child repository if the parent repository is ignoring it", ->
+          dispatchCommand('toggle-file-finder')
+          projectView.setMaxItems(Infinity)
+
+          waitForPathsToDisplay(projectView)
+
+          runs ->
+            expect(projectView.list.find("li:contains(c.txt)")).toExist()
