@@ -18,3 +18,4 @@
 
 '.fuzzy-finder atom-text-editor[mini]':
   'shift-enter': 'fuzzy-finder:invert-confirm'
+  'shift-down': 'fuzzy-finder:confirm-and-advance'

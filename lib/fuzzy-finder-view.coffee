@@ -12,6 +12,7 @@ class FuzzyFinderView extends SelectListView
   projectRelativePaths: null
   subscriptions: null
   alternateScoring: false
+  remainAfterOpening: false
 
   initialize: ->
     super
@@ -31,10 +32,21 @@ class FuzzyFinderView extends SelectListView
         @splitOpenPath (pane) -> pane.splitUp.bind(pane)
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
+      'fuzzy-finder:confirm-and-advance': =>
+        @confirmSelectionAndRemain()
+        @selectNextItemView()
 
     @alternateScoring = atom.config.get 'fuzzy-finder.useAlternateScoring'
     @subscriptions.add atom.config.onDidChange 'fuzzy-finder.useAlternateScoring', ({newValue}) => @alternateScoring = newValue
 
+    # would be better to refactor
+    # https://github.com/atom/atom-space-pen-views/blob/master/src/select-list-view.coffee
+    # to provide a @filterEditorViewBlurred() method to override rather than doing this
+    @filterEditorView.off 'blur'
+    @filterEditorView.on 'blur', @filterEditorViewBlurred
+
+  filterEditorViewBlurred: (e) =>
+    @cancel() unless @cancelling or @remainAfterOpening
 
   getFilterKey: ->
     'projectRelativePath'
@@ -118,7 +130,12 @@ class FuzzyFinderView extends SelectListView
 
   openPath: (filePath, lineNumber, openOptions) ->
     if filePath
-      atom.workspace.open(filePath, openOptions).then => @moveToLine(lineNumber)
+      @remainAfterOpening = openOptions and openOptions.remainAfter
+      atom.workspace.open(filePath, openOptions).then =>
+        @moveToLine(lineNumber)
+        if @remainAfterOpening
+          @focusFilterEditor()
+          @remainAfterOpening = false
 
   moveToLine: (lineNumber=-1) ->
     return unless lineNumber >= 0
@@ -197,6 +214,10 @@ class FuzzyFinderView extends SelectListView
     item = @getSelectedItem()
     @confirmed(item, searchAllPanes: not atom.config.get('fuzzy-finder.searchAllPanes'))
 
+  confirmSelectionAndRemain: ->
+    item = @getSelectedItem()
+    @confirmed(item, remainAfter: true)
+
   confirmed: ({filePath}={}, openOptions) ->
     if atom.workspace.getActiveTextEditor() and @isQueryALineJump()
       lineNumber = @getLineNumber()
@@ -209,7 +230,7 @@ class FuzzyFinderView extends SelectListView
       setTimeout((=> @setError()), 2000)
     else
       lineNumber = @getLineNumber()
-      @cancel()
+      @cancel() unless openOptions and openOptions.remainAfter
       @openPath(filePath, lineNumber, openOptions)
 
   isQueryALineJump: ->
