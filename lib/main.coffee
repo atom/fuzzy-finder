@@ -16,6 +16,10 @@ module.exports =
       type: 'boolean'
       default: true
       description: 'Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)'
+    preserveSearchBetweenViews:
+      type: 'boolean'
+      default: false
+      description: 'Remember the typed query when switching between different file finder, buffer finder and git status finder.'
 
   activate: (state) ->
     @active = true
@@ -64,18 +68,21 @@ module.exports =
       ProjectView  = require './project-view'
       @projectView = new ProjectView(@projectPaths)
       @projectPaths = null
+    @setTextToPrevious(@projectView)
     @projectView
 
   createGitStatusView: ->
     unless @gitStatusView?
       GitStatusView  = require './git-status-view'
       @gitStatusView = new GitStatusView()
+    @setTextToPrevious(@gitStatusView)
     @gitStatusView
 
   createBufferView: ->
     unless @bufferView?
       BufferView = require './buffer-view'
       @bufferView = new BufferView()
+    @setTextToPrevious(@bufferView)
     @bufferView
 
   startLoadPathsTask: ->
@@ -89,6 +96,14 @@ module.exports =
     @projectPathsSubscription = atom.project.onDidChangePaths =>
       @projectPaths = null
       @stopLoadPathsTask()
+
+
+  setTextToPrevious: (fuzzyFinderView) ->
+    return unless atom.config.get('fuzzy-finder.preserveSearchBetweenViews')
+    previous = @previous
+    @previous = fuzzyFinderView
+    return unless previous and previous isnt @previous
+    fuzzyFinderView.setText(previous.getText())
 
   stopLoadPathsTask: ->
     @projectPathsSubscription?.dispose()

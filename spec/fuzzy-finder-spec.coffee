@@ -870,6 +870,44 @@ describe 'FuzzyFinder', ->
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
+  describe "preserve search between finder views", ->
+    it "shouldn't preserve search by default", ->
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      projectView.filterEditorView.getModel().setText("this shouldn't show up when we open git finder")
+
+      dispatchCommand('toggle-buffer-finder')
+      expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+      expect(bufferView.filterEditorView.getText()).toBe ""
+      
+    describe 'with configuration set', ->
+      beforeEach ->
+        atom.config.set("fuzzy-finder.preserveSearchBetweenViews", true)
+
+      it "should preserve search between views", ->
+        dispatchCommand('toggle-file-finder')
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        projectView.filterEditorView.getModel().setText("this should show up when we open git finder")
+
+        dispatchCommand('toggle-buffer-finder')
+        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+        expect(bufferView.filterEditorView.getText()).toBe "this should show up when we open git finder"
+
+      it "shouldn't preserve search if previous view is not being shown", ->
+        dispatchCommand('toggle-file-finder')
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        projectView.filterEditorView.getModel().setText "this shouldn't show up when we close file finder and open git finder"
+        dispatchCommand('toggle-file-finder')
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+
+        dispatchCommand('toggle-buffer-finder')
+        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+        expect(bufferView.filterEditorView.getText()).toBe ""
+
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
