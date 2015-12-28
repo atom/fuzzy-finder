@@ -1,31 +1,35 @@
 path = require 'path'
-{Point} = require 'atom'
-{$$, SelectListView} = require 'atom-space-pen-views'
+{Point, CompositeDisposable} = require 'atom'
+{$, $$, SelectListView} = require 'atom-space-pen-views'
 {repositoryForPath} = require './helpers'
 fs = require 'fs-plus'
-{match} = require 'fuzzaldrin'
+fuzzaldrin = require 'fuzzaldrin'
+fuzzaldrinPlus = require 'fuzzaldrin-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
   filePaths: null
   projectRelativePaths: null
   lastSearch: ''
+  subscriptions: null
+  alternateScoring: false
 
   initialize: ->
     super
 
     @addClass('fuzzy-finder')
     @setMaxItems(10)
+    @subscriptions = new CompositeDisposable
 
     atom.commands.add @element,
       'pane:split-left': =>
-        @splitOpenPath (pane, item) -> pane.splitLeft(items: [item])
+        @splitOpenPath (pane) -> pane.splitLeft.bind(pane)
       'pane:split-right': =>
-        @splitOpenPath (pane, item) -> pane.splitRight(items: [item])
+        @splitOpenPath (pane) -> pane.splitRight.bind(pane)
       'pane:split-down': =>
-        @splitOpenPath (pane, item) -> pane.splitDown(items: [item])
+        @splitOpenPath (pane) -> pane.splitDown.bind(pane)
       'pane:split-up': =>
-        @splitOpenPath (pane, item) -> pane.splitUp(items: [item])
+        @splitOpenPath (pane) -> pane.splitUp.bind(pane)
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
 
@@ -34,6 +38,9 @@ class FuzzyFinderView extends SelectListView
         @previewSelection()
       'core:move-up': =>
         @previewSelection()
+
+    @alternateScoring = atom.config.get 'fuzzy-finder.useAlternateScoring'
+    @subscriptions.add atom.config.onDidChange 'fuzzy-finder.useAlternateScoring', ({newValue}) => @alternateScoring = newValue
 
   getFilterKey: ->
     'projectRelativePath'
@@ -47,12 +54,18 @@ class FuzzyFinderView extends SelectListView
   destroy: ->
     @cancel()
     @panel?.destroy()
+    @subscriptions?.dispose()
+    @subscriptions = null
 
   viewForItem: ({filePath, projectRelativePath}) ->
 
     # Style matched characters in search results
     filterQuery = @getFilterQuery()
-    matches = match(projectRelativePath, filterQuery)
+
+    if @alternateScoring
+      matches = fuzzaldrinPlus.match(projectRelativePath, filterQuery)
+    else
+      matches = fuzzaldrin.match(projectRelativePath, filterQuery)
 
     $$ ->
 
@@ -127,20 +140,19 @@ class FuzzyFinderView extends SelectListView
       textEditor.setCursorBufferPosition(position)
       textEditor.moveToFirstCharacterOfLine()
 
-  splitOpenPath: (fn) ->
+  splitOpenPath: (splitFn) ->
     {filePath} = @getSelectedItem() ? {}
+    lineNumber = @getLineNumber()
 
     if @isQueryALineJump() and editor = atom.workspace.getActiveTextEditor()
-      lineNumber = @getLineNumber()
       pane = atom.workspace.getActivePane()
-      fn(pane, pane.copyActiveItem())
+      splitFn(pane)(copyActiveItem: true)
       @moveToLine(lineNumber)
     else if not filePath
       return
     else if pane = atom.workspace.getActivePane()
-      atom.project.open(filePath).done (editor) =>
-        fn(pane, editor)
-        @moveToLine(lineNumber)
+      splitFn(pane)()
+      @openPath(filePath, lineNumber)
     else
       @openPath(filePath, lineNumber)
 
@@ -148,6 +160,8 @@ class FuzzyFinderView extends SelectListView
     if @isQueryALineJump()
       @list.empty()
       @setError('Jump to line in active editor')
+    else if @alternateScoring
+      @populateAlternateList()
     else
       super
       @previewSelection() if not @reloadPaths
@@ -158,6 +172,41 @@ class FuzzyFinderView extends SelectListView
       if filePath
         lineNumber = @getLineNumber()
         @openPath(filePath, lineNumber, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'), activatePane: false}, true)
+
+
+  # Unfortunately  SelectListView do not allow inheritor to handle their own filtering.
+  # That would be required to use external knowledge, for example: give a bonus to recent files.
+  #
+  # Or, in this case: test an alternate scoring algorithm.
+  #
+  # This is modified copy/paste from SelectListView#populateList, require jQuery!
+  # Should be temporary
+
+  populateAlternateList: ->
+
+    return unless @items?
+
+    filterQuery = @getFilterQuery()
+    if filterQuery.length
+      filteredItems = fuzzaldrinPlus.filter(@items, filterQuery, key: @getFilterKey())
+    else
+      filteredItems = @items
+
+    @list.empty()
+    if filteredItems.length
+      @setError(null)
+
+      for i in [0...Math.min(filteredItems.length, @maxItems)]
+        item = filteredItems[i]
+        itemView = $(@viewForItem(item))
+        itemView.data('select-list-item', item)
+        @list.append(itemView)
+
+      @selectItemView(@list.find('li:first'))
+    else
+      @setError(@getEmptyMessage(@items.length, filteredItems.length))
+
+
 
   confirmSelection: ->
     item = @getSelectedItem()
