@@ -7,6 +7,8 @@ _ = require 'underscore-plus'
 
 PathsChunkSize = 100
 
+emittedPaths = new Set
+
 class PathLoader
   constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
     @paths = []
@@ -31,7 +33,10 @@ class PathLoader
         return true if ignoredName.match(relativePath)
 
   pathLoaded: (loadedPath, done) ->
-    @paths.push(loadedPath) unless @isIgnored(loadedPath)
+    unless @isIgnored(loadedPath) or emittedPaths.has(loadedPath)
+      @paths.push(loadedPath)
+      emittedPaths.add(loadedPath)
+
     if @paths.length is PathsChunkSize
       @flushPaths()
     done()
