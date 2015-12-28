@@ -502,15 +502,15 @@ describe 'FuzzyFinder', ->
           editor = atom.workspace.getActiveTextEditor()
           projectViewElement = workspaceElement.querySelector('.fuzzy-finder')
           expect(projectView.getSelectedItem().filePath).toBe projectView.filePaths[0]
-          expect(projectView.previewSelection.callCount).toBe 1
+          expect(projectView.previewSelection.callCount).toBe 0
 
           atom.commands.dispatch(projectViewElement, 'core:move-down')
           expect(projectView.getSelectedItem().filePath).toBe projectView.filePaths[1]
-          expect(projectView.previewSelection.callCount).toBe 2
+          expect(projectView.previewSelection.callCount).toBe 1
 
           atom.commands.dispatch(projectViewElement, 'core:move-up')
           expect(projectView.getSelectedItem().filePath).toBe projectView.filePaths[0]
-          expect(projectView.previewSelection.callCount).toBe 3
+          expect(projectView.previewSelection.callCount).toBe 2
 
     describe "when the fuzzy finder is cancelled", ->
       describe "when an editor is open", ->
