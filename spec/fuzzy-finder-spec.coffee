@@ -913,7 +913,7 @@ describe 'FuzzyFinder', ->
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
-  fdescribe "Git integration", ->
+  describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
     beforeEach ->
@@ -986,8 +986,8 @@ describe 'FuzzyFinder', ->
           runs ->
             dispatchCommand('toggle-buffer-finder')
 
-          waitsFor ->
-            bufferView.find('.status.status-modified').length is 1
+          waitsFor 'the modified item', ->
+            bufferView.find('.status.status-modified').length > 0
 
           runs ->
             expect(bufferView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
@@ -1003,7 +1003,7 @@ describe 'FuzzyFinder', ->
           runs ->
             dispatchCommand('toggle-buffer-finder')
 
-          waitsFor ->
+          waitsFor 'the added item', ->
             bufferView.find('.status.status-added').length > 0
 
           runs ->
