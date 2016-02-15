@@ -923,8 +923,7 @@ describe 'FuzzyFinder', ->
 
       gitDirectory = atom.project.getDirectories()[1]
       gitRepository = atom.project.getRepositories()[1].async
-      waitsFor ->
-        not gitRepository._isRefreshing()
+      waitsForPromise -> gitRepository._refreshingPromise
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
@@ -958,7 +957,7 @@ describe 'FuzzyFinder', ->
 
         runs ->
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
-          expect(gitStatusView.find('.status.status-added').length).toBe 3
+          expect(gitStatusView.find('.status.status-added').length).toBe 1
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
