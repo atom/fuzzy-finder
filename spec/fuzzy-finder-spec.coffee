@@ -953,7 +953,8 @@ describe 'FuzzyFinder', ->
         dispatchCommand('toggle-git-status-finder')
         expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
 
-        waitForPathsToDisplay gitStatusView
+        waitsFor ->
+          gitStatusView.find('.file').length == 4
 
         runs ->
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
