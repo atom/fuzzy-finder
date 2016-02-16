@@ -954,7 +954,7 @@ describe 'FuzzyFinder', ->
         expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
 
         waitsFor ->
-          gitStatusView.find('.file').length == 4
+          gitStatusView.find('.file').length is 4
 
         runs ->
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
