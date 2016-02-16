@@ -923,7 +923,7 @@ describe 'FuzzyFinder', ->
 
       gitDirectory = atom.project.getDirectories()[1]
       gitRepository = atom.project.getRepositories()[1].async
-      waitsForPromise -> gitRepository._refreshingPromise
+      waitsForPromise -> gitRepository.refreshStatus()
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
