@@ -957,7 +957,7 @@ describe 'FuzzyFinder', ->
 
         runs ->
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
-          expect(gitStatusView.find('.status.status-added').length).toBe 1
+          expect(gitStatusView.find('.status.status-added').length).toBe 3
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
