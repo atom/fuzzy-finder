@@ -8,8 +8,6 @@ fuzzaldrinPlus = require 'fuzzaldrin-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
-  filePaths: null
-  projectRelativePaths: null
   subscriptions: null
   alternateScoring: false
 
@@ -55,7 +53,7 @@ class FuzzyFinderView extends SelectListView
     @subscriptions?.dispose()
     @subscriptions = null
 
-  viewForItem: ({filePath, projectRelativePath}) ->
+  viewForItem: ({filePath, projectRelativePath, status}) ->
 
     # Style matched characters in search results
     filterQuery = @getFilterQuery()
@@ -89,8 +87,7 @@ class FuzzyFinderView extends SelectListView
 
 
       @li class: 'two-lines', =>
-        if (repo = repositoryForPath(filePath))?
-          status = repo.getCachedPathStatus(filePath)
+        if (repo = repositoryForPath(filePath))? and status?
           if repo.isStatusNew(status)
             @div class: 'status status-added icon icon-diff-added'
           else if repo.isStatusModified(status)
@@ -236,21 +233,22 @@ class FuzzyFinderView extends SelectListView
       parseInt(query[colon+1..]) - 1
 
   setItems: (filePaths) ->
-    super(@projectRelativePathsForFilePaths(filePaths))
+    @dataForFilePaths(filePaths).then (data) =>
+      super(data)
 
-  projectRelativePathsForFilePaths: (filePaths) ->
-    # Don't regenerate project relative paths unless the file paths have changed
-    if filePaths isnt @filePaths
-      projectHasMultipleDirectories = atom.project.getDirectories().length > 1
+  dataForFilePaths: (filePaths) ->
+    projectHasMultipleDirectories = atom.project.getDirectories().length > 1
 
-      @filePaths = filePaths
-      @projectRelativePaths = @filePaths.map (filePath) ->
-        [rootPath, projectRelativePath] = atom.project.relativizePath(filePath)
-        if rootPath and projectHasMultipleDirectories
-          projectRelativePath = path.join(path.basename(rootPath), projectRelativePath)
-        {filePath, projectRelativePath}
-
-    @projectRelativePaths
+    promises = filePaths.map (filePath) ->
+      [rootPath, projectRelativePath] = atom.project.relativizePath(filePath)
+      if rootPath and projectHasMultipleDirectories
+        projectRelativePath = path.join(path.basename(rootPath), projectRelativePath)
+      if repo = repositoryForPath(filePath)
+        repo.getCachedPathStatus(filePath).then (status) ->
+          {filePath, projectRelativePath, status}
+      else
+        Promise.resolve({filePath, projectRelativePath})
+    Promise.all(promises)
 
   show: ->
     @storeFocusedElement()
