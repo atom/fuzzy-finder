@@ -913,7 +913,7 @@ describe 'FuzzyFinder', ->
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
-  fdescribe "Git integration", ->
+  describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
     beforeEach ->
@@ -925,7 +925,7 @@ describe 'FuzzyFinder', ->
       gitRepository = atom.project.getRepositories()[1].async
       waitsForPromise -> gitRepository.refreshStatus()
 
-    fdescribe "git-status-finder behavior", ->
+    describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
