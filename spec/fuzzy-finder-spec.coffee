@@ -913,7 +913,7 @@ describe 'FuzzyFinder', ->
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
-  describe "Git integration", ->
+  fdescribe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
     beforeEach ->
@@ -925,7 +925,7 @@ describe 'FuzzyFinder', ->
       gitRepository = atom.project.getRepositories()[1].async
       waitsForPromise -> gitRepository.refreshStatus()
 
-    describe "git-status-finder behavior", ->
+    fdescribe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
@@ -937,6 +937,9 @@ describe 'FuzzyFinder', ->
           originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
+
+          newPath = atom.project.getDirectories()[1].resolve('newsample.js')
+          fs.writeFileSync(newPath, '')
 
         waitsForPromise ->
           gitRepository.refreshStatusForPath(originalPath)
@@ -953,10 +956,11 @@ describe 'FuzzyFinder', ->
         dispatchCommand('toggle-git-status-finder')
         expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
 
-        waitsFor ->
-          gitStatusView.find('.file').length is 4
+        waitForPathsToDisplay gitStatusView
 
         runs ->
+          console.log(projectPath)
+          console.log(atom.project.getRepositories()[1].async.getCachedPathStatuses())
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
           expect(gitStatusView.find('.status.status-added').length).toBe 3
 
