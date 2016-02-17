@@ -960,7 +960,7 @@ describe 'FuzzyFinder', ->
 
         runs ->
           console.log(projectPath)
-          console.log(atom.project.getRepositories()[1].async.getCachedPathStatuses())
+          console.log(_.keys(atom.project.getRepositories()[1].async.getCachedPathStatuses()))
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
           expect(gitStatusView.find('.status.status-added').length).toBe 3
 
