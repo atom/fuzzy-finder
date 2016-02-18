@@ -942,14 +942,7 @@ describe 'FuzzyFinder', ->
           fs.writeFileSync(newPath, '')
 
         waitsForPromise ->
-          gitRepository.refreshStatusForPath(originalPath)
-
-        runs ->
-          newPath = atom.project.getDirectories()[1].resolve('newsample.js')
-          fs.writeFileSync(newPath, '')
-
-        waitsForPromise ->
-          gitRepository.refreshStatusForPath(newPath)
+          gitRepository.refreshStatus()
 
       it "displays all new and modified paths", ->
         expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
@@ -959,8 +952,6 @@ describe 'FuzzyFinder', ->
         waitForPathsToDisplay gitStatusView
 
         runs ->
-          console.log(projectPath)
-          console.log(_.keys(atom.project.getRepositories()[1].async.getCachedPathStatuses()))
           expect(gitStatusView.find('.status.status-modified').length).toBe 1
           expect(gitStatusView.find('.status.status-added').length).toBe 3
 
