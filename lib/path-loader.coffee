@@ -3,7 +3,7 @@ fs = require 'fs-plus'
 
 module.exports =
   startTask: (callback) ->
-    projectPaths = []
+    results = []
     taskPath = require.resolve('./load-paths-handler')
     followSymlinks = atom.config.get 'core.followSymlinks'
     ignoredNames = atom.config.get('fuzzy-finder.ignoredNames') ? []
@@ -17,10 +17,10 @@ module.exports =
       followSymlinks,
       ignoreVcsIgnores,
       ignoredNames, ->
-        callback(projectPaths)
+        callback(results)
     )
 
     task.on 'load-paths:paths-found', (paths) ->
-      projectPaths.push(paths...)
+      results.push(paths...)
 
     task
