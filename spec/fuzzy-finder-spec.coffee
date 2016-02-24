@@ -148,6 +148,7 @@ describe 'FuzzyFinder', ->
 
         describe "symlinks on #darwin or #linux", ->
           [junkDirPath, junkFilePath] = []
+
           beforeEach ->
             junkDirPath = fs.realpathSync(temp.mkdirSync('junk-1'))
             junkFilePath = path.join(junkDirPath, 'file.txt')
@@ -165,6 +166,19 @@ describe 'FuzzyFinder', ->
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
 
             fs.unlinkSync(brokenFilePath)
+
+          it "indexes project paths that are symlinks", ->
+            symlinkProjectPath = path.join(junkDirPath, 'root-dir-symlink')
+            fs.symlinkSync(atom.project.getPaths()[0], symlinkProjectPath)
+
+            atom.project.setPaths([symlinkProjectPath])
+
+            dispatchCommand('toggle-file-finder')
+
+            waitForPathsToDisplay(projectView)
+
+            runs ->
+              expect(projectView.list.find("li:contains(sample.txt)")).toExist()
 
           it "includes symlinked file paths", ->
             dispatchCommand('toggle-file-finder')
