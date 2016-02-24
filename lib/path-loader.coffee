@@ -1,3 +1,4 @@
+fs = require 'fs-plus'
 {Task} = require 'atom'
 
 module.exports =
@@ -8,10 +9,11 @@ module.exports =
     ignoredNames = atom.config.get('fuzzy-finder.ignoredNames') ? []
     ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
     ignoreVcsIgnores = atom.config.get('core.excludeVcsIgnoredPaths')
+    projectPaths = atom.project.getPaths().map((path) => fs.realpathSync(path))
 
     task = Task.once(
       taskPath,
-      atom.project.getPaths(),
+      projectPaths,
       followSymlinks,
       ignoreVcsIgnores,
       ignoredNames, ->
