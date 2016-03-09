@@ -96,6 +96,7 @@ class ProjectView extends FuzzyFinderView
             [entry] = data.splice(index, 1)
             data.unshift(entry)
             return data
+        data
 
     dataPromise
 
