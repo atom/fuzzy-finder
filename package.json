@@ -39,6 +39,11 @@
       "default": false,
       "description": "Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened."
     },
+    "searchSelectedText": {
+      "type": "boolean",
+      "default": false,
+      "description": "When fuzzy finder opens, initialize it with the text selected in the active tab."
+    },
     "useAlternateScoring": {
       "type": "boolean",
       "default": true,
