@@ -19,13 +19,13 @@ class FuzzyFinderView extends SelectListView
     @subscriptions = new CompositeDisposable
 
     atom.commands.add @element,
-      'pane:split-left': =>
+      'pane:split-left-and-copy-active-item': =>
         @splitOpenPath (pane) -> pane.splitLeft.bind(pane)
-      'pane:split-right': =>
+      'pane:split-right-and-copy-active-item': =>
         @splitOpenPath (pane) -> pane.splitRight.bind(pane)
-      'pane:split-down': =>
+      'pane:split-down-and-copy-active-item': =>
         @splitOpenPath (pane) -> pane.splitDown.bind(pane)
-      'pane:split-up': =>
+      'pane:split-up-and-copy-active-item': =>
         @splitOpenPath (pane) -> pane.splitUp.bind(pane)
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
