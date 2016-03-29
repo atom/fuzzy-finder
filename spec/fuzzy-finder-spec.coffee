@@ -658,7 +658,7 @@ describe 'FuzzyFinder', ->
       filePath = null
       runs ->
         {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
+        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left-and-copy-active-item'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -681,7 +681,7 @@ describe 'FuzzyFinder', ->
       filePath = null
       runs ->
         {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-right'
+        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-right-and-copy-active-item'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -704,7 +704,7 @@ describe 'FuzzyFinder', ->
       filePath = null
       runs ->
         {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-up'
+        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-up-and-copy-active-item'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -727,7 +727,7 @@ describe 'FuzzyFinder', ->
       filePath = null
       runs ->
         {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-down'
+        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-down-and-copy-active-item'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -897,7 +897,7 @@ describe 'FuzzyFinder', ->
           expect(bufferView.list.children('li').length).toBe 0
 
           spyOn(bufferView, 'moveToLine').andCallThrough()
-          atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
+          atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left-and-copy-active-item'
 
         waitsFor ->
           bufferView.moveToLine.callCount > 0
