@@ -18,15 +18,24 @@ class FuzzyFinderView extends SelectListView
     @setMaxItems(10)
     @subscriptions = new CompositeDisposable
 
+    splitLeft = => @splitOpenPath (pane) -> pane.splitLeft.bind(pane)
+    splitRight = => @splitOpenPath (pane) -> pane.splitRight.bind(pane)
+    splitUp = => @splitOpenPath (pane) -> pane.splitUp.bind(pane)
+    splitDown = => @splitOpenPath (pane) -> pane.splitDown.bind(pane)
+
     atom.commands.add @element,
-      'pane:split-left': =>
-        @splitOpenPath (pane) -> pane.splitLeft.bind(pane)
-      'pane:split-right': =>
-        @splitOpenPath (pane) -> pane.splitRight.bind(pane)
-      'pane:split-down': =>
-        @splitOpenPath (pane) -> pane.splitDown.bind(pane)
-      'pane:split-up': =>
-        @splitOpenPath (pane) -> pane.splitUp.bind(pane)
+      'pane:split-left': splitLeft
+      'pane:split-left-and-copy-active-item': splitLeft
+      'pane:split-left-and-move-active-item': splitLeft
+      'pane:split-right': splitRight
+      'pane:split-right-and-copy-active-item': splitRight
+      'pane:split-right-and-move-active-item': splitRight
+      'pane:split-up': splitUp
+      'pane:split-up-and-copy-active-item': splitUp
+      'pane:split-up-and-move-active-item': splitUp
+      'pane:split-down': splitDown
+      'pane:split-down-and-copy-active-item': splitDown
+      'pane:split-down-and-move-active-item': splitDown
       'fuzzy-finder:invert-confirm': =>
         @confirmInvertedSelection()
 
