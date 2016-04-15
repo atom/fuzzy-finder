@@ -86,19 +86,17 @@ class ProjectView extends FuzzyFinderView
           pathsFound += paths.length
           @loadingBadge.text(humanize.intComma(pathsFound))
 
-  dataForFilePaths: ->
-    dataPromise = super
+  projectRelativePathsForFilePaths: ->
+    projectRelativePaths = super
 
     if lastOpenedPath = @getLastOpenedPath()
-      dataPromise = dataPromise.then (data) ->
-        for {filePath}, index in data
-          if filePath is lastOpenedPath
-            [entry] = data.splice(index, 1)
-            data.unshift(entry)
-            return data
-        data
+      for {filePath}, index in projectRelativePaths
+        if filePath is lastOpenedPath
+          [entry] = projectRelativePaths.splice(index, 1)
+          projectRelativePaths.unshift(entry)
+          break
 
-    dataPromise
+    projectRelativePaths
 
   getLastOpenedPath: ->
     activePath = atom.workspace.getActivePaneItem()?.getPath?()
