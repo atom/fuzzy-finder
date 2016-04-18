@@ -8,6 +8,8 @@ fuzzaldrinPlus = require 'fuzzaldrin-plus'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
+  filePaths: null
+  filesPathsPromise: null
   subscriptions: null
   alternateScoring: false
 
@@ -246,18 +248,24 @@ class FuzzyFinderView extends SelectListView
       super(data)
 
   dataForFilePaths: (filePaths) ->
-    projectHasMultipleDirectories = atom.project.getDirectories().length > 1
+    # Don't regenerate project relative paths unless the file paths have changed
+    if filePaths isnt @filePaths
+      projectHasMultipleDirectories = atom.project.getDirectories().length > 1
 
-    promises = filePaths.map (filePath) ->
-      [rootPath, projectRelativePath] = atom.project.relativizePath(filePath)
-      if rootPath and projectHasMultipleDirectories
-        projectRelativePath = path.join(path.basename(rootPath), projectRelativePath)
-      if repo = repositoryForPath(filePath)
-        repo.getCachedPathStatus(filePath).then (status) ->
-          {filePath, projectRelativePath, status}
-      else
-        Promise.resolve({filePath, projectRelativePath})
-    Promise.all(promises)
+      @filePaths = filePaths
+
+      promises = filePaths.map (filePath) ->
+        [rootPath, projectRelativePath] = atom.project.relativizePath(filePath)
+        if rootPath and projectHasMultipleDirectories
+          projectRelativePath = path.join(path.basename(rootPath), projectRelativePath)
+        if repo = repositoryForPath(filePath)
+          repo.getCachedPathStatus(filePath).then (status) ->
+            {filePath, projectRelativePath, status}
+        else
+          Promise.resolve({filePath, projectRelativePath})
+      @filesPathsPromise = Promise.all(promises)
+
+    @filesPathsPromise
 
   show: ->
     @storeFocusedElement()
