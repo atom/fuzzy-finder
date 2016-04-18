@@ -951,6 +951,8 @@ describe 'FuzzyFinder', ->
       [originalText, originalPath, newPath] = []
 
       beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
         waitsForPromise ->
           atom.workspace.open(path.join(projectPath, 'a.txt'))
 
@@ -973,9 +975,11 @@ describe 'FuzzyFinder', ->
 
         waitForPathsToDisplay gitStatusView
 
-        runs ->
-          expect(gitStatusView.find('.status.status-modified').length).toBe 1
-          expect(gitStatusView.find('.status.status-added').length).toBe 3
+        waitsFor ->
+          gitStatusView.find('.status.status-modified').length is 1
+
+        waitsFor ->
+          gitStatusView.find('.status.status-added').length is 3
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
