@@ -64,8 +64,7 @@ class FuzzyFinderView extends SelectListView
     @subscriptions?.dispose()
     @subscriptions = null
 
-  viewForItem: ({filePath, projectRelativePath, status}) ->
-
+  viewForItem: ({filePath, projectRelativePath}) ->
     # Style matched characters in search results
     filterQuery = @getFilterQuery()
 
@@ -98,11 +97,15 @@ class FuzzyFinderView extends SelectListView
 
 
       @li class: 'two-lines', =>
-        if (repo = repositoryForPath(filePath))? and status?
-          if repo.isStatusNew(status)
-            @div class: 'status status-added icon icon-diff-added'
-          else if repo.isStatusModified(status)
-            @div class: 'status status-modified icon icon-diff-modified'
+        if (repo = repositoryForPath(filePath))?
+          id = encodeURIComponent("fuzzy-finder-#{filePath}")
+          @div class: 'status', id: id
+          repo.getCachedPathStatus(filePath).then (status) ->
+            statusNode = $(document.getElementById(id))
+            if statusNode? and repo.isStatusNew(status)
+              statusNode.addClass('status-added icon icon-diff-added')
+            else if statusNode? and repo.isStatusModified(status)
+              statusNode.addClass('status-modified icon icon-diff-modified')
 
         ext = path.extname(filePath)
         if fs.isReadmePath(filePath)
