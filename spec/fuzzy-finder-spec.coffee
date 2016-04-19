@@ -314,7 +314,7 @@ describe 'FuzzyFinder', ->
           expect(atom.views.getView(editor3)).toHaveFocus()
 
       describe "when the selected path is a directory", ->
-        it "leaves the the tree view open, doesn't open the path in the editor, and displays an error", ->
+        it "leaves the tree view open, doesn't open the path in the editor, and displays an error", ->
           jasmine.attachToDOM(workspaceElement)
           editorPath = atom.workspace.getActiveTextEditor().getPath()
           dispatchCommand('toggle-file-finder')
@@ -934,6 +934,60 @@ describe 'FuzzyFinder', ->
       expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
+
+  describe "search selected text", ->
+    it "searches text that is selected in the active text editor, when the config is set", ->
+      atom.config.set("fuzzy-finder.searchSelectedText", true)
+
+      waitsForPromise ->
+        # open a new tab and write "Hello world!!" in it
+        atom.workspace.open().then (editor) ->
+          editor.setText('Hello world!!')
+
+          # select "Hello"
+          editor.moveToFirstCharacterOfLine()
+          editor.selectWordsContainingCursors()
+
+          dispatchCommand('toggle-file-finder')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+          expect(projectView.filterEditorView.getText()).toBe 'Hello'
+
+    it "preserves last search when the config is set and the selection of text in the active text editor is cleared", ->
+      atom.config.set("fuzzy-finder.preserveLastSearch", true)
+      atom.config.set("fuzzy-finder.searchSelectedText", true)
+
+      waitsForPromise ->
+        # open a new tab and write "Hello world!!" in it
+        atom.workspace.open().then (editor) ->
+          editor.setText('Hello world!!')
+
+          dispatchCommand('toggle-file-finder')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+          projectView.filterEditorView.getModel().insertText('this should show up when we open the finder again after clearing all selections')
+
+          dispatchCommand('toggle-file-finder')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+
+          # select "Hello"
+          editor.moveToFirstCharacterOfLine()
+          editor.selectWordsContainingCursors()
+
+          dispatchCommand('toggle-file-finder')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+          expect(projectView.filterEditorView.getText()).toBe 'Hello'
+
+          dispatchCommand('toggle-file-finder')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+
+          # clear selection, "Hello" is no longer selcted
+          editor.getSelections().forEach((selection) -> selection.clear())
+
+          # the search text from the time before "Hello" was selected must be preserved
+          dispatchCommand('toggle-file-finder')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+          expect(projectView.filterEditorView.getText()).toBe 'this should show up when we open the finder again after clearing all selections'
+          expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up when we open the finder again after clearing all selections'
+
 
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []

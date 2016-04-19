@@ -50,7 +50,11 @@ class FuzzyFinderView extends SelectListView
 
   cancel: ->
     if atom.config.get('fuzzy-finder.preserveLastSearch')
-      lastSearch = @getFilterQuery()
+      if atom.config.get('fuzzy-finder.searchSelectedText') and @savedQuery?
+        lastSearch = @savedQuery
+        @savedQuery = null
+      else
+        lastSearch = @getFilterQuery()
       super
 
       @filterEditorView.setText(lastSearch)

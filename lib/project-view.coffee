@@ -10,6 +10,7 @@ class ProjectView extends FuzzyFinderView
   paths: null
   reloadPaths: true
   reloadAfterFirstLoad: false
+  savedQuery: null
 
   initialize: (@paths) ->
     super
@@ -61,6 +62,11 @@ class ProjectView extends FuzzyFinderView
       super
 
   populate: ->
+    if atom.config.get('fuzzy-finder.searchSelectedText') and (activeTextEditor = atom.workspace.getActiveTextEditor())
+      selectedText = activeTextEditor.getSelectedText()
+      if selectedText.length
+        @savedQuery = @filterEditorView.getText()
+        @filterEditorView.setText(selectedText)
     @setItems(@paths) if @paths?
 
     if atom.project.getPaths().length is 0
