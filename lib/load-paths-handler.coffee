@@ -46,7 +46,7 @@ class PathLoader
     @paths = []
 
   loadPath: (pathToLoad, done) ->
-    return done() if @isIgnored(pathToLoad)
+    return done() if @isIgnored(pathToLoad) and pathToLoad isnt @rootPath
     fs.lstat pathToLoad, (error, stats) =>
       return done() if error?
       if stats.isSymbolicLink()
