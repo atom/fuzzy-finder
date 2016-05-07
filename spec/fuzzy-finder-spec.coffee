@@ -935,6 +935,20 @@ describe 'FuzzyFinder', ->
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
 
+  dispatchCommandWithQuery = (command, query) ->
+    atom.commands.dispatch(workspaceElement, "fuzzy-finder:#{command}", query)
+
+  describe "accept query when toggling", ->
+    it "accepts query when toggling file-finder", ->
+      dispatchCommandWithQuery('toggle-file-finder', 'this should be my file search query right now')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      expect(projectView.filterEditorView.getText()).toBe 'this should be my file search query right now'
+
+    it "accepts query when toggling buffer-finder", ->
+      dispatchCommandWithQuery('toggle-buffer-finder', 'this should be my buffer search query right now')
+      expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+      expect(bufferView.filterEditorView.getText()).toBe 'this should be my buffer search query right now'
+
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
 
@@ -980,6 +994,11 @@ describe 'FuzzyFinder', ->
 
         waitsFor ->
           gitStatusView.find('.status.status-added').length is 3
+
+      it "accepts query when toggling git-status-finder", ->
+        dispatchCommandWithQuery('toggle-git-status-finder', 'this should be my git-status search query right now')
+        expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
+        expect(gitStatusView.filterEditorView.getText()).toBe 'this should be my git-status search query right now'
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []

@@ -47,11 +47,12 @@ class ProjectView extends FuzzyFinderView
     @disposables.add atom.config.onDidChange 'core.excludeVcsIgnoredPaths', =>
       @reloadPaths = true
 
-  toggle: ->
+  toggle: (query) ->
     if @panel?.isVisible()
       @cancel()
     else
       @populate()
+      @setFilterQuery(query) if query?
       @show()
 
   getEmptyMessage: (itemCount) ->
