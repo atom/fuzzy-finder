@@ -7,6 +7,7 @@ temp = require 'temp'
 wrench = require 'wrench'
 
 PathLoader = require '../lib/path-loader'
+DefaultFileIcons = require '../lib/default-file-icons'
 
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
@@ -632,7 +633,7 @@ describe 'FuzzyFinder', ->
 
       it "passes the indexed paths into the project view when it is created", ->
         {projectPaths} = fuzzyFinder
-        expect(projectPaths.length).toBe 18
+        expect(projectPaths.length).toBe 19
         projectView = fuzzyFinder.createProjectView()
         expect(projectView.paths).toBe projectPaths
         expect(projectView.reloadPaths).toBe false
@@ -934,6 +935,37 @@ describe 'FuzzyFinder', ->
       expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
       expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
       expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
+
+  describe "file icons", ->
+    fileIcons = new DefaultFileIcons
+
+    it "defaults to text", ->
+        
+      waitsForPromise ->
+        atom.workspace.open('sample.js')
+      
+      runs ->
+        dispatchCommand('toggle-buffer-finder')
+        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+        
+        bufferView.filterEditorView.getModel().insertText('js')
+        bufferView.populateList()
+        firstResult = bufferView.list.children('li').find('.primary-line')
+        expect(fileIcons.iconClassForPath(firstResult[0].dataset.path)).toBe 'icon-file-text'
+    
+    it "shows image icons", ->
+      
+      waitsForPromise ->
+        atom.workspace.open('sample.gif')
+      
+      runs ->
+        dispatchCommand('toggle-buffer-finder')
+        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+        
+        bufferView.filterEditorView.getModel().insertText('gif')
+        bufferView.populateList()
+        firstResult = bufferView.list.children('li').find('.primary-line')
+        expect(fileIcons.iconClassForPath(firstResult[0].dataset.path)).toBe 'icon-file-media'
 
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
