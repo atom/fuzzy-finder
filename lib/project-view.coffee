@@ -93,7 +93,7 @@ class ProjectView extends FuzzyFinderView
         @setLoading("Indexing project\u2026")
         @loadingBadge.text('0')
         pathsFound = 0
-        task.on 'load-paths:paths-found', (paths) =>
+        task?.on 'load-paths:paths-found', (paths) =>
           pathsFound += paths.length
           @loadingBadge.text(humanize.intComma(pathsFound))
 
