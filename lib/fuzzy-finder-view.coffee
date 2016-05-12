@@ -5,6 +5,7 @@ path = require 'path'
 fs = require 'fs-plus'
 fuzzaldrin = require 'fuzzaldrin'
 fuzzaldrinPlus = require 'fuzzaldrin-plus'
+FileIcons = require './file-icons'
 
 module.exports =
 class FuzzyFinderView extends SelectListView
@@ -107,24 +108,14 @@ class FuzzyFinderView extends SelectListView
             else if statusNode? and repo.isStatusModified(status)
               statusNode.addClass('status-modified icon icon-diff-modified')
 
-        ext = path.extname(filePath)
-        if fs.isReadmePath(filePath)
-          typeClass = 'icon-book'
-        else if fs.isCompressedExtension(ext)
-          typeClass = 'icon-file-zip'
-        else if fs.isImageExtension(ext)
-          typeClass = 'icon-file-media'
-        else if fs.isPdfExtension(ext)
-          typeClass = 'icon-file-pdf'
-        else if fs.isBinaryExtension(ext)
-          typeClass = 'icon-file-binary'
-        else
-          typeClass = 'icon-file-text'
+        typeClass = FileIcons.getService().iconClassForPath(filePath) or []
+        unless Array.isArray typeClass
+          typeClass = typeClass?.toString().split(/\s+/g)
 
         fileBasename = path.basename(filePath)
         baseOffset = projectRelativePath.length - fileBasename.length
 
-        @div class: "primary-line file icon #{typeClass}", 'data-name': fileBasename, 'data-path': projectRelativePath, -> highlighter(fileBasename, matches, baseOffset)
+        @div class: "primary-line file icon #{typeClass.join(' ')}", 'data-name': fileBasename, 'data-path': projectRelativePath, -> highlighter(fileBasename, matches, baseOffset)
         @div class: 'secondary-line path no-icon', -> highlighter(projectRelativePath, matches, 0)
 
   openPath: (filePath, lineNumber, openOptions) ->

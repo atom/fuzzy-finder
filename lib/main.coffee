@@ -1,3 +1,5 @@
+FileIcons = require './file-icons'
+
 module.exports =
   activate: (state) ->
     @active = true
@@ -29,8 +31,14 @@ module.exports =
       @gitStatusView.destroy()
       @gitStatusView = null
     @projectPaths = null
+    @fileIconsDisposable?.dispose()
     @stopLoadPathsTask()
     @active = false
+
+  consumeFileIcons: (service) ->
+    FileIcons.setService(service)
+    @fileIconsDisposable = service.onWillDeactivate ->
+      FileIcons.resetService()
 
   serialize: ->
     paths = {}
