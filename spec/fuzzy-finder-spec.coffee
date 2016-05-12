@@ -8,6 +8,15 @@ wrench = require 'wrench'
 
 PathLoader = require '../lib/path-loader'
 
+rmrf = (_path) ->
+  if fs.statSync(_path).isDirectory()
+    _.each(fs.readdirSync(_path), (child) ->
+      rmrf(path.join(_path, child))
+      )
+    fs.rmdirSync(_path)
+  else
+    fs.unlinkSync(_path)
+
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
   [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
@@ -289,6 +298,21 @@ describe 'FuzzyFinder', ->
 
           runs ->
             expect(projectView.list.children('li').length).toBe 0
+
+    describe "when a project's root path is unlinked", ->
+      beforeEach ->
+        rmrf(rootDir1) if fs.existsSync(rootDir1)
+        rmrf(rootDir2) if fs.existsSync(rootDir2)
+
+      it "posts an error notification", ->
+        spyOn(atom.notifications, 'addError')
+        dispatchCommand('toggle-file-finder')
+        waitsFor ->
+          atom.workspace.panelForItem(projectView).isVisible()
+        runs ->
+          expect(atom.notifications.addError).toHaveBeenCalled()
+
+
 
     describe "when a path selection is confirmed", ->
       it "opens the file associated with that path in that split", ->
