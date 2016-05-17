@@ -5,6 +5,9 @@ Quickly find and open files using `cmd-t`.
   * `cmd-t` or `cmd-p` to open the file finder
   * `cmd-b` to open the list of open buffers
   * `cmd-shift-b` to open the list of Git modified and untracked files
+
+When opening a file, you can control the behavior.
+
   * `enter` defaults to opening the selected file without leaving the current pane
   * `shift-enter` defaults to switching to another pane if the file is already open there
   * `:<line number>` will go directly to the line number you specify, or the last line if the number is larger
