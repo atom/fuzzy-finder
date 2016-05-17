@@ -7,6 +7,7 @@ Quickly find and open files using `cmd-t`.
   * `cmd-shift-b` to open the list of Git modified and untracked files
   * `enter` defaults to opening the selected file without leaving the current pane
   * `shift-enter` defaults to switching to another pane if the file is already open there
+  * `:<line number>` will go directly to the line number you specify, or the last line if the number is larger
 
 Turning on the "Search All Panes" setting reverses the behavior of `enter` and `shift-enter` so `enter` opens the file in any pane and `shift-enter` creates a new tab in the current pane.
 
