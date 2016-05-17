@@ -10,7 +10,7 @@ When opening a file, you can control the behavior.
 
   * `enter` defaults to opening the selected file without leaving the current pane
   * `shift-enter` defaults to switching to another pane if the file is already open there
-  * `:<line number>` will go directly to the line number you specify, or the last line if the number is larger
+  * Adding `:<line number>` to the end of your search will go directly to the line number you specify, or the last line if the number is larger
 
 Turning on the "Search All Panes" setting reverses the behavior of `enter` and `shift-enter` so `enter` opens the file in any pane and `shift-enter` creates a new tab in the current pane.
 
