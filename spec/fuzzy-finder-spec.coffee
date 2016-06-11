@@ -9,6 +9,9 @@ wrench = require 'wrench'
 PathLoader = require '../lib/path-loader'
 DefaultFileIcons = require '../lib/default-file-icons'
 
+escapeSelector = (_selector) ->
+  _selector.replace(/\\/g, '\\\\')
+
 rmrf = (_path) ->
   if fs.statSync(_path).isDirectory()
     _.each(fs.readdirSync(_path), (child) ->
@@ -113,7 +116,7 @@ describe 'FuzzyFinder', ->
 
           runs ->
             eachFilePath [rootDir1, rootDir2], (filePath) ->
-              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              item = projectView.list.find("li:contains(#{escapeSelector(filePath)})").eq(0)
               expect(item).toExist()
               nameDiv = item.find("div:first-child")
               expect(nameDiv).toHaveAttr("data-name", path.basename(filePath))
@@ -128,12 +131,12 @@ describe 'FuzzyFinder', ->
 
           runs ->
             eachFilePath [rootDir1], (filePath) ->
-              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              item = projectView.list.find("li:contains(#{escapeSelector(filePath)})").eq(0)
               expect(item).toExist()
               expect(item.find("div").eq(1)).toHaveText(path.join(path.basename(rootDir1), filePath))
 
             eachFilePath [rootDir2], (filePath) ->
-              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              item = projectView.list.find("li:contains(#{escapeSelector(filePath)})").eq(0)
               expect(item).toExist()
               expect(item.find("div").eq(1)).toHaveText(path.join(path.basename(rootDir2), filePath))
 
@@ -284,7 +287,7 @@ describe 'FuzzyFinder', ->
 
           runs ->
             eachFilePath [rootDir1], (filePath) ->
-              item = projectView.list.find("li:contains(#{filePath})").eq(0)
+              item = projectView.list.find("li:contains(#{escapeSelector(filePath)})").eq(0)
               expect(item).toExist()
               expect(item).not.toHaveText(path.basename(rootDir1))
 
@@ -964,28 +967,28 @@ describe 'FuzzyFinder', ->
     fileIcons = new DefaultFileIcons
 
     it "defaults to text", ->
-        
+
       waitsForPromise ->
         atom.workspace.open('sample.js')
-      
+
       runs ->
         dispatchCommand('toggle-buffer-finder')
         expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
-        
+
         bufferView.filterEditorView.getModel().insertText('js')
         bufferView.populateList()
         firstResult = bufferView.list.children('li').find('.primary-line')
         expect(fileIcons.iconClassForPath(firstResult[0].dataset.path)).toBe 'icon-file-text'
-    
+
     it "shows image icons", ->
-      
+
       waitsForPromise ->
         atom.workspace.open('sample.gif')
-      
+
       runs ->
         dispatchCommand('toggle-buffer-finder')
         expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
-        
+
         bufferView.filterEditorView.getModel().insertText('gif')
         bufferView.populateList()
         firstResult = bufferView.list.children('li').find('.primary-line')

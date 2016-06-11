@@ -81,7 +81,7 @@ class ProjectView extends FuzzyFinderView
         # throw ENOENT when it tries to get the realpath of all the project paths.
         # This catch block allows the file finder to still operate on the last
         # set of paths and still let the user know that something is wrong.
-        if error.code is 'ENOENT'
+        if error.code is 'ENOENT' or error.code is 'EPERM'
           atom.notifications.addError('Project path not found!', detail: error.message)
         else
           throw error
