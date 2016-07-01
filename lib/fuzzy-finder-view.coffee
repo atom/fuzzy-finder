@@ -18,7 +18,7 @@ class FuzzyFinderView extends SelectListView
     super
 
     @addClass('fuzzy-finder')
-    @setMaxItems(10)
+    @setMaxItems(atom.config.get('fuzzy-finder.maxFiles'))
     @subscriptions = new CompositeDisposable
 
     splitLeft = => @splitOpenPath (pane) -> pane.splitLeft.bind(pane)

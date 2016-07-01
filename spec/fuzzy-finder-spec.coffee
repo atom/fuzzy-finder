@@ -21,6 +21,99 @@ rmrf = (_path) ->
   else
     fs.unlinkSync(_path)
 
+describe 'FuzzyFinder#maxItem configuration option', ->
+  [rootDir3] = []
+  [fuzzyFinder, projectView, workspaceElement, fixturesPath] = []
+
+  beforeEach ->
+    rootDir3 = fs.realpathSync(temp.mkdirSync('root-dir3'))
+
+    fixturesPath = atom.project.getPaths()[0]
+
+    wrench.copyDirSyncRecursive(
+      path.join(fixturesPath, "root-dir3"),
+      rootDir3,
+      forceDelete: true
+    )
+
+    atom.project.setPaths([rootDir3])
+
+    workspaceElement = atom.views.getView(atom.workspace)
+
+    waitsForPromise ->
+      atom.workspace.open(path.join(rootDir3, 'sample.js'))
+
+  dispatchCommand = (command) ->
+    atom.commands.dispatch(workspaceElement, "fuzzy-finder:#{command}")
+
+  waitForPathsToDisplay = (fuzzyFinderView) ->
+    waitsFor "paths to display", 5000, ->
+      fuzzyFinderView.list.children("li").length > 0
+
+  describe "default maxFiles option", ->
+    beforeEach ->
+      waitsForPromise ->
+        atom.packages.activatePackage('fuzzy-finder').then (pack) ->
+          fuzzyFinder = pack.mainModule
+          projectView = fuzzyFinder.createProjectView()
+
+    it "retuns only 10 items by default", ->
+      dispatchCommand('toggle-file-finder')
+      waitForPathsToDisplay(projectView)
+
+      runs ->
+        expect(projectView.list.children("li").length).toEqual(10)
+
+  describe "chnaged maxFiles option", ->
+    beforeEach ->
+      atom.config.set('fuzzy-finder.maxFiles', 7)
+
+      waitsForPromise ->
+        atom.packages.activatePackage('fuzzy-finder').then (pack) ->
+          fuzzyFinder = pack.mainModule
+          projectView = fuzzyFinder.createProjectView()
+
+    it "retuns only 7 items if  maxFiles set to 7", ->
+      dispatchCommand('toggle-file-finder')
+      waitForPathsToDisplay(projectView)
+
+      runs ->
+        expect(projectView.list.children("li").length).toEqual(7)
+
+
+  describe "chnaged maxFiles option min", ->
+    beforeEach ->
+      atom.config.set('fuzzy-finder.maxFiles', 1)
+
+      waitsForPromise ->
+        atom.packages.activatePackage('fuzzy-finder').then (pack) ->
+          fuzzyFinder = pack.mainModule
+          projectView = fuzzyFinder.createProjectView()
+
+    it "retuns only min (5) if maxFiles was set to less then 5", ->
+      dispatchCommand('toggle-file-finder')
+      waitForPathsToDisplay(projectView)
+
+      runs ->
+        expect(projectView.list.children("li").length).toEqual(5)
+
+
+  describe "chnaged maxFiles option max", ->
+    beforeEach ->
+      atom.config.set('fuzzy-finder.maxFiles', 50)
+      waitsForPromise ->
+
+        atom.packages.activatePackage('fuzzy-finder').then (pack) ->
+          fuzzyFinder = pack.mainModule
+          projectView = fuzzyFinder.createProjectView()
+
+    it "retuns only max (20) if maxFiles was set to more then 20", ->
+      dispatchCommand('toggle-file-finder')
+      waitForPathsToDisplay(projectView)
+
+      runs ->
+        expect(projectView.list.children("li").length).toEqual(20)
+
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
   [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
