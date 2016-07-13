@@ -175,6 +175,9 @@ class FuzzyFinderView extends SelectListView
     else
       filteredItems = @items
 
+    if fs.isFileSync filterQuery
+      filteredItems.push(filePath: filterQuery, projectRelativePath: filterQuery)
+
     @list.empty()
     if filteredItems.length
       @setError(null)
