@@ -64,11 +64,6 @@ describe 'FuzzyFinder', ->
     waitsFor "paths to display", 5000, ->
       fuzzyFinderView.list.children("li").length > 0
 
-  waitsForPaths = (finder, expectedPaths) ->
-    waitsFor "specific paths", 3000, ->
-      foundPaths = _.pluck(finder.list.find('li > div.file'), 'outerText')
-      _.isEqual(foundPaths, expectedPaths)
-
   eachFilePath = (dirPaths, fn) ->
     for dirPath in dirPaths
       findings = for filePath in wrench.readdirSyncRecursive(dirPath)
@@ -297,11 +292,8 @@ describe 'FuzzyFinder', ->
 
         it "shows an empty message with no files in the list", ->
           dispatchCommand('toggle-file-finder')
-          waitsFor ->
-            projectView.error.text() is 'Project is empty'
-
-          runs ->
-            expect(projectView.list.children('li').length).toBe 0
+          expect(projectView.error.text()).toBe 'Project is empty'
+          expect(projectView.list.children('li').length).toBe 0
 
     describe "when a project's root path is unlinked", ->
       beforeEach ->
@@ -389,10 +381,7 @@ describe 'FuzzyFinder', ->
           runs ->
             dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
-
-          waitsForPaths(bufferView, ['sample.txt', 'sample.js', 'sample-with-tabs.coffee'])
-
-          runs ->
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.txt', 'sample.js', 'sample-with-tabs.coffee']
             dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe false
 
@@ -402,10 +391,7 @@ describe 'FuzzyFinder', ->
           runs ->
             dispatchCommand('toggle-buffer-finder')
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
-
-          waitsForPaths(bufferView, ['sample-with-tabs.coffee', 'sample.js', 'sample.txt'])
-
-          runs ->
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample-with-tabs.coffee', 'sample.js', 'sample.txt']
             expect(bufferView.list.children().first()).toHaveClass 'selected'
 
         it "serializes the list of paths and their last opened time", ->
@@ -460,8 +446,7 @@ describe 'FuzzyFinder', ->
           runs ->
             atom.workspace.getActivePane().splitRight(copyActiveItem: true)
             dispatchCommand('toggle-buffer-finder')
-
-          waitsForPaths(bufferView, ['sample.js'])
+            expect(_.pluck(bufferView.list.find('li > div.file'), 'outerText')).toEqual ['sample.js']
 
     describe "when a path selection is confirmed", ->
       [editor1, editor2, editor3] = []
@@ -681,12 +666,8 @@ describe 'FuzzyFinder', ->
       pane = atom.workspace.getActivePane()
 
       dispatchCommand('toggle-buffer-finder')
-      waitForPathsToDisplay bufferView
-
-      filePath = null
-      runs ->
-        {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
+      {filePath} = bufferView.getSelectedItem()
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-left'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -704,12 +685,8 @@ describe 'FuzzyFinder', ->
       pane = atom.workspace.getActivePane()
 
       dispatchCommand('toggle-buffer-finder')
-      waitForPathsToDisplay bufferView
-
-      filePath = null
-      runs ->
-        {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-right'
+      {filePath} = bufferView.getSelectedItem()
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-right'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -727,12 +704,8 @@ describe 'FuzzyFinder', ->
       pane = atom.workspace.getActivePane()
 
       dispatchCommand('toggle-buffer-finder')
-      waitForPathsToDisplay bufferView
-
-      filePath = null
-      runs ->
-        {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-up'
+      {filePath} = bufferView.getSelectedItem()
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-up'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -750,12 +723,8 @@ describe 'FuzzyFinder', ->
       pane = atom.workspace.getActivePane()
 
       dispatchCommand('toggle-buffer-finder')
-      waitForPathsToDisplay bufferView
-
-      filePath = null
-      runs ->
-        {filePath} = bufferView.getSelectedItem()
-        atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-down'
+      {filePath} = bufferView.getSelectedItem()
+      atom.commands.dispatch bufferView.filterEditorView.element, 'pane:split-down'
 
       waitsFor ->
         atom.workspace.getPanes().length is 2
@@ -790,14 +759,11 @@ describe 'FuzzyFinder', ->
 
         bufferView.filterEditorView.getModel().setText('sample.js:4')
         bufferView.populateList()
-        waitForPathsToDisplay bufferView
+        {filePath} = bufferView.getSelectedItem()
+        expect(atom.project.getDirectories()[0].resolve(filePath)).toBe editor1.getPath()
 
-        runs ->
-          {filePath} = bufferView.getSelectedItem()
-          expect(atom.project.getDirectories()[0].resolve(filePath)).toBe editor1.getPath()
-
-          spyOn(bufferView, 'moveToLine').andCallThrough()
-          atom.commands.dispatch bufferView.element, 'core:confirm'
+        spyOn(bufferView, 'moveToLine').andCallThrough()
+        atom.commands.dispatch bufferView.element, 'core:confirm'
 
         waitsFor ->
           bufferView.moveToLine.callCount > 0
@@ -814,51 +780,42 @@ describe 'FuzzyFinder', ->
     it "highlights an exact match", ->
       bufferView.filterEditorView.getModel().setText('sample.js')
       bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
 
-      waitForPathsToDisplay bufferView
-      runs ->
-        resultView = bufferView.getSelectedItemView()
-
-        primaryMatches = resultView.find('.primary-line .character-match')
-        secondaryMatches = resultView.find('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe 1
-        expect(primaryMatches.last().text()).toBe 'sample.js'
-        # Use `toBeGreaterThan` because dir may have some characters in it
-        expect(secondaryMatches.length).toBeGreaterThan 0
-        expect(secondaryMatches.last().text()).toBe 'sample.js'
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
+      expect(primaryMatches.length).toBe 1
+      expect(primaryMatches.last().text()).toBe 'sample.js'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 0
+      expect(secondaryMatches.last().text()).toBe 'sample.js'
 
     it "highlights a partial match", ->
       bufferView.filterEditorView.getModel().setText('sample')
       bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
 
-      waitForPathsToDisplay bufferView
-      runs ->
-        resultView = bufferView.getSelectedItemView()
-
-        primaryMatches = resultView.find('.primary-line .character-match')
-        secondaryMatches = resultView.find('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe 1
-        expect(primaryMatches.last().text()).toBe 'sample'
-        # Use `toBeGreaterThan` because dir may have some characters in it
-        expect(secondaryMatches.length).toBeGreaterThan 0
-        expect(secondaryMatches.last().text()).toBe 'sample'
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
+      expect(primaryMatches.length).toBe 1
+      expect(primaryMatches.last().text()).toBe 'sample'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 0
+      expect(secondaryMatches.last().text()).toBe 'sample'
 
     it "highlights multiple matches in the file name", ->
       bufferView.filterEditorView.getModel().setText('samplejs')
       bufferView.populateList()
+      resultView = bufferView.getSelectedItemView()
 
-      waitForPathsToDisplay bufferView
-      runs ->
-        resultView = bufferView.getSelectedItemView()
-
-        primaryMatches = resultView.find('.primary-line .character-match')
-        secondaryMatches = resultView.find('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe 2
-        expect(primaryMatches.first().text()).toBe 'sample'
-        expect(primaryMatches.last().text()).toBe 'js'
-        # Use `toBeGreaterThan` because dir may have some characters in it
-        expect(secondaryMatches.length).toBeGreaterThan 1
-        expect(secondaryMatches.last().text()).toBe 'js'
+      primaryMatches = resultView.find('.primary-line .character-match')
+      secondaryMatches = resultView.find('.secondary-line .character-match')
+      expect(primaryMatches.length).toBe 2
+      expect(primaryMatches.first().text()).toBe 'sample'
+      expect(primaryMatches.last().text()).toBe 'js'
+      # Use `toBeGreaterThan` because dir may have some characters in it
+      expect(secondaryMatches.length).toBeGreaterThan 1
+      expect(secondaryMatches.last().text()).toBe 'js'
 
     it "highlights matches in the directory and file name", ->
       bufferView.items = [
@@ -1003,8 +960,7 @@ describe 'FuzzyFinder', ->
       atom.project.setPaths([rootDir2, projectPath])
 
       gitDirectory = atom.project.getDirectories()[1]
-      gitRepository = atom.project.getRepositories()[1].async
-      waitsForPromise -> gitRepository.refreshStatus()
+      gitRepository = atom.project.getRepositories()[1]
 
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
@@ -1020,25 +976,20 @@ describe 'FuzzyFinder', ->
           originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
+          gitRepository.getPathStatus(originalPath)
 
           newPath = atom.project.getDirectories()[1].resolve('newsample.js')
           fs.writeFileSync(newPath, '')
-
-        waitsForPromise ->
-          gitRepository.refreshStatus()
+          gitRepository.getPathStatus(newPath)
 
       it "displays all new and modified paths", ->
         expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
         dispatchCommand('toggle-git-status-finder')
         expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
 
-        waitForPathsToDisplay gitStatusView
-
-        waitsFor ->
-          gitStatusView.find('.status.status-modified').length is 1
-
-        waitsFor ->
-          gitStatusView.find('.status.status-added').length is 3
+        expect(gitStatusView.find('.file').length).toBe 2
+        expect(gitStatusView.find('.status.status-modified').length).toBe 1
+        expect(gitStatusView.find('.status.status-added').length).toBe 1
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
@@ -1060,33 +1011,22 @@ describe 'FuzzyFinder', ->
         it "displays the modified icon", ->
           editor.setText('modified')
           editor.save()
-          waitsForPromise ->
-            gitRepository.refreshStatusForPath(editor.getPath())
+          gitRepository.getPathStatus(editor.getPath())
 
-          runs ->
-            dispatchCommand('toggle-buffer-finder')
-
-          waitsFor 'the modified item', ->
-            bufferView.find('.status.status-modified').length > 0
-
-          runs ->
-            expect(bufferView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
+          dispatchCommand('toggle-buffer-finder')
+          expect(bufferView.find('.status.status-modified').length).toBe 1
+          expect(bufferView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
 
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
           waitsForPromise ->
             atom.workspace.open(path.join(projectPath, 'newsample.js'))
 
-          waitsForPromise ->
-            gitRepository.refreshStatusForPath(editor.getPath())
-
           runs ->
+            gitRepository.getPathStatus(editor.getPath())
+
             dispatchCommand('toggle-buffer-finder')
-
-          waitsFor 'the added item', ->
-            bufferView.find('.status.status-added').length > 0
-
-          runs ->
+            expect(bufferView.find('.status.status-added').length).toBe 1
             expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
