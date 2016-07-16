@@ -586,7 +586,7 @@ describe 'FuzzyFinder', ->
           expect(inputView).toHaveFocus()
 
   describe "when the filter text contains an absolute path", ->
-    it "it matches the given path", ->
+    it "matches the given path", ->
       dispatchCommand('toggle-file-finder')
       expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
       expectedPath = path.join(rootDir2, "sample.html")
