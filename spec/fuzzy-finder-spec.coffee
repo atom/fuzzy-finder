@@ -599,6 +599,20 @@ describe 'FuzzyFinder', ->
         {filePath} = projectView.getSelectedItem()
         expect(atom.project.getDirectories()[0].resolve(filePath)).toBe expectedPath
 
+    it "accepts not normalized path", ->
+      dispatchCommand('toggle-file-finder')
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+      expectedPath = path.join(rootDir2, "sample.html")
+      searched = path.join(rootDir2, "..", "sample.html")
+
+      projectView.filterEditorView.getModel().insertText(expectedPath)
+      projectView.populateList()
+      waitForPathsToDisplay projectView
+
+      runs ->
+        {filePath} = projectView.getSelectedItem()
+        expect(atom.project.getDirectories()[0].resolve(filePath)).toBe expectedPath
+
   describe "cached file paths", ->
     beforeEach ->
       spyOn(PathLoader, "startTask").andCallThrough()
