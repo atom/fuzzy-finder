@@ -105,7 +105,7 @@ class FuzzyFinderView extends SelectListView
           else if repo.isStatusModified(status)
             @div class: 'status status-modified icon icon-diff-modified'
 
-        typeClass = FileIcons.getService().iconClassForPath(filePath) or []
+        typeClass = FileIcons.getService().iconClassForPath(filePath, 'fuzzy-finder') or []
         unless Array.isArray typeClass
           typeClass = typeClass?.toString().split(/\s+/g)
 
