@@ -1,3 +1,4 @@
+{Disposable} = require 'atom'
 FileIcons = require './file-icons'
 
 module.exports =
@@ -31,13 +32,12 @@ module.exports =
       @gitStatusView.destroy()
       @gitStatusView = null
     @projectPaths = null
-    @fileIconsDisposable?.dispose()
     @stopLoadPathsTask()
     @active = false
 
   consumeFileIcons: (service) ->
     FileIcons.setService(service)
-    @fileIconsDisposable = service.onWillDeactivate ->
+    new Disposable ->
       FileIcons.resetService()
 
   serialize: ->
