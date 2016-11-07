@@ -570,6 +570,12 @@ describe 'FuzzyFinder', ->
           expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
           expect(inputView).toHaveFocus()
 
+    it "respects the input throttle setting", ->
+      atom.config.set('fuzzy-finder.inputThrottle', 0)
+      expect(projectView.inputThrottle).toBe 0
+      atom.config.set('fuzzy-finder.inputThrottle', 50)
+      expect(projectView.inputThrottle).toBe 50
+
   describe "cached file paths", ->
     beforeEach ->
       spyOn(PathLoader, "startTask").andCallThrough()

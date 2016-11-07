@@ -50,6 +50,12 @@
       "type": "boolean",
       "default": true,
       "description": "Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)"
+    },
+    "inputThrottle": {
+      "type": "integer",
+      "default": 50,
+      "minimum": 0,
+      "description": "milliseconds to wait before filtering results"
     }
   }
 }
