@@ -10,7 +10,7 @@
     "atom-space-pen-views": "^2.0.0",
     "fs-plus": "^2.0.0",
     "fuzzaldrin": "^2.0",
-    "fuzzaldrin-plus": "^0.1",
+    "fuzzaldrin-plus": "^0.4.1",
     "humanize-plus": "~1.4.2",
     "minimatch": "~0.3.0",
     "temp": "~0.8.1",
