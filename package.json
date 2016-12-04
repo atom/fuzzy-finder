@@ -12,7 +12,7 @@
     "fuzzaldrin": "^2.0",
     "fuzzaldrin-plus": "^0.4.1",
     "humanize-plus": "~1.8.2",
-    "minimatch": "~0.3.0",
+    "minimatch": "~3.0.3",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0",
     "wrench": "^1.5"
