@@ -172,6 +172,10 @@ class FuzzyFinderView extends SelectListView
     else
       filteredItems = @items
 
+    normalizedQuery = fs.normalize(filterQuery)
+    if fs.isFileSync(normalizedQuery)
+      filteredItems.push(filePath: normalizedQuery, projectRelativePath: normalizedQuery)
+
     @list.empty()
     if filteredItems.length
       @setError(null)
