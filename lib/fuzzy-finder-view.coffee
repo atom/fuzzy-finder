@@ -45,6 +45,8 @@ class FuzzyFinderView extends SelectListView
     @alternateScoring = atom.config.get 'fuzzy-finder.useAlternateScoring'
     @subscriptions.add atom.config.onDidChange 'fuzzy-finder.useAlternateScoring', ({newValue}) => @alternateScoring = newValue
 
+    @inputThrottle = atom.config.get 'fuzzy-finder.inputThrottle'
+    @subscriptions.add atom.config.onDidChange 'fuzzy-finder.inputThrottle', ({newValue}) => @inputThrottle = newValue
 
   getFilterKey: ->
     'projectRelativePath'
