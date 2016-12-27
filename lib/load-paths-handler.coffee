@@ -13,10 +13,7 @@ class PathLoader
   constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
     @paths = []
     @realPathCache = {}
-    @repo = null
-    if ignoreVcsIgnores
-      repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
-      @repo = repo if repo?.relativize(path.join(@rootPath, 'test')) is 'test'
+    @repo = if ignoreVcsIgnores then GitRepository.open(@rootPath, refreshOnWindowFocus: false) else null
 
   load: (done) ->
     @loadPath @rootPath, true, =>
@@ -25,10 +22,10 @@ class PathLoader
       done()
 
   isIgnored: (loadedPath) ->
-    relativePath = path.relative(@rootPath, loadedPath)
-    if @repo?.isPathIgnored(relativePath)
+    if @repo?.isPathIgnored(loadedPath)
       true
     else
+      relativePath = path.relative(@rootPath, loadedPath)
       for ignoredName in @ignoredNames
         return true if ignoredName.match(relativePath)
 

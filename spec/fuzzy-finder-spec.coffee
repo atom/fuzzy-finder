@@ -1030,15 +1030,17 @@ describe 'FuzzyFinder', ->
             expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
+      [ignoreFile] = []
+
       beforeEach ->
         atom.config.set("core.excludeVcsIgnoredPaths", true)
+        ignoreFile = path.join(projectPath, '.gitignore')
 
       describe "when the project's path is the repository's working directory", ->
         beforeEach ->
-          ignoreFile = path.join(projectPath, '.gitignore')
-          fs.writeFileSync(ignoreFile, 'ignored.txt')
-
           ignoredFile = path.join(projectPath, 'ignored.txt')
+
+          fs.writeFileSync(ignoreFile, 'ignored.txt')
           fs.writeFileSync(ignoredFile, 'ignored text')
 
         it "excludes paths that are git ignored", ->
@@ -1052,22 +1054,25 @@ describe 'FuzzyFinder', ->
 
       describe "when the project's path is a subfolder of the repository's working directory", ->
         beforeEach ->
-          atom.project.setPaths([gitDirectory.resolve('dir')])
-          ignoreFile = path.join(projectPath, '.gitignore')
-          fs.writeFileSync(ignoreFile, 'b.txt')
+          dirPath = gitDirectory.resolve('dir')
+          atom.project.setPaths([dirPath])
 
-        it "does not exclude paths that are git ignored", ->
+          ignoredFile = path.join(dirPath, 'ignored.txt')
+
+          fs.writeFileSync(ignoreFile, 'ignored.txt')
+          fs.writeFileSync(ignoredFile, 'ignored text')
+
+        it "excludes paths that are git ignored", ->
           dispatchCommand('toggle-file-finder')
           projectView.setMaxItems(Infinity)
 
           waitForPathsToDisplay(projectView)
 
           runs ->
-            expect(projectView.list.find("li:contains(b.txt)")).toExist()
+            expect(projectView.list.find("li:contains(ignored.txt)")).not.toExist()
 
       describe "when the .gitignore matches parts of the path to the root folder", ->
         beforeEach ->
-          ignoreFile = path.join(projectPath, '.gitignore')
           fs.writeFileSync(ignoreFile, path.basename(projectPath))
 
         it "only applies the .gitignore patterns to relative paths within the root folder", ->
