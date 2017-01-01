@@ -46,6 +46,13 @@
       "default": false,
       "description": "Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened."
     },
+    "maxFiles": {
+      "type": "integer",
+      "default": 10,
+      "minimum": 5,
+      "maximum": 20,
+      "description": "Maximum number of files to be displayed"
+    },
     "useAlternateScoring": {
       "type": "boolean",
       "default": true,
