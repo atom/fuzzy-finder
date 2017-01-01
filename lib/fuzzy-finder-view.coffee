@@ -224,6 +224,8 @@ class FuzzyFinderView extends SelectListView
     query = query[0...colon] if colon isnt -1
     # Normalize to backslashes on Windows
     query = query.replace(/\//g, '\\') if process.platform is 'win32'
+    # Convert to UTF-8 NFD on macOS
+    query = query.normalize('NFD') if process.platform is 'darwin'
     query
 
   getLineNumber: ->
