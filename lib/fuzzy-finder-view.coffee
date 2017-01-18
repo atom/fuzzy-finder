@@ -237,6 +237,17 @@ class FuzzyFinderView extends SelectListView
   setItems: (filePaths) ->
     super(@projectRelativePathsForFilePaths(filePaths))
 
+  # Public: Populate the list view with the model items previously set by
+  # calling {::setItems}
+  # After populate it moves exact string matches to top
+  populateList: ->
+    super()
+    query = @getFilterQuery()
+    for line in @list.find('li .primary-line')
+      if line.innerHTML is query
+        @list.prepend(line.parentElement)
+        @selectItemView(@list.find('li:first'))
+
   projectRelativePathsForFilePaths: (filePaths) ->
     # Don't regenerate project relative paths unless the file paths have changed
     if filePaths isnt @filePaths
