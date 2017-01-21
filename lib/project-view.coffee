@@ -37,7 +37,7 @@ class ProjectView extends FuzzyFinderView
       @reloadPaths = true
       @paths = null
 
-    if !@paths
+    if not @paths
       @tryLoadCachedProjectFiles()
 
     @cleanupOldFiles()
@@ -142,22 +142,22 @@ class ProjectView extends FuzzyFinderView
     @loadPathsTask?.terminate()
     @loadPathsTask = PathLoader.startTask (newPaths) =>
       @reloadPaths = false
-      changed = newPaths && @pathsChanged(@paths, newPaths)
+      changed = newPaths and @pathsChanged(@paths, newPaths)
       @paths = newPaths
       if changed
         @saveProjectData()
       fn?()
 
   pathsChanged: (oldPaths, newPaths) ->
-    if (!oldPaths || oldPaths.length != newPaths.length)
+    if (not oldPaths or oldPaths.length isnt newPaths.length)
       return true
     oldHash = {}
     for oldPath in oldPaths
       oldHash[oldPath] = true
     for newPath in newPaths
-      if !oldHash[newPath]
-        return true;
-    return false;
+      if not oldHash[newPath]
+        return true
+    return false
 
   getBaseSavePath: ->
     packagePaths = atom.packages.getPackageDirPaths()
@@ -167,12 +167,11 @@ class ProjectView extends FuzzyFinderView
     path.join(@getBaseSavePath(), projectPath.replace(/\W+/g, '_'))
 
   saveProjectData: ->
-    if !@paths?.length
+    if not @paths?.length
       return
     atom.project.getPaths().map (projectPath) =>
-      projectFilesPaths = @paths.filter((p) => p.startsWith projectPath)
-      buffer = zlib.deflateSync(Buffer.from(JSON.stringify(projectFilesPaths)),
-        { level: zlib.Z_BEST_SPEED })
+      projectFilesPaths = @paths.filter((p) -> p.startsWith projectPath)
+      buffer = zlib.deflateSync(Buffer.from(JSON.stringify(projectFilesPaths)), {level: zlib.Z_BEST_SPEED})
       fs.writeFileSync(@getSavePath(projectPath), buffer)
 
   tryLoadCachedProjectFiles: ->
@@ -186,17 +185,17 @@ class ProjectView extends FuzzyFinderView
   cleanupOldFiles: ->
     basePath = @getBaseSavePath()
     new Promise (done) -> fs.readdir basePath, (err, files) ->
-      if err || !files
+      if err or not files
         done()
       else
         promise = Promise.all files.map (file) ->
           filePath = path.join(basePath, file)
           new Promise (resolve) -> fs.stat filePath, (err, stats) ->
-            if err || !stats
+            if err or not stats
               return resolve()
             fileAgeDays = (Date.now() - stats.mtime) / 1000 / 3600 / 24
             if (fileAgeDays > 30)
-              fs.unlink filePath, () -> resolve()
+              fs.unlink filePath, -> resolve()
             else
               resolve()
         promise.then -> done()

@@ -638,7 +638,7 @@ describe 'FuzzyFinder', ->
       dispatchCommand('toggle-file-finder')
 
       runs ->
-        projectPaths = atom.project.getPaths().map (p) => path.join(p, 'test')
+        projectPaths = atom.project.getPaths().map (p) -> path.join(p, 'test')
         projectView.paths = projectPaths
         projectView.saveProjectData()
         projectView.paths = []
@@ -649,10 +649,10 @@ describe 'FuzzyFinder', ->
       dispatchCommand('toggle-file-finder')
 
       runs ->
-        if !fs.existsSync projectView.getBaseSavePath()
+        if not fs.existsSync projectView.getBaseSavePath()
           fs.mkdirSync projectView.getBaseSavePath()
         oldFilePath = path.join(projectView.getBaseSavePath(), 'old_file')
-        if !fs.existsSync(oldFilePath)
+        if not fs.existsSync(oldFilePath)
           fs.writeFileSync(oldFilePath, '')
         fs.utimesSync(oldFilePath, 123, 123)
         projectView.cleanupOldFiles().then ->
