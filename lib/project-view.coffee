@@ -1,6 +1,9 @@
 {$} = require 'atom-space-pen-views'
 {Disposable, CompositeDisposable} = require 'atom'
 humanize = require 'humanize-plus'
+fs = require 'fs-plus'
+path = require 'path'
+zlib = require 'zlib'
 
 FuzzyFinderView = require './fuzzy-finder-view'
 PathLoader = require './path-loader'
@@ -33,6 +36,11 @@ class ProjectView extends FuzzyFinderView
     @disposables.add atom.project.onDidChangePaths =>
       @reloadPaths = true
       @paths = null
+
+    if !@paths
+      @tryLoadCachedProjectFiles()
+
+    @cleanupOldFiles()
 
   subscribeToConfig: ->
     @disposables.add atom.config.onDidChange 'fuzzy-finder.ignoredNames', =>
@@ -132,6 +140,66 @@ class ProjectView extends FuzzyFinderView
 
   runLoadPathsTask: (fn) ->
     @loadPathsTask?.terminate()
-    @loadPathsTask = PathLoader.startTask (@paths) =>
+    @loadPathsTask = PathLoader.startTask (newPaths) =>
       @reloadPaths = false
+      changed = newPaths && @pathsChanged(@paths, newPaths)
+      @paths = newPaths
+      if changed
+        @saveProjectData()
       fn?()
+
+  pathsChanged: (oldPaths, newPaths) ->
+    if (!oldPaths || oldPaths.length != newPaths.length)
+      return true
+    oldHash = {}
+    for oldPath in oldPaths
+      oldHash[oldPath] = true
+    for newPath in newPaths
+      if !oldHash[newPath]
+        console.log('np', newPath);
+        return true;
+    return false;
+
+  getBaseSavePath: ->
+    packagePaths = atom.packages.getPackageDirPaths()
+    path.join(packagePaths[packagePaths.length - 1], 'fuzzy-finder', 'data')
+
+  getSavePath: (projectPath) ->
+    path.join(@getBaseSavePath(), projectPath.replace(/\W+/g, '_'))
+
+  saveProjectData: ->
+    if !@paths?.length
+      return
+    atom.project.getPaths().map (projectPath) =>
+      projectFilesPaths = @paths.filter((p) => p.startsWith projectPath)
+      buffer = zlib.deflateSync(Buffer.from(JSON.stringify(projectFilesPaths)),
+        { level: zlib.Z_BEST_SPEED })
+      fs.writeFileSync(@getSavePath(projectPath), buffer)
+
+  tryLoadCachedProjectFiles: ->
+    atom.project.getPaths().forEach (projectPath) =>
+      console.log('try load', projectPath);
+      try
+        buffer = zlib.inflateSync(fs.readFileSync(@getSavePath(projectPath)))
+        data = JSON.parse(buffer.toString('utf8'))
+        console.log('loaded', data);
+        if data?.length
+          @paths = if @paths then @paths.concat(data) else data
+
+  cleanupOldFiles: ->
+    basePath = @getBaseSavePath()
+    new Promise (done) -> fs.readdir basePath, (err, files) ->
+      if err || !files
+        done()
+      else
+        promise = Promise.all files.map (file) ->
+          filePath = path.join(basePath, file)
+          new Promise (resolve) -> fs.stat filePath, (err, stats) ->
+            if err || !stats
+              return resolve()
+            fileAgeDays = (Date.now() - stats.mtime) / 1000 / 3600 / 24
+            if (fileAgeDays > 30)
+              fs.unlink filePath, () -> resolve()
+            else
+              resolve()
+        promise.then -> done()

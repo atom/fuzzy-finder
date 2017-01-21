@@ -634,6 +634,30 @@ describe 'FuzzyFinder', ->
         expect(PathLoader.startTask).toHaveBeenCalled()
         expect(projectView.list.children('li').length).toBe 0
 
+    it "saves cached files to disk", ->
+      dispatchCommand('toggle-file-finder')
+
+      runs ->
+        projectPaths = atom.project.getPaths().map (p) => path.join(p, 'test')
+        projectView.paths = projectPaths
+        projectView.saveProjectData()
+        projectView.paths = []
+        projectView.tryLoadCachedProjectFiles()
+        expect(projectView.paths.length).toBe projectPaths.length
+
+    it "cleans old cached files", ->
+      dispatchCommand('toggle-file-finder')
+
+      runs ->
+        if !fs.existsSync projectView.getBaseSavePath()
+          fs.mkdirSync projectView.getBaseSavePath()
+        oldFilePath = path.join(projectView.getBaseSavePath(), 'old_file')
+        if !fs.existsSync(oldFilePath)
+          fs.writeFileSync(oldFilePath, '')
+        fs.utimesSync(oldFilePath, 123, 123)
+        projectView.cleanupOldFiles().then ->
+          expect(fs.existsSync(oldFilePath)).toBe false
+
     describe "the initial load paths task started during package activation", ->
       beforeEach ->
         fuzzyFinder.projectView.destroy()
