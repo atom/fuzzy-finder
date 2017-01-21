@@ -156,7 +156,6 @@ class ProjectView extends FuzzyFinderView
       oldHash[oldPath] = true
     for newPath in newPaths
       if !oldHash[newPath]
-        console.log('np', newPath);
         return true;
     return false;
 
@@ -178,11 +177,9 @@ class ProjectView extends FuzzyFinderView
 
   tryLoadCachedProjectFiles: ->
     atom.project.getPaths().forEach (projectPath) =>
-      console.log('try load', projectPath);
       try
         buffer = zlib.inflateSync(fs.readFileSync(@getSavePath(projectPath)))
         data = JSON.parse(buffer.toString('utf8'))
-        console.log('loaded', data);
         if data?.length
           @paths = if @paths then @paths.concat(data) else data
 
