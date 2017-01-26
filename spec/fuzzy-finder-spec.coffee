@@ -2,7 +2,6 @@ net = require "net"
 path = require 'path'
 _ = require 'underscore-plus'
 etch = require 'etch'
-{$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 temp = require 'temp'
 wrench = require 'wrench'
