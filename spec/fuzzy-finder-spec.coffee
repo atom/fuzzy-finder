@@ -901,7 +901,7 @@ describe 'FuzzyFinder', ->
         expect(editor1.getCursorBufferPosition()).toEqual [0, 0]
 
     describe "when the filter text has a file path", ->
-      fffit "opens the selected path to that line number", ->
+      it "opens the selected path to that line number", ->
         [editor1, editor2] = atom.workspace.getTextEditors()
 
         waitsForPromise ->
@@ -935,44 +935,53 @@ describe 'FuzzyFinder', ->
         bufferView.toggle()
 
     it "highlights an exact match", ->
-      bufferView.filterEditorView.getModel().setText('sample.js')
-      bufferView.populateList()
-      resultView = bufferView.getSelectedItemView()
+      bufferView.selectListView.refs.queryEditor.setText('sample.js')
 
-      primaryMatches = resultView.find('.primary-line .character-match')
-      secondaryMatches = resultView.find('.secondary-line .character-match')
-      expect(primaryMatches.length).toBe 1
-      expect(primaryMatches.last().text()).toBe 'sample.js'
-      # Use `toBeGreaterThan` because dir may have some characters in it
-      expect(secondaryMatches.length).toBeGreaterThan 0
-      expect(secondaryMatches.last().text()).toBe 'sample.js'
+      waitsForPromise ->
+        etch.getScheduler().getNextUpdatePromise()
+
+      runs ->
+        resultView = bufferView.element.querySelector('li')
+        primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+        secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+        expect(primaryMatches.length).toBe 1
+        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe 'sample.js'
+        # Use `toBeGreaterThan` because dir may have some characters in it
+        expect(secondaryMatches.length).toBeGreaterThan 0
+        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe 'sample.js'
 
     it "highlights a partial match", ->
-      bufferView.filterEditorView.getModel().setText('sample')
-      bufferView.populateList()
-      resultView = bufferView.getSelectedItemView()
+      bufferView.selectListView.refs.queryEditor.setText('sample')
 
-      primaryMatches = resultView.find('.primary-line .character-match')
-      secondaryMatches = resultView.find('.secondary-line .character-match')
-      expect(primaryMatches.length).toBe 1
-      expect(primaryMatches.last().text()).toBe 'sample'
-      # Use `toBeGreaterThan` because dir may have some characters in it
-      expect(secondaryMatches.length).toBeGreaterThan 0
-      expect(secondaryMatches.last().text()).toBe 'sample'
+      waitsForPromise ->
+        etch.getScheduler().getNextUpdatePromise()
+
+      runs ->
+        resultView = bufferView.element.querySelector('li')
+        primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+        secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+        expect(primaryMatches.length).toBe 1
+        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe 'sample'
+        # Use `toBeGreaterThan` because dir may have some characters in it
+        expect(secondaryMatches.length).toBeGreaterThan 0
+        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe 'sample'
 
     it "highlights multiple matches in the file name", ->
-      bufferView.filterEditorView.getModel().setText('samplejs')
-      bufferView.populateList()
-      resultView = bufferView.getSelectedItemView()
+      bufferView.selectListView.refs.queryEditor.setText('samplejs')
 
-      primaryMatches = resultView.find('.primary-line .character-match')
-      secondaryMatches = resultView.find('.secondary-line .character-match')
-      expect(primaryMatches.length).toBe 2
-      expect(primaryMatches.first().text()).toBe 'sample'
-      expect(primaryMatches.last().text()).toBe 'js'
-      # Use `toBeGreaterThan` because dir may have some characters in it
-      expect(secondaryMatches.length).toBeGreaterThan 1
-      expect(secondaryMatches.last().text()).toBe 'js'
+      waitsForPromise ->
+        etch.getScheduler().getNextUpdatePromise()
+
+      runs ->
+        resultView = bufferView.element.querySelector('li')
+        primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+        secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+        expect(primaryMatches.length).toBe 2
+        expect(primaryMatches[0].textContent).toBe 'sample'
+        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe 'js'
+        # Use `toBeGreaterThan` because dir may have some characters in it
+        expect(secondaryMatches.length).toBeGreaterThan 1
+        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe 'js'
 
     it "highlights matches in the directory and file name", ->
       bufferView.items = [
@@ -981,18 +990,20 @@ describe 'FuzzyFinder', ->
           projectRelativePath: 'root-dir1/sample.js'
         }
       ]
-      bufferView.filterEditorView.getModel().setText('root-dirsample')
-      bufferView.populateList()
-      resultView = bufferView.getSelectedItemView()
+      bufferView.selectListView.refs.queryEditor.setText('root-dirsample')
 
-      primaryMatches = resultView.find('.primary-line .character-match')
-      expect(primaryMatches.length).toBe 1
-      expect(primaryMatches.last().text()).toBe 'sample'
+      waitsForPromise ->
+        etch.getScheduler().getNextUpdatePromise()
 
-      secondaryMatches = resultView.find('.secondary-line .character-match')
-      expect(secondaryMatches.length).toBe 2
-      expect(secondaryMatches.first().text()).toBe 'root-dir'
-      expect(secondaryMatches.last().text()).toBe 'sample'
+      runs ->
+        resultView = bufferView.element.querySelector('li')
+        primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+        secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+        expect(primaryMatches.length).toBe 1
+        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe 'sample'
+        expect(secondaryMatches.length).toBe 2
+        expect(secondaryMatches[0].textContent).toBe 'root-dir'
+        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe 'sample'
 
     describe "when the filter text doesn't have a file path", ->
       it "moves the cursor in the active editor to that line number", ->
@@ -1004,16 +1015,18 @@ describe 'FuzzyFinder', ->
         runs ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
-          waitsForPromise ->
-            bufferView.toggle()
+        waitsForPromise ->
+          bufferView.toggle()
 
-          runs ->
+        runs ->
           expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+          bufferView.selectListView.refs.queryEditor.insertText(':4')
 
-          bufferView.filterEditorView.getModel().insertText(':4')
-          bufferView.populateList()
-          expect(bufferView.list.children('li').length).toBe 0
+        waitsForPromise ->
+          etch.getScheduler().getNextUpdatePromise()
 
+        runs ->
+          expect(bufferView.element.querySelectorAll('li').length).toBe 0
           spyOn(bufferView, 'moveToLine').andCallThrough()
           atom.commands.dispatch bufferView.element, 'core:confirm'
 
@@ -1034,16 +1047,18 @@ describe 'FuzzyFinder', ->
         runs ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
 
-          waitsForPromise ->
-            bufferView.toggle()
+        waitsForPromise ->
+          bufferView.toggle()
 
-          runs ->
+        runs ->
           expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+          bufferView.selectListView.refs.queryEditor.insertText(':4')
 
-          bufferView.filterEditorView.getModel().insertText(':4')
-          bufferView.populateList()
-          expect(bufferView.list.children('li').length).toBe 0
+        waitsForPromise ->
+          etch.getScheduler().getNextUpdatePromise()
 
+        runs ->
+          expect(bufferView.element.querySelectorAll('li').length).toBe 0
           spyOn(bufferView, 'moveToLine').andCallThrough()
           atom.commands.dispatch bufferView.element, 'pane:split-left'
 
@@ -1061,21 +1076,21 @@ describe 'FuzzyFinder', ->
         projectView.toggle()
 
       runs ->
-      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-      projectView.filterEditorView.getModel().insertText('this should not show up next time we open finder')
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        bufferView.selectListView.refs.queryEditor.insertText('this should not show up next time we open finder')
 
       waitsForPromise ->
         projectView.toggle()
 
       runs ->
-      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
 
       waitsForPromise ->
         projectView.toggle()
 
       runs ->
-      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-      expect(projectView.filterEditorView.getText()).toBe ''
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        expect(projectView.selectListView.getQuery()).toBe ''
 
     it "preserves last search when the config is set", ->
       atom.config.set("fuzzy-finder.preserveLastSearch", true)
@@ -1084,22 +1099,22 @@ describe 'FuzzyFinder', ->
         projectView.toggle()
 
       runs ->
-      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-      projectView.filterEditorView.getModel().insertText('this should show up next time we open finder')
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        projectView.filterEditorView.getModel().insertText('this should show up next time we open finder')
 
       waitsForPromise ->
         projectView.toggle()
 
       runs ->
-      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe false
 
       waitsForPromise ->
         projectView.toggle()
 
       runs ->
-      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-      expect(projectView.filterEditorView.getText()).toBe 'this should show up next time we open finder'
-      expect(projectView.filterEditorView.getModel().getSelectedText()).toBe 'this should show up next time we open finder'
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        expect(projectView.selectListView.getQuery()).toBe 'this should show up next time we open finder'
+        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe 'this should show up next time we open finder'
 
   describe "file icons", ->
     fileIcons = new DefaultFileIcons

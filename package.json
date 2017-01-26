@@ -7,7 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "0.2.6",
-    "atom-select-list": "0.0.10",
+    "atom-select-list": "0.0.11",
     "atom-space-pen-views": "^2.0.0",
     "fs-plus": "^2.0.0",
     "fuzzaldrin": "^2.0",
