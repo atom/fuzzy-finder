@@ -1100,7 +1100,7 @@ describe 'FuzzyFinder', ->
 
       runs ->
         expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-        projectView.filterEditorView.getModel().insertText('this should show up next time we open finder')
+        projectView.selectListView.refs.queryEditor.insertText('this should show up next time we open finder')
 
       waitsForPromise ->
         projectView.toggle()
@@ -1120,38 +1120,40 @@ describe 'FuzzyFinder', ->
     fileIcons = new DefaultFileIcons
 
     it "defaults to text", ->
-
       waitsForPromise ->
         atom.workspace.open('sample.js')
 
+      waitsForPromise ->
+        bufferView.toggle()
+
       runs ->
-        waitsForPromise ->
-          bufferView.toggle()
-
-        runs ->
         expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+        bufferView.selectListView.refs.queryEditor.insertText('js')
 
-        bufferView.filterEditorView.getModel().insertText('js')
-        bufferView.populateList()
-        firstResult = bufferView.list.children('li').find('.primary-line')
-        expect(fileIcons.iconClassForPath(firstResult[0].dataset.path)).toBe 'icon-file-text'
+      waitsForPromise ->
+        etch.getScheduler().getNextUpdatePromise()
+
+      runs ->
+        firstResult = bufferView.element.querySelector('li .primary-line')
+        expect(fileIcons.iconClassForPath(firstResult.dataset.path)).toBe 'icon-file-text'
 
     it "shows image icons", ->
-
       waitsForPromise ->
         atom.workspace.open('sample.gif')
 
+      waitsForPromise ->
+        bufferView.toggle()
+
       runs ->
-        waitsForPromise ->
-          bufferView.toggle()
-
-        runs ->
         expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe true
+        bufferView.selectListView.refs.queryEditor.insertText('gif')
 
-        bufferView.filterEditorView.getModel().insertText('gif')
-        bufferView.populateList()
-        firstResult = bufferView.list.children('li').find('.primary-line')
-        expect(fileIcons.iconClassForPath(firstResult[0].dataset.path)).toBe 'icon-file-media'
+      waitsForPromise ->
+        etch.getScheduler().getNextUpdatePromise()
+
+      runs ->
+        firstResult = bufferView.element.querySelector('li .primary-line')
+        expect(fileIcons.iconClassForPath(firstResult.dataset.path)).toBe 'icon-file-media'
 
   describe "Git integration", ->
     [projectPath, gitRepository, gitDirectory] = []
@@ -1186,12 +1188,14 @@ describe 'FuzzyFinder', ->
 
       it "displays all new and modified paths", ->
         expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
-        dispatchCommand('toggle-git-status-finder')
-        expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
+        waitsForPromise ->
+          gitStatusView.toggle()
 
-        expect(gitStatusView.find('.file').length).toBe 2
-        expect(gitStatusView.find('.status.status-modified').length).toBe 1
-        expect(gitStatusView.find('.status.status-added').length).toBe 1
+        runs ->
+          expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
+          expect(gitStatusView.element.querySelectorAll('.file').length).toBe 2
+          expect(gitStatusView.element.querySelectorAll('.status.status-modified').length).toBe 1
+          expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe 1
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
@@ -1219,8 +1223,8 @@ describe 'FuzzyFinder', ->
             bufferView.toggle()
 
           runs ->
-          expect(bufferView.find('.status.status-modified').length).toBe 1
-          expect(bufferView.find('.status.status-modified').closest('li').find('.file').text()).toBe 'a.txt'
+            expect(bufferView.element.querySelectorAll('.status.status-modified').length).toBe 1
+            expect(bufferView.element.querySelector('.status.status-modified').closest('li').querySelector('.file').textContent).toBe 'a.txt'
 
       describe "when a new file is shown in the list", ->
         it "displays the new icon", ->
@@ -1234,8 +1238,8 @@ describe 'FuzzyFinder', ->
               bufferView.toggle()
 
             runs ->
-            expect(bufferView.find('.status.status-added').length).toBe 1
-            expect(bufferView.find('.status.status-added').closest('li').find('.file').text()).toBe 'newsample.js'
+              expect(bufferView.element.querySelectorAll('.status.status-added').length).toBe 1
+              expect(bufferView.element.querySelector('.status.status-added').closest('li').querySelector('.file').textContent).toBe 'newsample.js'
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
       beforeEach ->
@@ -1254,9 +1258,7 @@ describe 'FuzzyFinder', ->
             projectView.toggle()
 
           runs ->
-          projectView.setMaxItems(Infinity)
-
-          waitForPathsToDisplay(projectView)
+            waitForPathsToDisplay(projectView)
 
           runs ->
             expect(Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes("ignored.txt"))).not.toBeDefined()
@@ -1272,9 +1274,7 @@ describe 'FuzzyFinder', ->
             projectView.toggle()
 
           runs ->
-          projectView.setMaxItems(Infinity)
-
-          waitForPathsToDisplay(projectView)
+            waitForPathsToDisplay(projectView)
 
           runs ->
             expect(Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes("b.txt"))).toBeDefined()
@@ -1289,9 +1289,7 @@ describe 'FuzzyFinder', ->
             projectView.toggle()
 
           runs ->
-          projectView.setMaxItems(Infinity)
-
-          waitForPathsToDisplay(projectView)
+            waitForPathsToDisplay(projectView)
 
           runs ->
             expect(Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes("file.txt"))).toBeDefined()
