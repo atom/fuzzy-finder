@@ -1208,11 +1208,10 @@ describe 'FuzzyFinder', ->
           originalPath = editor.getPath()
           newPath = gitDirectory.resolve('newsample.js')
           fs.writeFileSync(newPath, '')
+          fs.writeFileSync(originalPath, 'a change')
 
       describe "when a modified file is shown in the list", ->
         it "displays the modified icon", ->
-          editor.setText('modified')
-          editor.save()
           gitRepository.getPathStatus(editor.getPath())
 
           waitsForPromise ->
