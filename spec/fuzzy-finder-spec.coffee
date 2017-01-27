@@ -980,16 +980,16 @@ describe 'FuzzyFinder', ->
         expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe 'js'
 
     it "highlights matches in the directory and file name", ->
-      bufferView.items = [
-        {
-          filePath: '/test/root-dir1/sample.js'
-          projectRelativePath: 'root-dir1/sample.js'
-        }
-      ]
+      spyOn(bufferView, "projectRelativePathsForFilePaths").andCallFake (paths) -> paths
       bufferView.selectListView.refs.queryEditor.setText('root-dirsample')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        bufferView.setItems([
+          {
+            filePath: '/test/root-dir1/sample.js'
+            projectRelativePath: 'root-dir1/sample.js'
+          }
+        ])
 
       runs ->
         resultView = bufferView.element.querySelector('li')
