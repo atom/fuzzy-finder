@@ -9,9 +9,6 @@ wrench = require 'wrench'
 PathLoader = require '../lib/path-loader'
 DefaultFileIcons = require '../lib/default-file-icons'
 
-escapeSelector = (_selector) ->
-  _selector.replace(/\\/g, '\\\\')
-
 rmrf = (_path) ->
   if fs.statSync(_path).isDirectory()
     _.each(fs.readdirSync(_path), (child) ->
@@ -120,7 +117,7 @@ describe 'FuzzyFinder', ->
 
           runs ->
             eachFilePath [rootDir1, rootDir2], (filePath) ->
-              item = Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes(escapeSelector(filePath)))
+              item = Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes(filePath))
               expect(item).toExist()
               nameDiv = item.querySelector("div:first-child")
               expect(nameDiv.dataset.name).toBe(path.basename(filePath))
@@ -136,12 +133,12 @@ describe 'FuzzyFinder', ->
 
           runs ->
             eachFilePath [rootDir1], (filePath) ->
-              item = Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes(escapeSelector(filePath)))
+              item = Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes(filePath))
               expect(item).toExist()
               expect(item.querySelectorAll("div")[1].textContent).toBe(path.join(path.basename(rootDir1), filePath))
 
             eachFilePath [rootDir2], (filePath) ->
-              item = Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes(escapeSelector(filePath)))
+              item = Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes(filePath))
               expect(item).toExist()
               expect(item.querySelectorAll("div")[1].textContent).toBe(path.join(path.basename(rootDir2), filePath))
 
@@ -329,7 +326,7 @@ describe 'FuzzyFinder', ->
           runs ->
             items = Array.from(projectView.element.querySelectorAll('li'))
             eachFilePath [rootDir1], (filePath) ->
-              item = items.find((a) -> a.textContent.includes(escapeSelector(filePath)))
+              item = items.find((a) -> a.textContent.includes(filePath))
               expect(item).toExist()
               expect(item).not.toHaveText(path.basename(rootDir1))
 
