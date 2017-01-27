@@ -1230,12 +1230,12 @@ describe 'FuzzyFinder', ->
           runs ->
             gitRepository.getPathStatus(editor.getPath())
 
-            waitsForPromise ->
-              bufferView.toggle()
+          waitsForPromise ->
+            bufferView.toggle()
 
-            runs ->
-              expect(bufferView.element.querySelectorAll('.status.status-added').length).toBe 1
-              expect(bufferView.element.querySelector('.status.status-added').closest('li').querySelector('.file').textContent).toBe 'newsample.js'
+          runs ->
+            expect(bufferView.element.querySelectorAll('.status.status-added').length).toBe 1
+            expect(bufferView.element.querySelector('.status.status-added').closest('li').querySelector('.file').textContent).toBe 'newsample.js'
 
     describe "when core.excludeVcsIgnoredPaths is set to true", ->
       beforeEach ->
