@@ -26,7 +26,7 @@ getOrScheduleUpdatePromise = ->
 
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
-  [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
+  [fuzzyFinder, projectView, bufferView, gitStatusView, service, workspaceElement, fixturesPath] = []
 
   beforeEach ->
     rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
@@ -59,6 +59,7 @@ describe 'FuzzyFinder', ->
         projectView = fuzzyFinder.createProjectView()
         bufferView = fuzzyFinder.createBufferView()
         gitStatusView = fuzzyFinder.createGitStatusView()
+        service = fuzzyFinder.provideFuzzyFinder()
 
   dispatchCommand = (command) ->
     atom.commands.dispatch(workspaceElement, "fuzzy-finder:#{command}")
@@ -1099,13 +1100,14 @@ describe 'FuzzyFinder', ->
 
     it "preserves last search when the config is set", ->
       atom.config.set("fuzzy-finder.preserveLastSearch", true)
+      query = 'this should show up next time we open finder'
 
       waitsForPromise ->
         projectView.toggle()
 
       runs ->
         expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-        projectView.selectListView.refs.queryEditor.insertText('this should show up next time we open finder')
+        projectView.selectListView.refs.queryEditor.insertText(query)
 
       waitsForPromise ->
         projectView.toggle()
@@ -1118,8 +1120,8 @@ describe 'FuzzyFinder', ->
 
       runs ->
         expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
-        expect(projectView.selectListView.getQuery()).toBe 'this should show up next time we open finder'
-        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe 'this should show up next time we open finder'
+        expect(projectView.selectListView.getQuery()).toBe query
+        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe query
 
   describe "file icons", ->
     fileIcons = new DefaultFileIcons
@@ -1297,3 +1299,14 @@ describe 'FuzzyFinder', ->
 
           runs ->
             expect(Array.from(projectView.element.querySelectorAll('li')).find((a) -> a.textContent.includes("file.txt"))).toBeDefined()
+
+  describe "toggleWithQuery service", ->
+    it "shows filter query provided by service", ->
+      query = 'this should show up'
+
+      waitsForPromise ->
+        service.toggleWithQuery(query)
+
+      runs ->
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        expect(projectView.selectListView.getQuery()).toBe query

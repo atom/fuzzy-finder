@@ -17,3 +17,33 @@ This package uses both the `core.ignoredNames` and `fuzzy-finder.ignoredNames` c
 This package also will also not show Git ignored files when the `core.excludeVcsIgnoredPaths` is enabled.
 
 ![](https://f.cloud.github.com/assets/671378/2241456/100db6b8-9cd3-11e3-9b3a-569c6b50cc60.png)
+
+## API
+
+This package provides a service that allows you to trigger **Fuzzy Finder** from other Atom packages.
+
+### Consume service
+
+#### package.json
+```json
+{
+  "consumedServices": {
+    "atom.fuzzy-finder": {
+      "versions": {
+        "1.0.0": "consumeFuzzyFinder"
+      }
+    }
+  }
+}
+```
+
+#### Your package main module
+```js
+consumeFuzzyFinder(fuzzyFinder) {
+  this.myPackage.fuzzyFinder = fuzzyFinder;
+}
+```
+
+### Service methods
+
+- `toggleWithQuery(query)` - sets filter to `query` and triggers **Fuzzy Finder** pane.

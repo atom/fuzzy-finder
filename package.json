@@ -30,6 +30,14 @@
       }
     }
   },
+  "providedServices": {
+    "atom.fuzzy-finder": {
+      "description": "fuzzy-finder",
+      "versions": {
+        "1.0.0": "provideFuzzyFinder"
+      }
+    }
+  },
   "configSchema": {
     "ignoredNames": {
       "type": "array",

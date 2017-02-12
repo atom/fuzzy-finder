@@ -40,6 +40,9 @@ module.exports =
     new Disposable ->
       FileIcons.resetService()
 
+  provideFuzzyFinder: ->
+    toggleWithQuery: @createProjectView().toggleWithQuery.bind(@projectView)
+
   serialize: ->
     paths = {}
     for editor in atom.workspace.getTextEditors()
