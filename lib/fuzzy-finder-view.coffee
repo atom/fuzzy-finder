@@ -220,6 +220,7 @@ class FuzzyFinderView extends SelectListView
 
   getFilterQuery: ->
     query = super
+    query = query.replace(/::/g, "/")
     colon = query.indexOf(':')
     query = query[0...colon] if colon isnt -1
     # Normalize to backslashes on Windows
