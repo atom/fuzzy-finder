@@ -1,5 +1,5 @@
 {Disposable} = require 'atom'
-FileIcons = require './file-icons'
+IconServices = require './icon-services'
 
 module.exports =
   activate: (state) ->
@@ -35,10 +35,15 @@ module.exports =
     @stopLoadPathsTask()
     @active = false
 
+  consumeElementIcons: (service) ->
+    IconServices.set 'element-icons', service
+    new Disposable =>
+      IconServices.reset 'element-icons'
+
   consumeFileIcons: (service) ->
-    FileIcons.setService(service)
+    IconServices.set 'file-icons', service
     new Disposable ->
-      FileIcons.resetService()
+      IconServices.reset 'file-icons'
 
   serialize: ->
     paths = {}
