@@ -21,6 +21,9 @@ rmrf = (_path) ->
 # TODO: Remove this after atom/atom#13977 lands in favor of unguarded `getCenter()` calls
 getCenter = -> atom.workspace.getCenter?() ? atom.workspace
 
+getOrScheduleUpdatePromise = ->
+  new Promise((resolve) -> etch.getScheduler().updateDocument(resolve))
+
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
   [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
@@ -911,7 +914,7 @@ describe 'FuzzyFinder', ->
           bufferView.selectListView.refs.queryEditor.setText('sample.js:4')
 
         waitsForPromise ->
-          etch.getScheduler().getNextUpdatePromise()
+          getOrScheduleUpdatePromise()
 
         runs ->
           {filePath} = bufferView.selectListView.getSelectedItem()
@@ -937,7 +940,7 @@ describe 'FuzzyFinder', ->
       bufferView.selectListView.refs.queryEditor.setText('sample.js')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         resultView = bufferView.element.querySelector('li')
@@ -953,7 +956,7 @@ describe 'FuzzyFinder', ->
       bufferView.selectListView.refs.queryEditor.setText('sample')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         resultView = bufferView.element.querySelector('li')
@@ -969,7 +972,7 @@ describe 'FuzzyFinder', ->
       bufferView.selectListView.refs.queryEditor.setText('samplejs')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         resultView = bufferView.element.querySelector('li')
@@ -1022,7 +1025,7 @@ describe 'FuzzyFinder', ->
           bufferView.selectListView.refs.queryEditor.insertText(':4')
 
         waitsForPromise ->
-          etch.getScheduler().getNextUpdatePromise()
+          getOrScheduleUpdatePromise()
 
         runs ->
           expect(bufferView.element.querySelectorAll('li').length).toBe 0
@@ -1054,7 +1057,7 @@ describe 'FuzzyFinder', ->
           bufferView.selectListView.refs.queryEditor.insertText(':4')
 
         waitsForPromise ->
-          etch.getScheduler().getNextUpdatePromise()
+          getOrScheduleUpdatePromise()
 
         runs ->
           expect(bufferView.element.querySelectorAll('li').length).toBe 0
@@ -1130,7 +1133,7 @@ describe 'FuzzyFinder', ->
         bufferView.selectListView.refs.queryEditor.insertText('js')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         firstResult = bufferView.element.querySelector('li .primary-line')
@@ -1148,7 +1151,7 @@ describe 'FuzzyFinder', ->
         bufferView.selectListView.refs.queryEditor.insertText('gif')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         firstResult = bufferView.element.querySelector('li .primary-line')
