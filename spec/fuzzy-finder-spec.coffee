@@ -338,6 +338,7 @@ describe 'FuzzyFinder', ->
 
       describe "when the project has no path", ->
         beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
           atom.project.setPaths([])
 
         it "shows an empty message with no files in the list", ->
@@ -345,8 +346,9 @@ describe 'FuzzyFinder', ->
             projectView.toggle()
 
           runs ->
-          expect(projectView.element.textContent).toBe 'Project is empty'
-          expect(projectView.element.querySelectorAll('li').length).toBe 0
+            expect(projectView.selectListView.refs.emptyMessage).toBeVisible()
+            expect(projectView.selectListView.refs.emptyMessage.textContent).toBe 'Project is empty'
+            expect(projectView.element.querySelectorAll('li').length).toBe 0
 
     describe "when a project's root path is unlinked", ->
       beforeEach ->
