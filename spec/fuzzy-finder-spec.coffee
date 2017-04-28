@@ -18,6 +18,12 @@ rmrf = (_path) ->
   else
     fs.unlinkSync(_path)
 
+# TODO: Remove this after atom/atom#13977 lands in favor of unguarded `getCenter()` calls
+getCenter = -> atom.workspace.getCenter?() ? atom.workspace
+
+getOrScheduleUpdatePromise = ->
+  new Promise((resolve) -> etch.getScheduler().updateDocument(resolve))
+
 describe 'FuzzyFinder', ->
   [rootDir1, rootDir2] = []
   [fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath] = []
@@ -332,6 +338,7 @@ describe 'FuzzyFinder', ->
 
       describe "when the project has no path", ->
         beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
           atom.project.setPaths([])
 
         it "shows an empty message with no files in the list", ->
@@ -339,8 +346,9 @@ describe 'FuzzyFinder', ->
             projectView.toggle()
 
           runs ->
-          expect(projectView.element.textContent).toBe 'Project is empty'
-          expect(projectView.element.querySelectorAll('li').length).toBe 0
+            expect(projectView.selectListView.refs.emptyMessage).toBeVisible()
+            expect(projectView.selectListView.refs.emptyMessage.textContent).toBe 'Project is empty'
+            expect(projectView.element.querySelectorAll('li').length).toBe 0
 
     describe "when a project's root path is unlinked", ->
       beforeEach ->
@@ -792,7 +800,7 @@ describe 'FuzzyFinder', ->
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
-      expect(atom.workspace.getPanes().length).toBe 1
+      expect(getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -804,18 +812,18 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-left'
 
       waitsFor ->
-        atom.workspace.getPanes().length is 2
+        getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [leftPane, rightPane] = atom.workspace.getPanes()
+        [leftPane, rightPane] = getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe leftPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
-      expect(atom.workspace.getPanes().length).toBe 1
+      expect(getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -827,18 +835,18 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-right'
 
       waitsFor ->
-        atom.workspace.getPanes().length is 2
+        getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [leftPane, rightPane] = atom.workspace.getPanes()
+        [leftPane, rightPane] = getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe rightPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
-      expect(atom.workspace.getPanes().length).toBe 1
+      expect(getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -850,18 +858,18 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-up'
 
       waitsFor ->
-        atom.workspace.getPanes().length is 2
+        getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [topPane, bottomPane] = atom.workspace.getPanes()
+        [topPane, bottomPane] = getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe topPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
-      expect(atom.workspace.getPanes().length).toBe 1
+      expect(getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -873,13 +881,13 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-down'
 
       waitsFor ->
-        atom.workspace.getPanes().length is 2
+        getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [topPane, bottomPane] = atom.workspace.getPanes()
+        [topPane, bottomPane] = getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe bottomPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
@@ -908,7 +916,7 @@ describe 'FuzzyFinder', ->
           bufferView.selectListView.refs.queryEditor.setText('sample.js:4')
 
         waitsForPromise ->
-          etch.getScheduler().getNextUpdatePromise()
+          getOrScheduleUpdatePromise()
 
         runs ->
           {filePath} = bufferView.selectListView.getSelectedItem()
@@ -934,7 +942,7 @@ describe 'FuzzyFinder', ->
       bufferView.selectListView.refs.queryEditor.setText('sample.js')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         resultView = bufferView.element.querySelector('li')
@@ -950,7 +958,7 @@ describe 'FuzzyFinder', ->
       bufferView.selectListView.refs.queryEditor.setText('sample')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         resultView = bufferView.element.querySelector('li')
@@ -966,7 +974,7 @@ describe 'FuzzyFinder', ->
       bufferView.selectListView.refs.queryEditor.setText('samplejs')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         resultView = bufferView.element.querySelector('li')
@@ -1019,7 +1027,7 @@ describe 'FuzzyFinder', ->
           bufferView.selectListView.refs.queryEditor.insertText(':4')
 
         waitsForPromise ->
-          etch.getScheduler().getNextUpdatePromise()
+          getOrScheduleUpdatePromise()
 
         runs ->
           expect(bufferView.element.querySelectorAll('li').length).toBe 0
@@ -1051,7 +1059,7 @@ describe 'FuzzyFinder', ->
           bufferView.selectListView.refs.queryEditor.insertText(':4')
 
         waitsForPromise ->
-          etch.getScheduler().getNextUpdatePromise()
+          getOrScheduleUpdatePromise()
 
         runs ->
           expect(bufferView.element.querySelectorAll('li').length).toBe 0
@@ -1127,7 +1135,7 @@ describe 'FuzzyFinder', ->
         bufferView.selectListView.refs.queryEditor.insertText('js')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         firstResult = bufferView.element.querySelector('li .primary-line')
@@ -1145,7 +1153,7 @@ describe 'FuzzyFinder', ->
         bufferView.selectListView.refs.queryEditor.insertText('gif')
 
       waitsForPromise ->
-        etch.getScheduler().getNextUpdatePromise()
+        getOrScheduleUpdatePromise()
 
       runs ->
         firstResult = bufferView.element.querySelector('li .primary-line')
