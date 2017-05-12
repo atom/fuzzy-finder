@@ -418,6 +418,7 @@ describe 'FuzzyFinder', ->
     describe "toggling", ->
       describe "when there are pane items with paths", ->
         beforeEach ->
+          jasmine.useRealClock()
           jasmine.attachToDOM(workspaceElement)
 
           waitsForPromise ->
