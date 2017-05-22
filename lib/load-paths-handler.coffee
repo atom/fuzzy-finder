@@ -26,7 +26,9 @@ class PathLoader
 
   isIgnored: (loadedPath) ->
     relativePath = path.relative(@rootPath, loadedPath)
-    if @repo?.isPathIgnored(relativePath)
+    if relativePath is ''
+      false
+    else if @repo?.isPathIgnored(loadedPath)
       true
     else
       for ignoredName in @ignoredNames
