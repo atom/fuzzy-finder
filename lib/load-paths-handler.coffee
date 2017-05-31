@@ -4,33 +4,42 @@ path = require 'path'
 _ = require 'underscore-plus'
 {GitRepository} = require 'atom'
 {Minimatch} = require 'minimatch'
+{GitProcess} = require 'dugite'
 
 PathsChunkSize = 100
 
 emittedPaths = new Set
 
 class PathLoader
-  constructor: (@rootPath, ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
+  constructor: (@rootPath, @ignoreVcsIgnores, @traverseSymlinkDirectories, @ignoredNames) ->
     @paths = []
     @realPathCache = {}
-    @repo = null
-    if ignoreVcsIgnores
-      repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
-      @repo = repo if repo?.relativize(path.join(@rootPath, 'test')) is 'test'
 
   load: (done) ->
-    @loadPath @rootPath, true, =>
-      @flushPaths()
-      @repo?.destroy()
-      done()
+    repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
+    if repo?.relativize(path.join(@rootPath, 'test')) is 'test'
+      args = ['ls-files', '-c', '-o', '-z']
+      if @ignoreVcsIgnores
+        args.push('--exclude-standard')
+      for ignoredName in @ignoredNames
+        args.push("-x")
+        args.push(ignoredName.pattern)
+      GitProcess.exec(args, @rootPath, {maxBuffer: 30 * 1024 * 1024}).then (result) ->
+        paths = result.stdout.split('\0')
+        while (paths.length)
+          emit('load-paths:paths-found', paths.splice(0, PathsChunkSize * 100))
+        repo?.destroy()
+        done()
+    else
+      @loadPath @rootPath, true, =>
+        @flushPaths()
+        repo?.destroy()
+        done()
 
   isIgnored: (loadedPath) ->
     relativePath = path.relative(@rootPath, loadedPath)
-    if @repo?.isPathIgnored(relativePath)
-      true
-    else
-      for ignoredName in @ignoredNames
-        return true if ignoredName.match(relativePath)
+    for ignoredName in @ignoredNames
+      return true if ignoredName.match(relativePath)
 
   pathLoaded: (loadedPath, done) ->
     unless @isIgnored(loadedPath) or emittedPaths.has(loadedPath)
