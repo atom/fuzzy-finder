@@ -8,7 +8,7 @@
   "dependencies": {
     "async": "0.2.6",
     "atom-select-list": "^0.1.0",
-    "dugite": "^1.30.0",
+    "dugite": "^1.35.0",
     "fs-plus": "^3.0.0",
     "fuzzaldrin": "^2.0",
     "fuzzaldrin-plus": "^0.4.1",

@@ -24,10 +24,13 @@ class PathLoader
       for ignoredName in @ignoredNames
         args.push("-x")
         args.push(ignoredName.pattern)
-      GitProcess.exec(args, @rootPath, {maxBuffer: 30 * 1024 * 1024}).then (result) ->
-        paths = result.stdout.split('\0')
-        while (paths.length)
-          emit('load-paths:paths-found', paths.splice(0, PathsChunkSize * 100))
+      output = ""
+      proc = GitProcess.spawn(args, @rootPath)
+      proc.stdout.on 'data', (chunk) ->
+        files = (output + chunk).split("\0")
+        output = files.pop()
+        emit('load-paths:paths-found', files)
+      proc.on "close", (code) ->
         repo?.destroy()
         done()
     else
