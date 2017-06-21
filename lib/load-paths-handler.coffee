@@ -18,19 +18,19 @@ class PathLoader
   load: (done) ->
     repo = GitRepository.open(@rootPath, refreshOnWindowFocus: false)
     if repo?.relativize(path.join(@rootPath, 'test')) is 'test'
-      args = ['ls-files', '-c', '-o', '-z']
+      args = ['ls-files', '--cached', '--others', '-z']
       if @ignoreVcsIgnores
         args.push('--exclude-standard')
       for ignoredName in @ignoredNames
-        args.push("-x")
+        args.push('--exclude')
         args.push(ignoredName.pattern)
-      output = ""
+      output = ''
       proc = GitProcess.spawn(args, @rootPath)
       proc.stdout.on 'data', (chunk) ->
-        files = (output + chunk).split("\0")
+        files = (output + chunk).split('\0')
         output = files.pop()
         emit('load-paths:paths-found', files)
-      proc.on "close", (code) ->
+      proc.on 'close', (code) ->
         repo?.destroy()
         done()
     else
