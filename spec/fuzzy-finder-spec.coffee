@@ -923,11 +923,11 @@ describe 'FuzzyFinder', ->
           {filePath} = bufferView.selectListView.getSelectedItem()
           expect(atom.project.getDirectories()[0].resolve(filePath)).toBe editor1.getPath()
 
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveTo').andCallThrough()
           atom.commands.dispatch bufferView.element, 'core:confirm'
 
         waitsFor ->
-          bufferView.moveToLine.callCount > 0
+          bufferView.moveTo.callCount > 0
 
         runs ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
@@ -1032,11 +1032,11 @@ describe 'FuzzyFinder', ->
 
         runs ->
           expect(bufferView.element.querySelectorAll('li').length).toBe 0
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveTo').andCallThrough()
           atom.commands.dispatch bufferView.element, 'core:confirm'
 
         waitsFor ->
-          bufferView.moveToLine.callCount > 0
+          bufferView.moveTo.callCount > 0
 
         runs ->
           expect(atom.workspace.getActiveTextEditor()).toBe editor1
@@ -1064,11 +1064,11 @@ describe 'FuzzyFinder', ->
 
         runs ->
           expect(bufferView.element.querySelectorAll('li').length).toBe 0
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveTo').andCallThrough()
           atom.commands.dispatch bufferView.element, 'pane:split-left'
 
         waitsFor ->
-          bufferView.moveToLine.callCount > 0
+          bufferView.moveTo.callCount > 0
 
         runs ->
           expect(atom.workspace.getActiveTextEditor()).not.toBe editor1
