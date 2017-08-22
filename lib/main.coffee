@@ -1,25 +1,7 @@
-module.exports =
-  config:
-    ignoredNames:
-      type: 'array'
-      default: []
-      description: 'List of string glob patterns. Files and directories matching these patterns will be ignored. This list is merged with the list defined by the core `Ignored Names` config setting. Example: `.git, ._*, Thumbs.db`.'
-    searchAllPanes:
-      type: 'boolean'
-      default: false
-      description: 'Search all panes when opening files. If disabled, only the active pane is searched. Holding `shift` inverts this setting.'
-    preserveLastSearch:
-      type: 'boolean'
-      default: false
-    previewSelection:
-      type: 'boolean'
-      default: false
-      description: 'Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened.'
-    useAlternateScoring:
-      type: 'boolean'
-      default: true
-      description: 'Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)'
+{Disposable} = require 'atom'
+FileIcons = require './file-icons'
 
+module.exports =
   activate: (state) ->
     @active = true
 
@@ -52,6 +34,11 @@ module.exports =
     @projectPaths = null
     @stopLoadPathsTask()
     @active = false
+
+  consumeFileIcons: (service) ->
+    FileIcons.setService(service)
+    new Disposable ->
+      FileIcons.resetService()
 
   serialize: ->
     paths = {}
