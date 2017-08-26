@@ -364,6 +364,11 @@ module.exports = FuzzyFinderView = (function(superClass) {
     return FuzzyFinderView.__super__.setItems.call(this, this.projectRelativePathsForFilePaths(filePaths));
   };
 
+  FuzzyFinderView.prototype.setMaxItems = function(maxCount) {
+    FuzzyFinderView.__super__.setMaxItems(maxCount)
+    return maxCount
+  }
+
   FuzzyFinderView.prototype.projectRelativePathsForFilePaths = function(filePaths) {
     var projectHasMultipleDirectories;
     if (filePaths !== this.filePaths) {
