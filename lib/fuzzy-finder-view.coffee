@@ -365,7 +365,8 @@ module.exports = FuzzyFinderView = (function(superClass) {
   };
 
   FuzzyFinderView.prototype.setMaxItems = function(maxCount) {
-    FuzzyFinderView.__super__.setMaxItems(maxCount)
+    this.maxItems = maxCount;
+    
     return maxCount
   }
 
