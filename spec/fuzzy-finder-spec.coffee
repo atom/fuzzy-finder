@@ -1121,7 +1121,7 @@ describe 'FuzzyFinder', ->
         expect(projectView.selectListView.getQuery()).toBe 'this should show up next time we open finder'
         expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe 'this should show up next time we open finder'
 
-  fdescribe "prefill query from selection", ->
+  describe "prefill query from selection", ->
     it "takes selection from active editor and prefills query with it", ->
 
       waitsForPromise ->
