@@ -1121,6 +1121,25 @@ describe 'FuzzyFinder', ->
         expect(projectView.selectListView.getQuery()).toBe 'this should show up next time we open finder'
         expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe 'this should show up next time we open finder'
 
+  fdescribe "prefill query from selection", ->
+    it "takes selection from active editor and prefills query with it", ->
+
+      waitsForPromise ->
+        atom.workspace.open()
+
+      runs ->
+        atom.workspace.getActiveTextEditor().setText('sample.txt')
+        atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
+        expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe 'sample.txt'
+
+      waitsForPromise ->
+        projectView.toggle()
+
+      runs ->
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe true
+        expect(projectView.selectListView.getQuery()).toBe 'sample.txt'
+        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe 'sample.txt'
+
   describe "file icons", ->
     fileIcons = new DefaultFileIcons
 
