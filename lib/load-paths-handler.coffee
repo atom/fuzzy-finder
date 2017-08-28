@@ -19,7 +19,7 @@ class PathLoader
       @repo = repo if repo?.relativize(path.join(@rootPath, 'test')) is 'test'
 
   load: (done) ->
-    @loadPath @rootPath, =>
+    @loadPath @rootPath, true, =>
       @flushPaths()
       @repo?.destroy()
       done()
@@ -45,8 +45,8 @@ class PathLoader
     emit('load-paths:paths-found', @paths)
     @paths = []
 
-  loadPath: (pathToLoad, done) ->
-    return done() if @isIgnored(pathToLoad)
+  loadPath: (pathToLoad, root, done) ->
+    return done() if @isIgnored(pathToLoad) and not root
     fs.lstat pathToLoad, (error, stats) =>
       return done() if error?
       if stats.isSymbolicLink()
@@ -75,7 +75,7 @@ class PathLoader
       async.each(
         children,
         (childName, next) =>
-          @loadPath(path.join(folderPath, childName), next)
+          @loadPath(path.join(folderPath, childName), false, next)
         done
       )
 
