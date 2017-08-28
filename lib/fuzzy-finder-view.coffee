@@ -250,6 +250,20 @@ module.exports = FuzzyFinderView = (function(superClass) {
     }
   };
 
+  FuzzyFinderView.prototype.previewSelection = function() {
+    var filePath, lineNumber, ref2;
+    if (atom.config.get('fuzzy-finder.previewSelection')) {
+      filePath = ((ref2 = this.getSelectedItem()) != null ? ref2 : {}).filePath;
+      if (filePath) {
+        lineNumber = this.getLineNumber();
+        return this.openPath(filePath, lineNumber, {
+          searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes'),
+          activatePane: false
+        }, true);
+      }
+    }
+  };
+
   FuzzyFinderView.prototype.populateList = function() {
     if (this.isQueryALineJump()) {
       this.list.empty();
