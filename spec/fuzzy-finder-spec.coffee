@@ -18,9 +18,6 @@ rmrf = (_path) ->
   else
     fs.unlinkSync(_path)
 
-# TODO: Remove this after atom/atom#13977 lands in favor of unguarded `getCenter()` calls
-getCenter = -> atom.workspace.getCenter?() ? atom.workspace
-
 getOrScheduleUpdatePromise = ->
   new Promise((resolve) -> etch.getScheduler().updateDocument(resolve))
 
@@ -801,7 +798,7 @@ describe 'FuzzyFinder', ->
 
   describe "opening a path into a split", ->
     it "opens the path by splitting the active editor left", ->
-      expect(getCenter().getPanes().length).toBe 1
+      expect(atom.workspace.getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -813,18 +810,18 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-left'
 
       waitsFor ->
-        getCenter().getPanes().length is 2
+        atom.workspace.getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [leftPane, rightPane] = getCenter().getPanes()
+        [leftPane, rightPane] = atom.workspace.getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe leftPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor right", ->
-      expect(getCenter().getPanes().length).toBe 1
+      expect(atom.workspace.getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -836,18 +833,18 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-right'
 
       waitsFor ->
-        getCenter().getPanes().length is 2
+        atom.workspace.getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [leftPane, rightPane] = getCenter().getPanes()
+        [leftPane, rightPane] = atom.workspace.getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe rightPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor up", ->
-      expect(getCenter().getPanes().length).toBe 1
+      expect(atom.workspace.getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -859,18 +856,18 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-up'
 
       waitsFor ->
-        getCenter().getPanes().length is 2
+        atom.workspace.getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [topPane, bottomPane] = getCenter().getPanes()
+        [topPane, bottomPane] = atom.workspace.getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe topPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
     it "opens the path by splitting the active editor down", ->
-      expect(getCenter().getPanes().length).toBe 1
+      expect(atom.workspace.getCenter().getPanes().length).toBe 1
       pane = atom.workspace.getActivePane()
       filePath = null
 
@@ -882,13 +879,13 @@ describe 'FuzzyFinder', ->
         atom.commands.dispatch bufferView.element, 'pane:split-down'
 
       waitsFor ->
-        getCenter().getPanes().length is 2
+        atom.workspace.getCenter().getPanes().length is 2
 
       waitsFor ->
         atom.workspace.getActiveTextEditor()
 
       runs ->
-        [topPane, bottomPane] = getCenter().getPanes()
+        [topPane, bottomPane] = atom.workspace.getCenter().getPanes()
         expect(atom.workspace.getActivePane()).toBe bottomPane
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe atom.project.getDirectories()[0].resolve(filePath)
 
