@@ -20,9 +20,6 @@
   "engines": {
     "atom": "*"
   },
-  "devDependencies": {
-    "coffeelint": "^1.9.7"
-  },
   "consumedServices": {
     "atom.file-icons": {
       "versions": {
