@@ -1195,7 +1195,7 @@ describe('FuzzyFinder', () => {
     })
 
     describe('git-status-finder behavior', () => {
-      let originalText, originalPath, newPath
+      let originalPath, newPath
 
       beforeEach(() => {
         jasmine.attachToDOM(workspaceElement)
@@ -1204,7 +1204,6 @@ describe('FuzzyFinder', () => {
 
         runs(() => {
           const editor = atom.workspace.getActiveTextEditor()
-          originalText = editor.getText()
           originalPath = editor.getPath()
           fs.writeFileSync(originalPath, 'making a change for the better')
           gitRepository.getPathStatus(originalPath)
@@ -1229,7 +1228,7 @@ describe('FuzzyFinder', () => {
     })
 
     describe('status decorations', () => {
-      let originalText, originalPath, editor, newPath
+      let originalPath, editor, newPath
 
       beforeEach(() => {
         jasmine.attachToDOM(workspaceElement)
@@ -1238,7 +1237,6 @@ describe('FuzzyFinder', () => {
 
         runs(() => {
           editor = atom.workspace.getActiveTextEditor()
-          originalText = editor.getText()
           originalPath = editor.getPath()
           newPath = gitDirectory.resolve('newsample.js')
           fs.writeFileSync(newPath, '')
