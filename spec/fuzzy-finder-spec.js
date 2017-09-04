@@ -282,7 +282,7 @@ describe('FuzzyFinder', () => {
           let socketServer, socketPath
 
           beforeEach(() => {
-            socketServer = net.createServer(function () {})
+            socketServer = net.createServer(() => {})
             socketPath = path.join(rootDir1, 'some.sock')
             waitsFor(done => socketServer.listen(socketPath, done))
           })
@@ -342,7 +342,7 @@ describe('FuzzyFinder', () => {
 
           runs(() => {
             const items = Array.from(projectView.element.querySelectorAll('li'))
-            eachFilePath([rootDir1], function (filePath) {
+            eachFilePath([rootDir1], (filePath) => {
               const item = items.find(a => a.textContent.includes(filePath))
               expect(item).toExist()
               expect(item).not.toHaveText(path.basename(rootDir1))
