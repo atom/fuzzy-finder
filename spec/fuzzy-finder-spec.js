@@ -884,7 +884,6 @@ describe('FuzzyFinder', () => {
 
     it('opens the path by splitting the active editor down', () => {
       expect(atom.workspace.getCenter().getPanes().length).toBe(1)
-      const pane = atom.workspace.getActivePane()
       let filePath = null
 
       waitsForPromise(() => bufferView.toggle())
