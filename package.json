@@ -22,7 +22,9 @@
   },
   "standard": {
     "globals": [
+      "advanceClock",
       "atom",
+      "CustomEvent",
       "emit"
     ],
     "ignore": ["spec/fixtures"]
