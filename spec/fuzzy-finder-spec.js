@@ -1,3 +1,6 @@
+/* eslint-env jasmine */
+/* global waitsForPromise */
+
 const net = require('net')
 const path = require('path')
 const _ = require('underscore-plus')
