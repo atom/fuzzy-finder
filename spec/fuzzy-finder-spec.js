@@ -504,8 +504,9 @@ describe('FuzzyFinder', () => {
 
           waitsForPromise(() => atom.workspace.open())
 
+          waitsForPromise(() => Promise.resolve(atom.packages.deactivatePackage('fuzzy-finder')))
+
           runs(() => {
-            atom.packages.deactivatePackage('fuzzy-finder')
             let states = _.map(atom.packages.getPackageState('fuzzy-finder'), (path, time) => [path, time])
             expect(states.length).toBe(3)
             states = _.sortBy(states, (path, time) => -time)
