@@ -1142,6 +1142,47 @@ describe('FuzzyFinder', () => {
       })
     })
   })
+  
+  describe("prefill query from selection", () => {
+    it("should not be enabled by default", () => {
+      waitsForPromise(() => atom.workspace.open())
+
+      runs(() => {
+        atom.workspace.getActiveTextEditor().setText('sample.txt')
+        atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
+        expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe('sample.txt')
+      })
+
+      waitsForPromise(() => projectView.toggle())
+
+      runs(() => {
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+        expect(projectView.selectListView.getQuery()).toBe('')
+        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('')
+      })
+    })
+
+    it("takes selection from active editor and prefills query with it", () => {
+      atom.config.set("fuzzy-finder.prefillFromSelection", true)
+
+      waitsForPromise(() => atom.workspace.open())
+
+      runs(() => {
+        atom.workspace.getActiveTextEditor().setText('sample.txt')
+        atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
+        expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe('sample.txt')
+      })
+
+      waitsForPromise(() => projectView.toggle())
+
+      runs(() => {
+        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+        expect(projectView.selectListView.getQuery()).toBe('sample.txt')
+        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('sample.txt')
+      })
+    })
+  })
+
 
   describe('file icons', () => {
     const fileIcons = new DefaultFileIcons()
