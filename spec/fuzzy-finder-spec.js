@@ -1144,9 +1144,9 @@ describe('FuzzyFinder', () => {
       })
     })
   })
-  
-  describe("prefill query from selection", () => {
-    it("should not be enabled by default", () => {
+
+  describe('prefill query from selection', () => {
+    it('should not be enabled by default', () => {
       waitsForPromise(() => atom.workspace.open())
 
       runs(() => {
@@ -1164,8 +1164,8 @@ describe('FuzzyFinder', () => {
       })
     })
 
-    it("takes selection from active editor and prefills query with it", () => {
-      atom.config.set("fuzzy-finder.prefillFromSelection", true)
+    it('takes selection from active editor and prefills query with it', () => {
+      atom.config.set('fuzzy-finder.prefillFromSelection', true)
 
       waitsForPromise(() => atom.workspace.open())
 
@@ -1184,7 +1184,6 @@ describe('FuzzyFinder', () => {
       })
     })
   })
-
 
   describe('file icons', () => {
     const fileIcons = new DefaultFileIcons()
