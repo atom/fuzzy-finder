@@ -25,7 +25,9 @@
       "atom",
       "emit"
     ],
-    "ignore": ["spec/fixtures"]
+    "ignore": [
+      "spec/fixtures"
+    ]
   },
   "engines": {
     "atom": "*"
