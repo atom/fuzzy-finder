@@ -6,9 +6,13 @@ Quickly find and open files using <kbd>cmd-t</kbd>.
   * <kbd>cmd-t</kbd> or <kbd>cmd-p</kbd> to open the file finder
   * <kbd>cmd-b</kbd> to open the list of open buffers
   * <kbd>cmd-shift-b</kbd> to open the list of Git modified and untracked files
+
+When opening a file, you can control the behavior.
+
   * <kbd>enter</kbd> defaults to opening the selected file without leaving the current pane
   * <kbd>shift-enter</kbd> defaults to switching to another pane if the file is already open there
   * <kbd>cmd-k</kbd> <kbd>right</kbd> (or any other directional arrow) will open the highlighted file in a new pane on the side indicated by the arrow
+  * Adding `:<line number>` to the end of your search will go directly to the line number you specify, or the last line if the number is larger
 
 Turning on the "Search All Panes" setting reverses the behavior of <kbd>enter</kbd> and <kbd>shift-enter</kbd> so <kbd>enter</kbd> opens the file in any pane and <kbd>shift-enter</kbd> creates a new tab in the current pane.
 
