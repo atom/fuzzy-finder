@@ -17,11 +17,18 @@
     "underscore-plus": "^1.0.0",
     "wrench": "^1.5"
   },
+  "devDependencies": {
+    "standard": "*"
+  },
+  "standard": {
+    "globals": [
+      "atom",
+      "emit"
+    ],
+    "ignore": ["spec/fixtures"]
+  },
   "engines": {
     "atom": "*"
-  },
-  "devDependencies": {
-    "coffeelint": "^1.9.7"
   },
   "consumedServices": {
     "atom.file-icons": {

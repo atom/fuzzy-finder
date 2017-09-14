@@ -1,3 +1,6 @@
+/* eslint-env jasmine */
+/* global CustomEvent, advanceClock, waitsForPromise */
+
 const net = require('net')
 const path = require('path')
 const _ = require('underscore-plus')
@@ -443,7 +446,7 @@ describe('FuzzyFinder', () => {
         it("shows the FuzzyFinder if it isn't showing, or hides it and returns focus to the active editor", () => {
           expect(atom.workspace.panelForItem(bufferView)).toBeNull()
           atom.workspace.getActivePane().splitRight({copyActiveItem: true})
-          const [editor1, editor2, editor3] = Array.from(atom.workspace.getTextEditors())
+          const [editor1, editor2, editor3] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
           expect(atom.workspace.getActivePaneItem()).toBe(editor3)
 
           expect(atom.views.getView(editor3)).toHaveFocus()
@@ -830,7 +833,7 @@ describe('FuzzyFinder', () => {
       waitsFor(() => atom.workspace.getActiveTextEditor())
 
       runs(() => {
-        const [leftPane, rightPane] = Array.from(atom.workspace.getCenter().getPanes())
+        const [leftPane, rightPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
         expect(atom.workspace.getActivePane()).toBe(leftPane)
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
       })
@@ -852,7 +855,7 @@ describe('FuzzyFinder', () => {
       waitsFor(() => atom.workspace.getActiveTextEditor())
 
       runs(() => {
-        const [leftPane, rightPane] = Array.from(atom.workspace.getCenter().getPanes())
+        const [leftPane, rightPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
         expect(atom.workspace.getActivePane()).toBe(rightPane)
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
       })
@@ -874,7 +877,7 @@ describe('FuzzyFinder', () => {
       waitsFor(() => atom.workspace.getActiveTextEditor())
 
       runs(() => {
-        const [topPane, bottomPane] = Array.from(atom.workspace.getCenter().getPanes())
+        const [topPane, bottomPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
         expect(atom.workspace.getActivePane()).toBe(topPane)
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
       })
@@ -882,7 +885,6 @@ describe('FuzzyFinder', () => {
 
     it('opens the path by splitting the active editor down', () => {
       expect(atom.workspace.getCenter().getPanes().length).toBe(1)
-      const pane = atom.workspace.getActivePane()
       let filePath = null
 
       waitsForPromise(() => bufferView.toggle())
@@ -897,7 +899,7 @@ describe('FuzzyFinder', () => {
       waitsFor(() => atom.workspace.getActiveTextEditor())
 
       runs(() => {
-        const [topPane, bottomPane] = Array.from(atom.workspace.getCenter().getPanes())
+        const [topPane, bottomPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
         expect(atom.workspace.getActivePane()).toBe(bottomPane)
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
       })
@@ -920,7 +922,7 @@ describe('FuzzyFinder', () => {
 
     describe('when the filter text has a file path', () =>
       it('opens the selected path to that line number', () => {
-        const [editor1, editor2] = Array.from(atom.workspace.getTextEditors())
+        const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
         waitsForPromise(() => bufferView.toggle())
 
@@ -1034,7 +1036,7 @@ describe('FuzzyFinder', () => {
 
     describe("when the filter text doesn't have a file path", () =>
       it('moves the cursor in the active editor to that line number', () => {
-        const [editor1, editor2] = Array.from(atom.workspace.getTextEditors())
+        const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
         waitsForPromise(() => atom.workspace.open('sample.js'))
 
@@ -1066,7 +1068,7 @@ describe('FuzzyFinder', () => {
 
     describe('when splitting panes', () =>
       it('opens the selected path to that line number in a new pane', () => {
-        const [editor1, editor2] = Array.from(atom.workspace.getTextEditors())
+        const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
         waitsForPromise(() => atom.workspace.open('sample.js'))
 
