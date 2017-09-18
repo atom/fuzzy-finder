@@ -1,6 +1,6 @@
 {
   "name": "fuzzy-finder",
-  "version": "1.5.8",
+  "version": "1.6.0",
   "main": "./lib/main",
   "description": "Open an editor to a file in the project with `cmd-t`.",
   "repository": "https://github.com/atom/fuzzy-finder",
@@ -17,11 +17,20 @@
     "underscore-plus": "^1.0.0",
     "wrench": "^1.5"
   },
+  "devDependencies": {
+    "standard": "*"
+  },
+  "standard": {
+    "globals": [
+      "atom",
+      "emit"
+    ],
+    "ignore": [
+      "spec/fixtures"
+    ]
+  },
   "engines": {
     "atom": "*"
-  },
-  "devDependencies": {
-    "coffeelint": "^1.9.7"
   },
   "consumedServices": {
     "atom.file-icons": {
@@ -55,6 +64,11 @@
       "type": "boolean",
       "default": true,
       "description": "Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)"
+    },
+    "prefillFromSelection": {
+      "type": "boolean",
+      "default": false,
+      "description": "Prefills search query with selected in current editor text"
     }
   }
 }
