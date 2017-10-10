@@ -1171,6 +1171,8 @@ describe 'FuzzyFinder', ->
       gitDirectory = atom.project.getDirectories()[1]
       gitRepository = atom.project.getRepositories()[1]
 
+      waitsFor((done) -> gitRepository.onDidChangeStatuses(done))
+
     describe "git-status-finder behavior", ->
       [originalText, originalPath, newPath] = []
 
@@ -1198,9 +1200,9 @@ describe 'FuzzyFinder', ->
 
         runs ->
           expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe true
-          expect(gitStatusView.element.querySelectorAll('.file').length).toBe 2
+          expect(gitStatusView.element.querySelectorAll('.file').length).toBe 4
           expect(gitStatusView.element.querySelectorAll('.status.status-modified').length).toBe 1
-          expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe 1
+          expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe 3
 
     describe "status decorations", ->
       [originalText, originalPath, editor, newPath] = []
