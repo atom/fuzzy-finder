@@ -920,7 +920,7 @@ describe('FuzzyFinder', () => {
       })
     })
 
-    describe('when the filter text has a file path', () =>
+    describe('when the filter text has a file path', () => {
       it('opens the selected path to that line number', () => {
         const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
@@ -948,7 +948,7 @@ describe('FuzzyFinder', () => {
           expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
         })
       })
-  )
+    })
   })
 
   describe('match highlighting', () => {
@@ -1034,7 +1034,7 @@ describe('FuzzyFinder', () => {
       })
     })
 
-    describe("when the filter text doesn't have a file path", () =>
+    describe("when the filter text doesn't have a file path", () => {
       it('moves the cursor in the active editor to that line number', () => {
         const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
@@ -1064,9 +1064,9 @@ describe('FuzzyFinder', () => {
           expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
         })
       })
-  )
+    })
 
-    describe('when splitting panes', () =>
+    describe('when splitting panes', () => {
       it('opens the selected path to that line number in a new pane', () => {
         const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
@@ -1097,7 +1097,7 @@ describe('FuzzyFinder', () => {
           expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual([3, 4])
         })
       })
-  )
+    })
   })
 
   describe('preserve last search', () => {
@@ -1235,6 +1235,8 @@ describe('FuzzyFinder', () => {
 
       gitDirectory = atom.project.getDirectories()[1]
       gitRepository = atom.project.getRepositories()[1]
+
+      waitsFor(done => gitRepository.onDidChangeStatuses(done))
     })
 
     describe('git-status-finder behavior', () => {
@@ -1263,9 +1265,9 @@ describe('FuzzyFinder', () => {
 
         runs(() => {
           expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe(true)
-          expect(gitStatusView.element.querySelectorAll('.file').length).toBe(2)
+          expect(gitStatusView.element.querySelectorAll('.file').length).toBe(4)
           expect(gitStatusView.element.querySelectorAll('.status.status-modified').length).toBe(1)
-          expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe(1)
+          expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe(3)
         })
       })
     })
