@@ -1186,8 +1186,6 @@ describe('FuzzyFinder', () => {
   })
 
   describe('file icons', () => {
-    const fileIcons = new DefaultFileIcons()
-
     it('defaults to text', () => {
       waitsForPromise(() => atom.workspace.open('sample.js'))
 
@@ -1202,7 +1200,7 @@ describe('FuzzyFinder', () => {
 
       runs(() => {
         const firstResult = bufferView.element.querySelector('li .primary-line')
-        expect(fileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-text')
+        expect(DefaultFileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-text')
       })
     })
 
@@ -1220,7 +1218,7 @@ describe('FuzzyFinder', () => {
 
       runs(() => {
         const firstResult = bufferView.element.querySelector('li .primary-line')
-        expect(fileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-media')
+        expect(DefaultFileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-media')
       })
     })
   })
