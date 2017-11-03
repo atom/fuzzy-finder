@@ -32,8 +32,9 @@ describe('FuzzyFinder', () => {
   let fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath
 
   beforeEach(() => {
-    rootDir1 = fs.realpathSync(temp.mkdirSync('root-dir1'))
-    rootDir2 = fs.realpathSync(temp.mkdirSync('root-dir2'))
+    const ancestorDir = fs.realpathSync(temp.mkdirSync('ancestor-dir'))
+    rootDir1 = path.join(ancestorDir, 'root-dir1')
+    rootDir2 = path.join(ancestorDir, 'root-dir2')
 
     fixturesPath = atom.project.getPaths()[0]
 
@@ -217,6 +218,7 @@ describe('FuzzyFinder', () => {
 
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('sample.txt'), atom.project.getDirectories()[0].resolve('symlink-to-internal-file'))
             fs.symlinkSync(atom.project.getDirectories()[0].resolve('dir'), atom.project.getDirectories()[0].resolve('symlink-to-internal-dir'))
+            fs.symlinkSync(atom.project.getDirectories()[0].resolve('..'), atom.project.getDirectories()[0].resolve('symlink-to-project-dir-ancestor'))
 
             fs.unlinkSync(brokenFilePath)
           })
