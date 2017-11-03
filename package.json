@@ -1,6 +1,6 @@
 {
   "name": "fuzzy-finder",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "main": "./lib/main",
   "description": "Open an editor to a file in the project with `cmd-t`.",
   "repository": "https://github.com/atom/fuzzy-finder",
