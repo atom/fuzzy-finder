@@ -10,7 +10,7 @@
     "atom-select-list": "^0.1.0",
     "fs-plus": "^3.0.0",
     "fuzzaldrin": "^2.0",
-    "fuzzaldrin-plus": "^0.5.0",
+    "fuzzaldrin-plus": "^0.6.0",
     "humanize-plus": "~1.8.2",
     "minimatch": "~3.0.3",
     "temp": "~0.8.1",
