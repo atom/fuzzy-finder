@@ -32,7 +32,7 @@ describe('FuzzyFinder', () => {
   let fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath
 
   beforeEach(() => {
-    const ancestorDir = fs.realpathSync(temp.mkdirSync('ancestor-dir'))
+    const ancestorDir = fs.realpathSync(temp.mkdirSync())
     rootDir1 = path.join(ancestorDir, 'root-dir1')
     rootDir2 = path.join(ancestorDir, 'root-dir2')
 
