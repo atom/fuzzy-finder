@@ -1021,7 +1021,7 @@ describe('FuzzyFinder', () => {
         bufferView.setItems([
           {
             filePath: '/test/root-dir1/sample.js',
-            projectRelativePath: 'root-dir1/sample.js'
+            label: 'root-dir1/sample.js'
           }
         ])
       )
