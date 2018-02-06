@@ -402,7 +402,7 @@ describe('FuzzyFinder', () => {
 
         waitsForPromise(() => projectView.toggle())
 
-        runs(() => projectView.confirm({filePath: expectedPath}))
+        runs(() => projectView.confirm({uri: expectedPath}))
 
         waitsFor(() => atom.workspace.getActivePane().getItems().length === 2)
 
@@ -423,7 +423,7 @@ describe('FuzzyFinder', () => {
           waitsForPromise(() => projectView.toggle())
 
           runs(() => {})
-          projectView.confirm({filePath: atom.project.getDirectories()[0].resolve('dir')})
+          projectView.confirm({uri: atom.project.getDirectories()[0].resolve('dir')})
           expect(projectView.element.parentElement).toBeDefined()
           expect(atom.workspace.getActiveTextEditor().getPath()).toBe(editorPath)
 
@@ -584,7 +584,7 @@ describe('FuzzyFinder', () => {
       describe('when the active pane has an item for the selected path', () =>
         it('switches to the item for the selected path', () => {
           const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-          bufferView.confirm({filePath: expectedPath})
+          bufferView.confirm({uri: expectedPath})
 
           waitsFor(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
 
@@ -610,7 +610,7 @@ describe('FuzzyFinder', () => {
 
           runs(() => {
             expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-            bufferView.confirm({filePath: expectedPath}, atom.config.get('fuzzy-finder.searchAllPanes'))
+            bufferView.confirm({uri: expectedPath}, atom.config.get('fuzzy-finder.searchAllPanes'))
           })
 
           waitsFor(() => atom.workspace.getActivePane().getItems().length === 2)
@@ -648,7 +648,7 @@ describe('FuzzyFinder', () => {
 
           runs(() => {
             expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-            bufferView.confirm({filePath: expectedPath}, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes')})
+            bufferView.confirm({uri: expectedPath}, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes')})
           })
 
           waitsFor(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
