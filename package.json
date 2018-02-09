@@ -35,7 +35,7 @@
   "consumedServices": {
     "teletype": {
       "versions": {
-        "*": "consumeTeletype"
+        "0.0.1": "consumeTeletype"
       }
     },
     "atom.file-icons": {
