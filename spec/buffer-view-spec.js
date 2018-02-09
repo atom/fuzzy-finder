@@ -23,10 +23,10 @@ describe('BufferView', () => {
     await bufferView.toggle()
 
     expect(bufferView.items).toEqual([
-      {uri: 'remote2-uri', filePath: 'remote2-path', label: 'remote2-label', lastOpened: undefined},
-      {uri: localEditor1.getURI(), filePath: localEditor1.getPath(), label: localEditor1.getPath(), lastOpened: undefined},
-      {uri: localEditor2.getURI(), filePath: localEditor2.getPath(), label: localEditor2.getPath(), lastOpened: undefined},
-      {uri: 'remote1-uri', filePath: 'remote1-path', label: 'remote1-label', lastOpened: undefined}
+      {uri: 'remote2-uri', filePath: 'remote2-path', label: 'remote2-label'},
+      {uri: localEditor1.getURI(), filePath: localEditor1.getPath(), label: localEditor1.getPath()},
+      {uri: localEditor2.getURI(), filePath: localEditor2.getPath(), label: localEditor2.getPath()},
+      {uri: 'remote1-uri', filePath: 'remote1-path', label: 'remote1-label'}
     ])
   })
 
@@ -38,8 +38,8 @@ describe('BufferView', () => {
     await bufferView.toggle()
 
     expect(bufferView.items).toEqual([
-      {uri: editor1.getURI(), filePath: editor1.getPath(), label: editor1.getPath(), lastOpened: undefined},
-      {uri: editor2.getURI(), filePath: editor2.getPath(), label: editor2.getPath(), lastOpened: undefined}
+      {uri: editor1.getURI(), filePath: editor1.getPath(), label: editor1.getPath()},
+      {uri: editor2.getURI(), filePath: editor2.getPath(), label: editor2.getPath()}
     ])
   })
 })
