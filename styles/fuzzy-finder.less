@@ -5,3 +5,18 @@
   color: @text-color-highlight;
   font-weight: bold;
 }
+
+.FuzzyFinderResult {
+  position: relative;
+
+  &-avatar {
+    @size: 28px;
+
+    position: absolute !important;
+    border-radius: @size;
+    width: @size;
+    top: 50%;
+    margin-top: -(@size / 2);
+    right: @component-padding;
+  }
+}
