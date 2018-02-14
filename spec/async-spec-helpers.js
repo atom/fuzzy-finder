@@ -36,7 +36,7 @@ exports.conditionPromise = async function (condition, description = 'anonymous c
   const startTime = Date.now()
 
   while (true) {
-    await timeoutPromise(100)
+    await exports.timeoutPromise(100)
 
     if (await condition()) {
       return
