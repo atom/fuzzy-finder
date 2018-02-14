@@ -23,7 +23,10 @@
   "standard": {
     "globals": [
       "atom",
-      "emit"
+      "emit",
+      "jasmine",
+      "describe",
+      "expect"
     ],
     "ignore": [
       "spec/fixtures"

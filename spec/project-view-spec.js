@@ -1,4 +1,4 @@
-const {it, fit, ffit, fffit, beforeEach, afterEach, conditionPromise} = require('./async-spec-helpers')
+const {it, fit, ffit, fffit, beforeEach, afterEach, conditionPromise} = require('./async-spec-helpers')  // eslint-disable-line no-unused-vars
 const fs = require('fs')
 const path = require('path')
 const temp = require('temp').track()
