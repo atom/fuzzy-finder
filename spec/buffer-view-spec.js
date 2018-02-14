@@ -29,17 +29,4 @@ describe('BufferView', () => {
       {uri: 'remote1-uri', filePath: 'remote1-path', label: '@user-1: remote1-path', ownerGitHubUsername: 'user-1'}
     ])
   })
-
-  it('excludes remote editors when teletype is disabled', async () => {
-    const bufferView = new BufferView()
-
-    const editor1 = await atom.workspace.open(path.join(temp.path(), 'a'))
-    const editor2 = await atom.workspace.open(path.join(temp.path(), 'b'))
-    await bufferView.toggle()
-
-    expect(bufferView.items).toEqual([
-      {uri: editor1.getURI(), filePath: editor1.getPath(), label: editor1.getPath()},
-      {uri: editor2.getURI(), filePath: editor2.getPath(), label: editor2.getPath()}
-    ])
-  })
 })
