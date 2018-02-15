@@ -37,4 +37,24 @@ describe('ProjectView', () => {
       {uri: file2Path, filePath: file2Path, label: 'b'}
     ])
   })
+
+  it('shows remote editors even when there is no open project', async () => {
+    const projectView = new ProjectView()
+
+    atom.project.setPaths([])
+    projectView.setTeletypeService({
+      async getRemoteEditors () {
+        return [
+          {uri: 'remote1-uri', path: 'remote1-path', hostGitHubUsername: 'user-1'},
+          {uri: 'remote2-uri', path: 'remote2-path', hostGitHubUsername: 'user-2'}
+        ]
+      }
+    })
+
+    await projectView.toggle()
+    expect(projectView.items).toEqual([
+      {uri: 'remote1-uri', filePath: 'remote1-path', label: '@user-1: remote1-path', ownerGitHubUsername: 'user-1'},
+      {uri: 'remote2-uri', filePath: 'remote2-path', label: '@user-2: remote2-path', ownerGitHubUsername: 'user-2'}
+    ])
+  })
 })
