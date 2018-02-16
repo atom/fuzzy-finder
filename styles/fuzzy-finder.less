@@ -9,9 +9,14 @@
 .FuzzyFinderResult {
   position: relative;
 
-  &-avatar {
-    @size: 28px;
+  @size: 28px;
 
+  &.has-avatar {
+    // add some extra space for the avatar
+    padding-right: @size + (@component-padding * 2) !important;
+  }
+
+  &-avatar {
     position: absolute !important;
     border-radius: @size;
     width: @size;
