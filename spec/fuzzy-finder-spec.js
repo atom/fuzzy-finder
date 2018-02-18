@@ -1,6 +1,3 @@
-/* eslint-env jasmine */
-/* global CustomEvent, advanceClock, waitsForPromise */
-
 const net = require('net')
 const path = require('path')
 const _ = require('underscore-plus')
