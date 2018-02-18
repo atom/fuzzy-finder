@@ -907,7 +907,7 @@ describe('FuzzyFinder', () => {
     })
   })
 
-  describe('when the filter text contains a colon followed by a number', () => {
+  describe('when the query contains a colon', () => {
     beforeEach(() => {
       jasmine.attachToDOM(workspaceElement)
       expect(atom.workspace.panelForItem(projectView)).toBeNull()
@@ -916,37 +916,138 @@ describe('FuzzyFinder', () => {
 
       runs(() => {
         const [editor1, editor2] = Array.from(atom.workspace.getTextEditors())
+        editor1.setCursorBufferPosition([8, 3])
         expect(atom.workspace.getActiveTextEditor()).toBe(editor2)
-        expect(editor1.getCursorBufferPosition()).toEqual([0, 0])
+        expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
       })
     })
 
-    describe('when the filter text has a file path', () => {
-      it('opens the selected path to that line number', () => {
-        const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+    describe('when the colon is followed by numbers', () => {
+      describe('when the filter text has a file path', () => {
+        it('opens the selected path to that line number', () => {
+          const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
-        waitsForPromise(() => bufferView.toggle())
+          waitsForPromise(() => bufferView.toggle())
 
-        runs(() => {
-          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-          bufferView.selectListView.refs.queryEditor.setText('sample.js:4')
+          runs(() => {
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.setText('sample.js:4')
+          })
+
+          waitsForPromise(() => getOrScheduleUpdatePromise())
+
+          runs(() => {
+            const {filePath} = bufferView.selectListView.getSelectedItem()
+            expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+
+            spyOn(bufferView, 'moveToLine').andCallThrough()
+            atom.commands.dispatch(bufferView.element, 'core:confirm')
+          })
+
+          waitsFor(() => bufferView.moveToLine.callCount > 0)
+
+          runs(() => {
+            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+            expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
+          })
         })
+      })
 
-        waitsForPromise(() => getOrScheduleUpdatePromise())
+      describe("when the filter text doesn't have a file path", () => {
+        it('moves the cursor in the active editor to that line number', () => {
+          const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
-        runs(() => {
-          const {filePath} = bufferView.selectListView.getSelectedItem()
-          expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+          waitsForPromise(() => atom.workspace.open('sample.js'))
 
-          spyOn(bufferView, 'moveToLine').andCallThrough()
-          atom.commands.dispatch(bufferView.element, 'core:confirm')
+          runs(() => expect(atom.workspace.getActiveTextEditor()).toBe(editor1))
+
+          waitsForPromise(() => bufferView.toggle())
+
+          runs(() => {
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.insertText(':4')
+          })
+
+          waitsForPromise(() => getOrScheduleUpdatePromise())
+
+          runs(() => {
+            expect(bufferView.element.querySelectorAll('li').length).toBe(0)
+            spyOn(bufferView, 'moveToLine').andCallThrough()
+            atom.commands.dispatch(bufferView.element, 'core:confirm')
+          })
+
+          waitsFor(() => bufferView.moveToLine.callCount > 0)
+
+          runs(() => {
+            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+            expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
+          })
         })
+      })
+    })
 
-        waitsFor(() => bufferView.moveToLine.callCount > 0)
+    describe('when the colon is not followed by numbers', () => {
+      describe('when the filter text has a file path', () => {
+        it('opens the file and does not throw an error', () => {
+          const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
-        runs(() => {
-          expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-          expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
+          waitsForPromise(() => bufferView.toggle())
+
+          runs(() => {
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.setText('sample.js:a')
+          })
+
+          waitsForPromise(() => getOrScheduleUpdatePromise())
+
+          runs(() => {
+            const {filePath} = bufferView.selectListView.getSelectedItem()
+            expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+
+            spyOn(bufferView, 'moveToLine').andCallThrough()
+            atom.commands.dispatch(bufferView.element, 'core:confirm')
+          })
+
+          waitsFor(() => bufferView.moveToLine.callCount > 0)
+
+          runs(() => {
+            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+            expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
+          })
+        })
+      })
+
+      describe("when the filter text doesn't have a file path", () => {
+        it('shows an error and does not move the cursor', () => {
+          const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+          waitsForPromise(() => atom.workspace.open('sample.js'))
+
+          runs(() => expect(atom.workspace.getActiveTextEditor()).toBe(editor1))
+
+          waitsForPromise(() => bufferView.toggle())
+
+          runs(() => {
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.setText('::')
+          })
+
+          waitsForPromise(() => getOrScheduleUpdatePromise())
+
+          runs(() => {
+            expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual('Invalid line number')
+
+            expect(bufferView.element.querySelectorAll('li').length).toBe(0)
+            spyOn(bufferView, 'moveToLine').andCallThrough()
+            atom.commands.dispatch(bufferView.element, 'core:confirm')
+          })
+
+          waitsFor(() => bufferView.moveToLine.callCount > 0)
+
+          runs(() => {
+            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+            expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
+          })
         })
       })
     })
@@ -1032,38 +1133,6 @@ describe('FuzzyFinder', () => {
         expect(secondaryMatches.length).toBe(2)
         expect(secondaryMatches[0].textContent).toBe('root-dir')
         expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample')
-      })
-    })
-
-    describe("when the filter text doesn't have a file path", () => {
-      it('moves the cursor in the active editor to that line number', () => {
-        const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-
-        waitsForPromise(() => atom.workspace.open('sample.js'))
-
-        runs(() => expect(atom.workspace.getActiveTextEditor()).toBe(editor1))
-
-        waitsForPromise(() => bufferView.toggle())
-
-        runs(() => {
-          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-          bufferView.selectListView.refs.queryEditor.insertText(':4')
-        })
-
-        waitsForPromise(() => getOrScheduleUpdatePromise())
-
-        runs(() => {
-          expect(bufferView.element.querySelectorAll('li').length).toBe(0)
-          spyOn(bufferView, 'moveToLine').andCallThrough()
-          atom.commands.dispatch(bufferView.element, 'core:confirm')
-        })
-
-        waitsFor(() => bufferView.moveToLine.callCount > 0)
-
-        runs(() => {
-          expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-          expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
-        })
       })
     })
 
