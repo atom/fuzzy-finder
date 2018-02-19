@@ -1,6 +1,6 @@
 {
   "name": "fuzzy-finder",
-  "version": "1.7.5",
+  "version": "1.7.6",
   "main": "./lib/main",
   "description": "Open an editor to a file in the project with `cmd-t`.",
   "repository": "https://github.com/atom/fuzzy-finder",
@@ -10,7 +10,7 @@
     "atom-select-list": "^0.7.0",
     "fs-plus": "^3.0.0",
     "fuzzaldrin": "^2.0",
-    "fuzzaldrin-plus": "^0.4.1",
+    "fuzzaldrin-plus": "^0.6.0",
     "humanize-plus": "~1.8.2",
     "minimatch": "~3.0.3",
     "temp": "~0.8.1",
@@ -18,15 +18,17 @@
     "wrench": "^1.5"
   },
   "devDependencies": {
-    "standard": "*"
+    "standard": "^10.0.3"
   },
   "standard": {
+    "env": {
+      "atomtest": true,
+      "browser": true,
+      "jasmine": true,
+      "node": true
+    },
     "globals": [
-      "atom",
-      "emit",
-      "jasmine",
-      "describe",
-      "expect"
+      "atom"
     ],
     "ignore": [
       "spec/fixtures"
