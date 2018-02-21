@@ -927,6 +927,58 @@ describe('FuzzyFinder', () => {
     })
   })
 
+  describe('when the query contains a leading ./', () => {
+    const originalPlatform = process.platform
+
+    beforeEach(async () => {
+      jasmine.attachToDOM(workspaceElement)
+    })
+
+    afterEach(async () => {
+      Object.defineProperty(process, 'platform', {value: originalPlatform})
+    })
+
+    it('ignores it', async () => {
+      const [editor1] = atom.workspace.getTextEditors()
+
+      await projectView.toggle()
+
+      await waitForPathsToDisplay(projectView)
+
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+
+      projectView.selectListView.refs.queryEditor.setText('./root-dir1/sample.js')
+
+      await getOrScheduleUpdatePromise()
+
+      expect(projectView.selectListView.getFilterQuery()).toBe(path.join('root-dir1', 'sample.js'))
+
+      const {filePath} = projectView.selectListView.getSelectedItem()
+      expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+    })
+
+    it('additionally ignores .\\ on Windows', async () => {
+      Object.defineProperty(process, 'platform', {value: 'win32'})
+
+      const [editor1] = atom.workspace.getTextEditors()
+
+      await projectView.toggle()
+
+      await waitForPathsToDisplay(projectView)
+
+      expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+
+      projectView.selectListView.refs.queryEditor.setText('.\\root-dir1\\sample.js')
+
+      await getOrScheduleUpdatePromise()
+
+      expect(projectView.selectListView.getFilterQuery()).toBe(path.join('root-dir1', 'sample.js'))
+
+      const {filePath} = projectView.selectListView.getSelectedItem()
+      expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+    })
+  })
+
   describe('match highlighting', () => {
     beforeEach(async () => {
       jasmine.attachToDOM(workspaceElement)
