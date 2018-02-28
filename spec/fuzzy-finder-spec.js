@@ -355,7 +355,7 @@ describe('FuzzyFinder', () => {
 
         await projectView.toggle()
 
-        projectView.confirm({filePath: expectedPath})
+        projectView.confirm({uri: expectedPath})
 
         await conditionPromise(() => atom.workspace.getActivePane().getItems().length === 2)
 
@@ -373,7 +373,7 @@ describe('FuzzyFinder', () => {
           const editorPath = atom.workspace.getActiveTextEditor().getPath()
           await projectView.toggle()
 
-          projectView.confirm({filePath: atom.project.getDirectories()[0].resolve('dir')})
+          projectView.confirm({uri: atom.project.getDirectories()[0].resolve('dir')})
           expect(projectView.element.parentElement).toBeDefined()
           expect(atom.workspace.getActiveTextEditor().getPath()).toBe(editorPath)
 
@@ -523,7 +523,7 @@ describe('FuzzyFinder', () => {
       describe('when the active pane has an item for the selected path', () =>
         it('switches to the item for the selected path', async () => {
           const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-          bufferView.confirm({filePath: expectedPath})
+          bufferView.confirm({uri: expectedPath})
 
           await conditionPromise(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
 
@@ -546,7 +546,7 @@ describe('FuzzyFinder', () => {
           await bufferView.toggle()
 
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-          bufferView.confirm({filePath: expectedPath}, atom.config.get('fuzzy-finder.searchAllPanes'))
+          bufferView.confirm({uri: expectedPath}, atom.config.get('fuzzy-finder.searchAllPanes'))
 
           await conditionPromise(() => atom.workspace.getActivePane().getItems().length === 2)
 
@@ -578,7 +578,7 @@ describe('FuzzyFinder', () => {
           await bufferView.toggle()
 
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-          bufferView.confirm({filePath: expectedPath}, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes')})
+          bufferView.confirm({uri: expectedPath}, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes')})
 
           await conditionPromise(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
 
@@ -986,7 +986,7 @@ describe('FuzzyFinder', () => {
       await bufferView.setItems([
         {
           filePath: '/test/root-dir1/sample.js',
-          projectRelativePath: 'root-dir1/sample.js'
+          label: 'root-dir1/sample.js'
         }
       ])
 
