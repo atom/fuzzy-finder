@@ -1,6 +1,4 @@
-/** @babel */
-
-export function beforeEach (fn) {
+exports.beforeEach = function (fn) {
   global.beforeEach(function () {
     const result = fn()
     if (result instanceof Promise) {
@@ -9,7 +7,7 @@ export function beforeEach (fn) {
   })
 }
 
-export function afterEach (fn) {
+exports.afterEach = function (fn) {
   global.afterEach(function () {
     const result = fn()
     if (result instanceof Promise) {
@@ -18,7 +16,7 @@ export function afterEach (fn) {
   })
 }
 
-['it', 'fit', 'ffit', 'fffit'].forEach(function (name) {
+for (const name of ['it', 'fit', 'ffit', 'fffit']) {
   module.exports[name] = function (description, fn) {
     if (fn === undefined) {
       global[name](description)
@@ -32,13 +30,13 @@ export function afterEach (fn) {
       }
     })
   }
-})
+}
 
-export async function conditionPromise (condition, description = 'anonymous condition') {
+exports.conditionPromise = async function (condition, description = 'anonymous condition') {
   const startTime = Date.now()
 
   while (true) {
-    await timeoutPromise(100)
+    await exports.timeoutPromise(100)
 
     if (await condition()) {
       return
@@ -50,7 +48,7 @@ export async function conditionPromise (condition, description = 'anonymous cond
   }
 }
 
-export function timeoutPromise (timeout) {
+exports.timeoutPromise = function (timeout) {
   return new Promise(function (resolve) {
     global.setTimeout(resolve, timeout)
   })
@@ -64,40 +62,4 @@ function waitsForPromise (fn) {
       done()
     })
   })
-}
-
-export function emitterEventPromise (emitter, event, timeout = 15000) {
-  return new Promise((resolve, reject) => {
-    const timeoutHandle = setTimeout(() => {
-      reject(new Error(`Timed out waiting for '${event}' event`))
-    }, timeout)
-    emitter.once(event, () => {
-      clearTimeout(timeoutHandle)
-      resolve()
-    })
-  })
-}
-
-export function promisify (original) {
-  return function (...args) {
-    return new Promise((resolve, reject) => {
-      args.push((err, ...results) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(...results)
-        }
-      })
-
-      return original(...args)
-    })
-  }
-}
-
-export function promisifySome (obj, fnNames) {
-  const result = {}
-  for (const fnName of fnNames) {
-    result[fnName] = promisify(obj[fnName])
-  }
-  return result
 }
