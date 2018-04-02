@@ -57,4 +57,18 @@ describe('ProjectView', () => {
       {uri: 'remote2-uri', filePath: 'remote2-path', label: '@user-2: remote2-path', ownerGitHubUsername: 'user-2'}
     ])
   })
+
+  it('gracefully defaults to empty list if teletype is unable to provide remote editors', async () => {
+    const projectView = new ProjectView()
+
+    atom.project.setPaths([])
+    projectView.setTeletypeService({
+      async getRemoteEditors () {
+        return null
+      }
+    })
+
+    await projectView.toggle()
+    expect(projectView.items).toEqual([])
+  })
 })
