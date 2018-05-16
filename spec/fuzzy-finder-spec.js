@@ -254,13 +254,13 @@ describe('FuzzyFinder', () => {
         describe('socket files on #darwin or #linux', () => {
           let socketServer, socketPath
 
-          beforeEach(() => {
+          beforeEach(async () => {
             socketServer = net.createServer(() => {})
             socketPath = path.join(rootDir1, 'some.sock')
-            waitsFor(done => socketServer.listen(socketPath, done))
+            await socketServer.listen(socketPath)
           })
 
-          afterEach(() => waitsFor(done => socketServer.close(done)))
+          afterEach(async () => await socketServer.close())
 
           it('ignores them', async () => {
             await projectView.toggle()
