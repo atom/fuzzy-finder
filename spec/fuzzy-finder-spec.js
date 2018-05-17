@@ -260,7 +260,7 @@ describe('FuzzyFinder', () => {
             waitsFor(done => socketServer.listen(socketPath, done))
           })
 
-          afterEach(() => waitsFor(done => socketServer.close(done)))
+          afterEach(() => socketServer.close())
 
           it('ignores them', async () => {
             await projectView.toggle()
