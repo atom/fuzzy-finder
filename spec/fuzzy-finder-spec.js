@@ -262,10 +262,11 @@ describe('FuzzyFinder', () => {
 
           afterEach(() => socketServer.close())
 
-          it('ignores them', async () => {
+          it('does not interfere with ability to load files', async () => {
             await projectView.toggle()
 
             await waitForPathsToDisplay(projectView)
+            expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('a'))).toBeDefined()
             expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('some.sock'))).not.toBeDefined()
           })
         })
