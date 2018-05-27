@@ -171,6 +171,22 @@ describe('FuzzyFinder', () => {
           expect(projectView.element.querySelectorAll('li')[1].textContent).toContain('sample.html')
         })
 
+        describe('when the current open buffer is the first match', () => {
+          it('switches the first two matches', async () => {
+            await atom.workspace.open(path.join(rootDir1, 'git', 'working-dir', 'file.txt'));
+            await atom.workspace.open(path.join(rootDir1, 'git', 'working-dir', 'a.txt'));
+
+            await projectView.toggle()
+            await waitForPathsToDisplay(projectView)
+
+            projectView.selectListView.refs.queryEditor.setText('a.txt')
+            await getOrScheduleUpdatePromise()
+
+            expect(projectView.element.querySelectorAll('li')[0].textContent).toContain('sample.txt')
+            expect(projectView.element.querySelectorAll('li')[1].textContent).toContain('a.txt')
+          })
+        })
+
         it('displays paths correctly if the last-opened path is not part of the project (regression)', async () => {
           await atom.workspace.open('foo.txt')
           await atom.workspace.open('sample.js')
