@@ -173,8 +173,8 @@ describe('FuzzyFinder', () => {
 
         describe('when the current open buffer is the first match', () => {
           it('switches the first two matches', async () => {
-            await atom.workspace.open(path.join(rootDir1, 'git', 'working-dir', 'file.txt'));
-            await atom.workspace.open(path.join(rootDir1, 'git', 'working-dir', 'a.txt'));
+            await atom.workspace.open(path.join(rootDir1, 'git', 'working-dir', 'file.txt'))
+            await atom.workspace.open(path.join(rootDir1, 'git', 'working-dir', 'a.txt'))
 
             await projectView.toggle()
             await waitForPathsToDisplay(projectView)
