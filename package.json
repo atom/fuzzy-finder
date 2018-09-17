@@ -80,5 +80,10 @@
       "default": false,
       "description": "Prefills search query with selected in current editor text"
     }
+  },
+  "apmInstallSource": {
+    "type": "git",
+    "source": "oxilumin/fuzzy-finder",
+    "sha": "7dc33bb9d2a5671f497fd79f2e27d438cf809db0"
   }
 }
