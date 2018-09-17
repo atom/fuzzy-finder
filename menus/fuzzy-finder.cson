@@ -4,5 +4,6 @@
     { 'label': 'Find Buffer', 'command': 'fuzzy-finder:toggle-buffer-finder' }
     { 'label': 'Find File', 'command': 'fuzzy-finder:toggle-file-finder' }
     { 'label': 'Find Modified File', 'command': 'fuzzy-finder:toggle-git-status-finder' }
+    { 'label': 'Kill Tab', 'command': 'fuzzy-finder:kill-tab' }
   ]
 ]
