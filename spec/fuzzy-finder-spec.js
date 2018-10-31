@@ -873,7 +873,7 @@ describe('FuzzyFinder', () => {
           })
         })
       })
-      
+
       describe('when the numbers are followed by another colon', () => {
         describe('when the colon is followed by more numbers', () => {
           describe('when the filter text has a file path', () => {
@@ -926,7 +926,7 @@ describe('FuzzyFinder', () => {
             })
           })
         })
-        
+
         describe('when the colon is not followed by more numbers', () => {
           describe('when the filter text has a file path', () => {
             it('opens the file, jumps to the first character of the line and does not throw an error', async () => {
