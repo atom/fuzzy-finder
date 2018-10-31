@@ -836,10 +836,10 @@ describe('FuzzyFinder', () => {
           const {filePath} = bufferView.selectListView.getSelectedItem()
           expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
 
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
           atom.commands.dispatch(bufferView.element, 'core:confirm')
 
-          await conditionPromise(() => bufferView.moveToLine.callCount > 0)
+          await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
           expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
@@ -862,10 +862,10 @@ describe('FuzzyFinder', () => {
           await getOrScheduleUpdatePromise()
 
           expect(bufferView.element.querySelectorAll('li').length).toBe(0)
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
           atom.commands.dispatch(bufferView.element, 'core:confirm')
 
-          await conditionPromise(() => bufferView.moveToLine.callCount > 0)
+          await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
           expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
@@ -888,10 +888,10 @@ describe('FuzzyFinder', () => {
           const {filePath} = bufferView.selectListView.getSelectedItem()
           expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
 
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
           atom.commands.dispatch(bufferView.element, 'core:confirm')
 
-          await conditionPromise(() => bufferView.moveToLine.callCount > 0)
+          await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
           expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
@@ -916,10 +916,10 @@ describe('FuzzyFinder', () => {
           expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual('Invalid line number')
 
           expect(bufferView.element.querySelectorAll('li').length).toBe(0)
-          spyOn(bufferView, 'moveToLine').andCallThrough()
+          spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
           atom.commands.dispatch(bufferView.element, 'core:confirm')
 
-          await conditionPromise(() => bufferView.moveToLine.callCount > 0)
+          await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
           expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
@@ -1017,10 +1017,10 @@ describe('FuzzyFinder', () => {
         await getOrScheduleUpdatePromise()
 
         expect(bufferView.element.querySelectorAll('li').length).toBe(0)
-        spyOn(bufferView, 'moveToLine').andCallThrough()
+        spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
         atom.commands.dispatch(bufferView.element, 'pane:split-left')
 
-        await conditionPromise(() => bufferView.moveToLine.callCount > 0)
+        await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
         expect(atom.workspace.getActiveTextEditor()).not.toBe(editor1)
         expect(atom.workspace.getActiveTextEditor().getPath()).toBe(editor1.getPath())
