@@ -924,6 +924,33 @@ describe('FuzzyFinder', () => {
           expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
           expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
         })
+        
+        it('updates the error message after further entry', async () => {
+          const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+          
+          const emptyMessage = 'Jump to line in active editor'
+          const errorMessage = 'Invalid line number'
+
+          await atom.workspace.open('sample.js')
+
+          expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+          await bufferView.toggle()
+
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+          
+          bufferView.selectListView.refs.queryEditor.setText(':42')
+          await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
+          
+          bufferView.selectListView.refs.queryEditor.setText(':42a')
+          await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
+          
+          bufferView.selectListView.refs.queryEditor.setText(':42')
+          await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
+        })
       })
     })
   })
