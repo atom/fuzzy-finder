@@ -942,14 +942,17 @@ describe('FuzzyFinder', () => {
           bufferView.selectListView.refs.queryEditor.setText(':42')
           await getOrScheduleUpdatePromise()
           expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
+          expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
 
           bufferView.selectListView.refs.queryEditor.setText(':42a')
           await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.emptyMessage).toBeUndefined()
           expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
 
           bufferView.selectListView.refs.queryEditor.setText(':42')
           await getOrScheduleUpdatePromise()
           expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
+          expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
         })
       })
     })
