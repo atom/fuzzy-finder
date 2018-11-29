@@ -925,7 +925,7 @@ describe('FuzzyFinder', () => {
           expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
         })
 
-        it('updates the error message after further entry', async () => {
+        it('updates the message when the error gets resolved', async () => {
           const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
           const emptyMessage = 'Jump to line in active editor'
