@@ -915,6 +915,9 @@ describe('FuzzyFinder', () => {
 
               await getOrScheduleUpdatePromise()
 
+              expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(
+                'Jump to line and column in active editor'
+              )
               expect(bufferView.element.querySelectorAll('li').length).toBe(0)
               spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
               atom.commands.dispatch(bufferView.element, 'core:confirm')
@@ -1060,6 +1063,45 @@ describe('FuzzyFinder', () => {
           await getOrScheduleUpdatePromise()
           expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
           expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
+        })
+
+        it('shows a specific error message when the column is invalid', async () => {
+          const [editor1] = atom.workspace.getTextEditors()
+          const errorMessage = 'Invalid column number'
+
+          await atom.workspace.open('sample.js')
+
+          expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+          await bufferView.toggle()
+
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+
+          bufferView.selectListView.refs.queryEditor.setText(':42:12a')
+          await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.emptyMessage).toBeUndefined()
+          expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
+        })
+
+        it('shows a more specific message when jumping to line and column', async () => {
+          const [editor1] = atom.workspace.getTextEditors()
+          const emptyColumnMessage = 'Jump to line and column in active editor'
+
+          await atom.workspace.open('sample.js')
+
+          expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+          await bufferView.toggle()
+
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+
+          bufferView.selectListView.refs.queryEditor.setText(':42:')
+          await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyColumnMessage)
+
+          bufferView.selectListView.refs.queryEditor.setText(':42:12')
+          await getOrScheduleUpdatePromise()
+          expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyColumnMessage)
         })
       })
     })
