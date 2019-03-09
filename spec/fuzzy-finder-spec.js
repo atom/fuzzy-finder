@@ -1208,6 +1208,38 @@ describe('FuzzyFinder', () => {
     })
   })
 
+  describe('allow pending pane items', () => {
+    beforeEach(() => {
+      atom.config.set('core.allowPendingPaneItems', true)
+      jasmine.attachToDOM(workspaceElement)
+      pane = atom.workspace.getActivePane()
+    })
+
+    it('does not open a preview on initial selection', async () => {
+      expect(atom.workspace.getTextEditors().length).toEqual(1)
+
+      await projectView.toggle()
+      await waitForPathsToDisplay(projectView)
+
+      expect(atom.workspace.getTextEditors().length).toEqual(1)
+      expect(pane.getPendingItem()).toBeNull()
+    })
+
+    it('opens a preview when there is a new selection', async () => {
+      await projectView.toggle()
+      await waitForPathsToDisplay(projectView)
+
+      spyOn(projectView, 'preview').andCallThrough()
+
+      projectView.selectListView.refs.queryEditor.setText('sample.html')
+
+      await conditionPromise(() => projectView.preview.callCount > 0)
+
+      expect(atom.workspace.getTextEditors().length).toEqual(2)
+      expect(pane.getPendingItem()).toBe(atom.workspace.getActiveTextEditor())
+    })
+  })
+
   describe('preserve last search', () => {
     it('does not preserve last search by default', async () => {
       await projectView.toggle()
