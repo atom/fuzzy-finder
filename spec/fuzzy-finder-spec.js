@@ -1107,6 +1107,42 @@ describe('FuzzyFinder', () => {
     })
   })
 
+  describe('unicode characters', () => {
+    const originalPlatform = process.platform
+
+    afterEach(() => {
+      Object.defineProperty(process, 'platform', {value: originalPlatform})
+    })
+
+    it('decomposes unicode characters on macOS', async () => {
+      Object.defineProperty(process, 'platform', {value: 'darwin'})
+
+      await bufferView.toggle()
+
+      bufferView.selectListView.refs.queryEditor.setText('erstiebegrüßung')
+
+      const query = bufferView.selectListView.getFilterQuery()
+      expect(query.length).toBe(16)
+      expect(query.includes('ü')).toBe(false)
+      expect(query.includes('u\u0308')).toBe(true)
+    })
+
+    it('composes unicode characters on Windows and Linux', async () => {
+      for (let platform of ['win32, linux']) {
+        Object.defineProperty(process, 'platform', {value: platform})
+
+        await bufferView.toggle()
+
+        bufferView.selectListView.refs.queryEditor.setText('erstiebegru\u0308ßung')
+
+        const query = bufferView.selectListView.getFilterQuery()
+        expect(query.length).toBe(15)
+        expect(query.includes('ü')).toBe(true)
+        expect(query.includes('u\u0308')).toBe(false)
+      }
+    })
+  })
+
   describe('match highlighting', () => {
     beforeEach(async () => {
       jasmine.attachToDOM(workspaceElement)
