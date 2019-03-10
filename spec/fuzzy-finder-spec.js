@@ -1210,7 +1210,7 @@ describe('FuzzyFinder', () => {
 
   describe('allow pending pane items', () => {
     beforeEach(() => {
-      atom.config.set('core.allowPendingPaneItems', true)
+      atom.config.set('fuzzy-finder.allowPendingPaneItems', true)
       jasmine.attachToDOM(workspaceElement)
       pane = atom.workspace.getActivePane()
     })
@@ -1237,6 +1237,52 @@ describe('FuzzyFinder', () => {
 
       expect(atom.workspace.getTextEditors().length).toEqual(2)
       expect(pane.getPendingItem()).toBe(atom.workspace.getActiveTextEditor())
+    })
+
+    describe('fuzzy finder is cancelled', () => {
+      it('switches back to the original editor when a preview is open', async () => {
+        const originalEditor = atom.workspace.getActiveTextEditor()
+
+        await projectView.toggle()
+        await waitForPathsToDisplay(projectView)
+
+        spyOn(projectView, 'preview').andCallThrough()
+
+        projectView.selectListView.refs.queryEditor.setText('sample.html')
+
+        await conditionPromise(() => projectView.preview.callCount > 0)
+
+        expect(pane.getPendingItem()).toBe(atom.workspace.getActiveTextEditor())
+
+        await projectView.toggle()
+
+        expect(originalEditor).toBe(atom.workspace.getActiveTextEditor())
+        expect(pane.getPendingItem()).toBeNull
+      })
+
+      it('switches back to the original editor when a preview is not open', async () => {
+        const otherEditor = atom.workspace.getActiveTextEditor()
+
+        await atom.workspace.open('sample.html')
+
+        const originalEditor = atom.workspace.getActiveTextEditor()
+
+        await projectView.toggle()
+        await waitForPathsToDisplay(projectView)
+
+        spyOn(projectView, 'preview').andCallThrough()
+
+        projectView.selectListView.refs.queryEditor.setText('sample.js')
+
+        await conditionPromise(() => projectView.preview.callCount > 0)
+
+        expect(otherEditor).toBe(atom.workspace.getActiveTextEditor())
+        expect(pane.getPendingItem()).toBeNull
+
+        await projectView.toggle()
+
+        expect(originalEditor).toBe(atom.workspace.getActiveTextEditor())
+      })
     })
   })
 

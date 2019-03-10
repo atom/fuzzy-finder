@@ -65,10 +65,10 @@
       "default": false,
       "description": "Search all panes when opening files. If disabled, only the active pane is searched. Holding `shift` inverts this setting."
     },
-    "preserveLastSearch": {
+    "allowPendingPaneItems": {
       "type": "boolean",
       "default": false,
-      "description": "Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened."
+      "description": "Allow the selected item to be previewed without permanently adding it to the pane."
     },
     "useAlternateScoring": {
       "type": "boolean",
