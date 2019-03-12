@@ -1209,6 +1209,8 @@ describe('FuzzyFinder', () => {
   })
 
   describe('allow pending pane items', () => {
+    let pane
+
     beforeEach(() => {
       atom.config.set('fuzzy-finder.allowPendingPaneItems', true)
       jasmine.attachToDOM(workspaceElement)
@@ -1252,12 +1254,12 @@ describe('FuzzyFinder', () => {
 
         await conditionPromise(() => projectView.preview.callCount > 0)
 
-        expect(pane.getPendingItem()).toBe(atom.workspace.getActiveTextEditor())
+        expect(pane.getPendingItem()).toEqual(atom.workspace.getActiveTextEditor())
 
-        await projectView.toggle()
+        atom.commands.dispatch(projectView.element, 'core:cancel')
 
-        expect(originalEditor).toBe(atom.workspace.getActiveTextEditor())
-        expect(pane.getPendingItem()).toBeNull
+        expect(originalEditor).toEqual(atom.workspace.getActiveTextEditor())
+        expect(pane.getPendingItem()).toBeNull()
       })
 
       it('switches back to the original editor when a preview is not open', async () => {
@@ -1276,12 +1278,12 @@ describe('FuzzyFinder', () => {
 
         await conditionPromise(() => projectView.preview.callCount > 0)
 
-        expect(otherEditor).toBe(atom.workspace.getActiveTextEditor())
-        expect(pane.getPendingItem()).toBeNull
+        expect(otherEditor).toEqual(atom.workspace.getActiveTextEditor())
+        expect(pane.getPendingItem()).toBeNull()
 
-        await projectView.toggle()
+        atom.commands.dispatch(projectView.element, 'core:cancel')
 
-        expect(originalEditor).toBe(atom.workspace.getActiveTextEditor())
+        expect(originalEditor).toEqual(atom.workspace.getActiveTextEditor())
       })
     })
   })
