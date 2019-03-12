@@ -1217,34 +1217,18 @@ describe('FuzzyFinder', () => {
       pane = atom.workspace.getActivePane()
     })
 
-    it('does not open a preview on initial selection', async () => {
-      expect(atom.workspace.getTextEditors().length).toEqual(1)
+    describe('fuzzy finder is opened', () => {
+      it('does not open a preview on initial selection', async () => {
+        expect(atom.workspace.getTextEditors().length).toEqual(1)
 
-      await projectView.toggle()
-      await waitForPathsToDisplay(projectView)
+        await projectView.toggle()
+        await waitForPathsToDisplay(projectView)
 
-      expect(atom.workspace.getTextEditors().length).toEqual(1)
-      expect(pane.getPendingItem()).toBeNull()
-    })
+        expect(atom.workspace.getTextEditors().length).toEqual(1)
+        expect(pane.getPendingItem()).toBeNull()
+      })
 
-    it('opens a preview when there is a new selection', async () => {
-      await projectView.toggle()
-      await waitForPathsToDisplay(projectView)
-
-      spyOn(projectView, 'preview').andCallThrough()
-
-      projectView.selectListView.refs.queryEditor.setText('sample.html')
-
-      await conditionPromise(() => projectView.preview.callCount > 0)
-
-      expect(atom.workspace.getTextEditors().length).toEqual(2)
-      expect(pane.getPendingItem()).toBe(atom.workspace.getActiveTextEditor())
-    })
-
-    describe('fuzzy finder is cancelled', () => {
-      it('switches back to the original editor when a preview is open', async () => {
-        const originalEditor = atom.workspace.getActiveTextEditor()
-
+      it('opens a preview when there is a new selection', async () => {
         await projectView.toggle()
         await waitForPathsToDisplay(projectView)
 
@@ -1254,36 +1238,80 @@ describe('FuzzyFinder', () => {
 
         await conditionPromise(() => projectView.preview.callCount > 0)
 
-        expect(pane.getPendingItem()).toEqual(atom.workspace.getActiveTextEditor())
+        expect(atom.workspace.getTextEditors().length).toEqual(2)
+        expect(pane.getPendingItem()).toBe(atom.workspace.getActiveTextEditor())
+      })
+    })
 
-        atom.commands.dispatch(projectView.element, 'core:cancel')
+    describe('fuzzy finder is cancelled', () => {
+      describe('with an editor already open', () => {
+        it('closes the pending editor and activates the original editor', async () => {
+          const originalEditor = atom.workspace.getActiveTextEditor()
 
-        expect(originalEditor).toEqual(atom.workspace.getActiveTextEditor())
-        expect(pane.getPendingItem()).toBeNull()
+          await projectView.toggle()
+          await waitForPathsToDisplay(projectView)
+
+          spyOn(projectView, 'preview').andCallThrough()
+
+          projectView.selectListView.refs.queryEditor.setText('sample.html')
+
+          await conditionPromise(() => projectView.preview.callCount > 0)
+
+          expect(pane.getPendingItem()).toEqual(atom.workspace.getActiveTextEditor())
+
+          atom.commands.dispatch(projectView.element, 'core:cancel')
+
+          expect(originalEditor).toEqual(atom.workspace.getActiveTextEditor())
+          expect(pane.getPendingItem()).toBeNull()
+        })
+
+        it('activates the original editor when previewing a non-pending editor', async () => {
+          const otherEditor = atom.workspace.getActiveTextEditor()
+
+          await atom.workspace.open('sample.html')
+
+          const originalEditor = atom.workspace.getActiveTextEditor()
+
+          await projectView.toggle()
+          await waitForPathsToDisplay(projectView)
+
+          spyOn(projectView, 'preview').andCallThrough()
+
+          projectView.selectListView.refs.queryEditor.setText('sample.js')
+
+          await conditionPromise(() => projectView.preview.callCount > 0)
+
+          expect(otherEditor).toEqual(atom.workspace.getActiveTextEditor())
+          expect(pane.getPendingItem()).toBeNull()
+
+          atom.commands.dispatch(projectView.element, 'core:cancel')
+
+          expect(originalEditor).toEqual(atom.workspace.getActiveTextEditor())
+        })
       })
 
-      it('switches back to the original editor when a preview is not open', async () => {
-        const otherEditor = atom.workspace.getActiveTextEditor()
+      describe('without any editors open', () => {
+        it('closes the pending editor', async () => {
+          pane.destroyItems()
 
-        await atom.workspace.open('sample.html')
+          expect(atom.workspace.getTextEditors().length).toEqual(0)
 
-        const originalEditor = atom.workspace.getActiveTextEditor()
+          await projectView.toggle()
+          await waitForPathsToDisplay(projectView)
 
-        await projectView.toggle()
-        await waitForPathsToDisplay(projectView)
+          spyOn(projectView, 'preview').andCallThrough()
 
-        spyOn(projectView, 'preview').andCallThrough()
+          projectView.selectListView.refs.queryEditor.setText('sample.html')
 
-        projectView.selectListView.refs.queryEditor.setText('sample.js')
+          await conditionPromise(() => projectView.preview.callCount > 0)
 
-        await conditionPromise(() => projectView.preview.callCount > 0)
+          expect(pane.getPendingItem()).toEqual(atom.workspace.getActiveTextEditor())
 
-        expect(otherEditor).toEqual(atom.workspace.getActiveTextEditor())
-        expect(pane.getPendingItem()).toBeNull()
+          atom.commands.dispatch(projectView.element, 'core:cancel')
 
-        atom.commands.dispatch(projectView.element, 'core:cancel')
-
-        expect(originalEditor).toEqual(atom.workspace.getActiveTextEditor())
+          expect(atom.workspace.getActiveTextEditor()).toBeUndefined()
+          expect(pane.getPendingItem()).toBeNull()
+        })
       })
     })
   })
