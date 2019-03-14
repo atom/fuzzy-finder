@@ -3,6 +3,8 @@ const path = require('path')
 const _ = require('underscore-plus')
 const etch = require('etch')
 const fs = require('fs-plus')
+const os = require('os')
+const sinon = require('sinon')
 const temp = require('temp')
 const wrench = require('wrench')
 
@@ -81,7 +83,13 @@ describe('FuzzyFinder', () => {
 
   describe('file-finder behavior', () => {
     beforeEach(async () => {
+      sinon.stub(os, 'cpus').returns({length: 1})
+
       await projectView.selectListView.update({maxResults: null})
+    })
+
+    afterEach(() => {
+      os.cpus.restore()
     })
 
     describe('toggling', () => {
@@ -167,8 +175,10 @@ describe('FuzzyFinder', () => {
 
           await waitForPathsToDisplay(projectView)
 
-          expect(projectView.element.querySelectorAll('li')[0].textContent).toContain('sample.txt')
-          expect(projectView.element.querySelectorAll('li')[1].textContent).toContain('sample.html')
+          const results = projectView.element.querySelectorAll('li')
+
+          expect(results[0].textContent).toContain('sample.txt')
+          expect(results[results.length - 1].textContent).toContain('sample.html')
         })
 
         it('displays paths correctly if the last-opened path is not part of the project (regression)', async () => {
