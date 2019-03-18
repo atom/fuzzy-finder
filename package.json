@@ -80,7 +80,7 @@
     "useRipGrep": {
       "type": "boolean",
       "default": false,
-      "description": "Use the experimental `ripgrep` crawler. This will speed up substantially the indexing process on large projects."
+      "description": "Use the experimental `ripgrep` crawler. This will substantially speed up the indexing process on large projects."
     },
     "prefillFromSelection": {
       "type": "boolean",
