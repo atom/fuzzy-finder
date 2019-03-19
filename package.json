@@ -15,9 +15,11 @@
     "minimatch": "~3.0.3",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0",
+    "vscode-ripgrep": "^1.2.5",
     "wrench": "^1.5"
   },
   "devDependencies": {
+    "sinon": "1.17.4",
     "standard": "^10.0.3"
   },
   "standard": {
@@ -74,6 +76,11 @@
       "type": "boolean",
       "default": true,
       "description": "Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)"
+    },
+    "useRipGrep": {
+      "type": "boolean",
+      "default": false,
+      "description": "Use the experimental `ripgrep` crawler. This will substantially speed up the indexing process on large projects."
     },
     "prefillFromSelection": {
       "type": "boolean",
