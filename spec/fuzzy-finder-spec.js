@@ -8,6 +8,7 @@ const sinon = require('sinon')
 const temp = require('temp')
 const wrench = require('wrench')
 
+const fuzzyFinderPackage = require('..')
 const PathLoader = require('../lib/path-loader')
 const DefaultFileIcons = require('../lib/default-file-icons')
 const getIconServices = require('../lib/get-icon-services')
@@ -1577,6 +1578,58 @@ describe('FuzzyFinder', () => {
 
               expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('file.txt'))).toBeDefined()
             })
+          })
+        })
+
+        describe('logging of metrics events', () => {
+          let disposable
+
+          afterEach(() => {
+            if (disposable) {
+              disposable.dispose()
+            }
+          })
+
+          it('logs the crawling time', async () => {
+            const reporterStub = {
+              addTiming: sinon.spy()
+            }
+
+            disposable = fuzzyFinderPackage.consumeMetricsReporter(reporterStub)
+
+            // After setting the reporter it may receive some old events from previous tests
+            // that we want to discard.
+            reporterStub.addTiming.reset()
+
+            await projectView.toggle()
+
+            await waitForPathsToDisplay(projectView)
+
+            expect(reporterStub.addTiming.firstCall.args[0]).toEqual('fuzzy-finder-v1')
+            expect(reporterStub.addTiming.firstCall.args[2]).toEqual(
+              {ec: 'time-to-crawl', el: useRipGrep ? 'ripgrep' : 'fs', ev: 5}
+            )
+          })
+
+          it('queues the events until a reporter is set', async () => {
+            const reporterStub = {
+              addTiming: sinon.spy()
+            }
+
+            // After setting the reporter it may receive some old events from previous tests
+            // that we want to discard.
+            reporterStub.addTiming.reset()
+
+            await projectView.toggle()
+
+            await waitForPathsToDisplay(projectView)
+
+            fuzzyFinderPackage.consumeMetricsReporter(reporterStub)
+
+            expect(reporterStub.addTiming.firstCall.args[0]).toEqual('fuzzy-finder-v1')
+            expect(reporterStub.addTiming.firstCall.args[2]).toEqual(
+              {ec: 'time-to-crawl', el: useRipGrep ? 'ripgrep' : 'fs', ev: 5}
+            )
           })
         })
       })
