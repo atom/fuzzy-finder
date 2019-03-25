@@ -421,449 +421,609 @@ describe('FuzzyFinder', () => {
           })
         )
       })
-    })
 
-    describe('buffer-finder behavior', () => {
-      describe('toggling', () => {
-        describe('when there are pane items with paths', () => {
+      describe('buffer-finder behavior', () => {
+        describe('toggling', () => {
+          describe('when there are pane items with paths', () => {
+            beforeEach(async () => {
+              jasmine.attachToDOM(workspaceElement)
+
+              await atom.workspace.open('sample.txt')
+            })
+
+            it("shows the FuzzyFinder if it isn't showing, or hides it and returns focus to the active editor", async () => {
+              expect(atom.workspace.panelForItem(bufferView)).toBeNull()
+              atom.workspace.getActivePane().splitRight({copyActiveItem: true})
+              const [editor1, editor2, editor3] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+              expect(atom.workspace.getActivePaneItem()).toBe(editor3)
+
+              expect(atom.views.getView(editor3)).toHaveFocus()
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+              expect(workspaceElement.querySelector('.fuzzy-finder')).toHaveFocus()
+              bufferView.selectListView.refs.queryEditor.insertText('this should not show up next time we toggle')
+
+              await bufferView.toggle()
+
+              expect(atom.views.getView(editor3)).toHaveFocus()
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
+
+              await bufferView.toggle()
+
+              expect(bufferView.selectListView.refs.queryEditor.getText()).toBe('')
+            })
+
+            it('lists the paths of the current items, sorted by most recently opened but with the current item last', async () => {
+              await atom.workspace.open('sample-with-tabs.coffee')
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+              expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample.txt', 'sample.js', 'sample-with-tabs.coffee'])
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
+
+              await atom.workspace.open('sample.txt')
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+              expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample-with-tabs.coffee', 'sample.js', 'sample.txt'])
+              expect(bufferView.element.querySelector('li')).toHaveClass('selected')
+            })
+
+            it('serializes the list of paths and their last opened time', async () => {
+              await atom.workspace.open('sample-with-tabs.coffee')
+
+              await bufferView.toggle()
+
+              await atom.workspace.open('sample.js')
+
+              await bufferView.toggle()
+
+              await atom.workspace.open()
+
+              await atom.packages.deactivatePackage('fuzzy-finder')
+
+              let states = _.map(atom.packages.getPackageState('fuzzy-finder'), (path, time) => [path, time])
+              expect(states.length).toBe(3)
+              states = _.sortBy(states, (path, time) => -time)
+
+              const paths = ['sample-with-tabs.coffee', 'sample.txt', 'sample.js']
+
+              for (let [time, bufferPath] of states) {
+                expect(_.last(bufferPath.split(path.sep))).toBe(paths.shift())
+                expect(time).toBeGreaterThan(50000)
+              }
+            })
+          })
+
+          describe('when there are only panes with anonymous items', () =>
+            it('does not open', async () => {
+              atom.workspace.getActivePane().destroy()
+              await atom.workspace.open()
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView)).toBeNull()
+            })
+          )
+
+          describe('when there are no pane items', () =>
+            it('does not open', async () => {
+              atom.workspace.getActivePane().destroy()
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView)).toBeNull()
+            })
+          )
+
+          describe('when multiple sessions are opened on the same path', () =>
+            it('does not display duplicates for that path in the list', async () => {
+              await atom.workspace.open('sample.js')
+
+              atom.workspace.getActivePane().splitRight({copyActiveItem: true})
+
+              await bufferView.toggle()
+
+              expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample.js'])
+            })
+        )
+        })
+
+        describe('when a path selection is confirmed', () => {
+          let editor1, editor2, editor3
+
           beforeEach(async () => {
             jasmine.attachToDOM(workspaceElement)
-
-            await atom.workspace.open('sample.txt')
-          })
-
-          it("shows the FuzzyFinder if it isn't showing, or hides it and returns focus to the active editor", async () => {
-            expect(atom.workspace.panelForItem(bufferView)).toBeNull()
             atom.workspace.getActivePane().splitRight({copyActiveItem: true})
-            const [editor1, editor2, editor3] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-            expect(atom.workspace.getActivePaneItem()).toBe(editor3)
 
-            expect(atom.views.getView(editor3)).toHaveFocus()
+            await atom.workspace.open('sample.txt');
 
-            await bufferView.toggle()
+            [editor1, editor2, editor3] = atom.workspace.getTextEditors()
 
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-            expect(workspaceElement.querySelector('.fuzzy-finder')).toHaveFocus()
-            bufferView.selectListView.refs.queryEditor.insertText('this should not show up next time we toggle')
+            expect(atom.workspace.getActiveTextEditor()).toBe(editor3)
+
+            atom.commands.dispatch(atom.views.getView(editor2), 'pane:show-previous-item')
 
             await bufferView.toggle()
-
-            expect(atom.views.getView(editor3)).toHaveFocus()
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
-
-            await bufferView.toggle()
-
-            expect(bufferView.selectListView.refs.queryEditor.getText()).toBe('')
           })
 
-          it('lists the paths of the current items, sorted by most recently opened but with the current item last', async () => {
-            await atom.workspace.open('sample-with-tabs.coffee')
+          describe('when the active pane has an item for the selected path', () =>
+            it('switches to the item for the selected path', async () => {
+              const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
+              bufferView.confirm({uri: expectedPath})
 
-            await bufferView.toggle()
+              await conditionPromise(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
 
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-            expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample.txt', 'sample.js', 'sample-with-tabs.coffee'])
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
+              expect(editor1.getPath()).not.toBe(expectedPath)
+              expect(editor2.getPath()).not.toBe(expectedPath)
+              expect(editor3.getPath()).toBe(expectedPath)
+              expect(atom.views.getView(editor3)).toHaveFocus()
+            })
+          )
 
-            await bufferView.toggle()
+          describe('when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is false', () =>
+            it('adds a new item to the active pane for the selected path', async () => {
+              const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
 
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
+              await bufferView.toggle()
 
-            await atom.workspace.open('sample.txt')
+              atom.views.getView(editor1).focus()
 
-            await bufferView.toggle()
+              await bufferView.toggle()
 
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-            expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample-with-tabs.coffee', 'sample.js', 'sample.txt'])
-            expect(bufferView.element.querySelector('li')).toHaveClass('selected')
-          })
+              expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+              bufferView.confirm({uri: expectedPath}, atom.config.get('fuzzy-finder.searchAllPanes'))
 
-          it('serializes the list of paths and their last opened time', async () => {
-            await atom.workspace.open('sample-with-tabs.coffee')
+              await conditionPromise(() => atom.workspace.getActivePane().getItems().length === 2)
 
-            await bufferView.toggle()
+              const editor4 = atom.workspace.getActiveTextEditor()
 
-            await atom.workspace.open('sample.js')
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
 
-            await bufferView.toggle()
+              expect(editor4).not.toBe(editor1)
+              expect(editor4).not.toBe(editor2)
+              expect(editor4).not.toBe(editor3)
 
-            await atom.workspace.open()
+              expect(editor4.getPath()).toBe(expectedPath)
+              expect(atom.views.getView(editor4)).toHaveFocus()
+            })
+          )
 
-            await atom.packages.deactivatePackage('fuzzy-finder')
+          describe('when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is true', () => {
+            beforeEach(() => atom.config.set('fuzzy-finder.searchAllPanes', true))
 
-            let states = _.map(atom.packages.getPackageState('fuzzy-finder'), (path, time) => [path, time])
-            expect(states.length).toBe(3)
-            states = _.sortBy(states, (path, time) => -time)
+            it('switches to the pane with the item for the selected path', async () => {
+              const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
+              let originalPane = null
 
-            const paths = ['sample-with-tabs.coffee', 'sample.txt', 'sample.js']
+              await bufferView.toggle()
 
-            for (let [time, bufferPath] of states) {
-              expect(_.last(bufferPath.split(path.sep))).toBe(paths.shift())
-              expect(time).toBeGreaterThan(50000)
-            }
+              atom.views.getView(editor1).focus()
+              originalPane = atom.workspace.getActivePane()
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+              bufferView.confirm({uri: expectedPath}, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes')})
+
+              await conditionPromise(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
+
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
+              expect(atom.workspace.getActivePane()).not.toBe(originalPane)
+              expect(atom.workspace.getActiveTextEditor()).toBe(editor3)
+              expect(atom.workspace.getPaneItems().length).toBe(3)
+            })
           })
         })
-
-        describe('when there are only panes with anonymous items', () =>
-          it('does not open', async () => {
-            atom.workspace.getActivePane().destroy()
-            await atom.workspace.open()
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.panelForItem(bufferView)).toBeNull()
-          })
-        )
-
-        describe('when there are no pane items', () =>
-          it('does not open', async () => {
-            atom.workspace.getActivePane().destroy()
-            await bufferView.toggle()
-
-            expect(atom.workspace.panelForItem(bufferView)).toBeNull()
-          })
-        )
-
-        describe('when multiple sessions are opened on the same path', () =>
-          it('does not display duplicates for that path in the list', async () => {
-            await atom.workspace.open('sample.js')
-
-            atom.workspace.getActivePane().splitRight({copyActiveItem: true})
-
-            await bufferView.toggle()
-
-            expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample.js'])
-          })
-      )
       })
 
-      describe('when a path selection is confirmed', () => {
-        let editor1, editor2, editor3
+      describe('common behavior between file and buffer finder', () =>
+        describe('when the fuzzy finder is cancelled', () => {
+          describe('when an editor is open', () =>
+            it('detaches the finder and focuses the previously focused element', async () => {
+              jasmine.attachToDOM(workspaceElement)
+              const activeEditor = atom.workspace.getActiveTextEditor()
 
-        beforeEach(async () => {
-          jasmine.attachToDOM(workspaceElement)
-          atom.workspace.getActivePane().splitRight({copyActiveItem: true})
+              await projectView.toggle()
 
-          await atom.workspace.open('sample.txt');
+              expect(projectView.element.parentElement).toBeDefined()
+              expect(projectView.selectListView.refs.queryEditor.element).toHaveFocus()
 
-          [editor1, editor2, editor3] = atom.workspace.getTextEditors()
+              projectView.cancel()
 
-          expect(atom.workspace.getActiveTextEditor()).toBe(editor3)
+              expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
+              expect(atom.views.getView(activeEditor)).toHaveFocus()
+            })
+          )
 
-          atom.commands.dispatch(atom.views.getView(editor2), 'pane:show-previous-item')
+          describe('when no editors are open', () =>
+            it('detaches the finder and focuses the previously focused element', async () => {
+              jasmine.attachToDOM(workspaceElement)
+              atom.workspace.getActivePane().destroy()
+
+              const inputView = document.createElement('input')
+              workspaceElement.appendChild(inputView)
+              inputView.focus()
+
+              await projectView.toggle()
+
+              expect(projectView.element.parentElement).toBeDefined()
+              expect(projectView.selectListView.refs.queryEditor.element).toHaveFocus()
+              projectView.cancel()
+              expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
+              expect(inputView).toHaveFocus()
+            })
+          )
+        })
+      )
+
+      describe('cached file paths', () => {
+        beforeEach(() => {
+          spyOn(PathLoader, 'startTask').andCallThrough()
+          spyOn(atom.workspace, 'getTextEditors').andCallThrough()
+        })
+
+        it('caches file paths after first time', async () => {
+          await projectView.toggle()
+
+          await waitForPathsToDisplay(projectView)
+
+          expect(PathLoader.startTask).toHaveBeenCalled()
+          PathLoader.startTask.reset()
+
+          await projectView.toggle()
+
+          await projectView.toggle()
+
+          await waitForPathsToDisplay(projectView)
+
+          expect(PathLoader.startTask).not.toHaveBeenCalled()
+        })
+
+        it("doesn't cache buffer paths", async () => {
+          await bufferView.toggle()
+
+          await waitForPathsToDisplay(bufferView)
+
+          expect(atom.workspace.getTextEditors).toHaveBeenCalled()
+          atom.workspace.getTextEditors.reset()
 
           await bufferView.toggle()
+
+          await bufferView.toggle()
+
+          await waitForPathsToDisplay(bufferView)
+
+          expect(atom.workspace.getTextEditors).toHaveBeenCalled()
         })
 
-        describe('when the active pane has an item for the selected path', () =>
-          it('switches to the item for the selected path', async () => {
-            const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-            bufferView.confirm({uri: expectedPath})
+        it('busts the cache when the window gains focus', async () => {
+          await projectView.toggle()
 
-            await conditionPromise(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
+          await waitForPathsToDisplay(projectView)
 
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
-            expect(editor1.getPath()).not.toBe(expectedPath)
-            expect(editor2.getPath()).not.toBe(expectedPath)
-            expect(editor3.getPath()).toBe(expectedPath)
-            expect(atom.views.getView(editor3)).toHaveFocus()
+          expect(PathLoader.startTask).toHaveBeenCalled()
+          PathLoader.startTask.reset()
+          window.dispatchEvent(new CustomEvent('focus'))
+          await projectView.toggle()
+
+          await projectView.toggle()
+
+          expect(PathLoader.startTask).toHaveBeenCalled()
+        })
+
+        it('busts the cache when the project path changes', async () => {
+          await projectView.toggle()
+
+          await waitForPathsToDisplay(projectView)
+
+          expect(PathLoader.startTask).toHaveBeenCalled()
+          PathLoader.startTask.reset()
+          atom.project.setPaths([temp.mkdirSync('atom')])
+
+          await projectView.toggle()
+
+          await projectView.toggle()
+
+          expect(PathLoader.startTask).toHaveBeenCalled()
+          expect(projectView.element.querySelectorAll('li').length).toBe(0)
+        })
+
+        describe('the initial load paths task started during package activation', () => {
+          beforeEach(async () => {
+            fuzzyFinder.projectView.destroy()
+            fuzzyFinder.projectView = null
+            fuzzyFinder.startLoadPathsTask()
+
+            await conditionPromise(() => fuzzyFinder.projectPaths)
           })
-        )
 
-        describe('when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is false', () =>
-          it('adds a new item to the active pane for the selected path', async () => {
-            const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-
-            await bufferView.toggle()
-
-            atom.views.getView(editor1).focus()
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-            bufferView.confirm({uri: expectedPath}, atom.config.get('fuzzy-finder.searchAllPanes'))
-
-            await conditionPromise(() => atom.workspace.getActivePane().getItems().length === 2)
-
-            const editor4 = atom.workspace.getActiveTextEditor()
-
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
-
-            expect(editor4).not.toBe(editor1)
-            expect(editor4).not.toBe(editor2)
-            expect(editor4).not.toBe(editor3)
-
-            expect(editor4.getPath()).toBe(expectedPath)
-            expect(atom.views.getView(editor4)).toHaveFocus()
+          it('passes the indexed paths into the project view when it is created', () => {
+            const {projectPaths} = fuzzyFinder
+            expect(projectPaths.length).toBe(19)
+            projectView = fuzzyFinder.createProjectView()
+            expect(projectView.paths).toBe(projectPaths)
+            expect(projectView.reloadPaths).toBe(false)
           })
-        )
 
-        describe('when the active pane does not have an item for the selected path and fuzzy-finder.searchAllPanes is true', () => {
-          beforeEach(() => atom.config.set('fuzzy-finder.searchAllPanes', true))
+          it('busts the cached paths when the project paths change', () => {
+            atom.project.setPaths([])
 
-          it('switches to the pane with the item for the selected path', async () => {
-            const expectedPath = atom.project.getDirectories()[0].resolve('sample.txt')
-            let originalPane = null
+            const {projectPaths} = fuzzyFinder
+            expect(projectPaths).toBe(null)
 
-            await bufferView.toggle()
-
-            atom.views.getView(editor1).focus()
-            originalPane = atom.workspace.getActivePane()
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-            bufferView.confirm({uri: expectedPath}, {searchAllPanes: atom.config.get('fuzzy-finder.searchAllPanes')})
-
-            await conditionPromise(() => atom.workspace.getActiveTextEditor().getPath() === expectedPath)
-
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(false)
-            expect(atom.workspace.getActivePane()).not.toBe(originalPane)
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor3)
-            expect(atom.workspace.getPaneItems().length).toBe(3)
+            projectView = fuzzyFinder.createProjectView()
+            expect(projectView.paths).toBe(null)
+            expect(projectView.reloadPaths).toBe(true)
           })
         })
       })
-    })
 
-    describe('common behavior between file and buffer finder', () =>
-      describe('when the fuzzy finder is cancelled', () => {
-        describe('when an editor is open', () =>
-          it('detaches the finder and focuses the previously focused element', async () => {
-            jasmine.attachToDOM(workspaceElement)
-            const activeEditor = atom.workspace.getActiveTextEditor()
+      describe('opening a path into a split', () => {
+        it('opens the path by splitting the active editor left', async () => {
+          expect(atom.workspace.getCenter().getPanes().length).toBe(1)
+          let filePath = null
 
-            await projectView.toggle()
+          await bufferView.toggle();
 
-            expect(projectView.element.parentElement).toBeDefined()
-            expect(projectView.selectListView.refs.queryEditor.element).toHaveFocus()
+          ({filePath} = bufferView.selectListView.getSelectedItem())
+          atom.commands.dispatch(bufferView.element, 'pane:split-left')
 
-            projectView.cancel()
+          await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
 
-            expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
-            expect(atom.views.getView(activeEditor)).toHaveFocus()
-          })
-        )
+          await conditionPromise(() => atom.workspace.getActiveTextEditor())
 
-        describe('when no editors are open', () =>
-          it('detaches the finder and focuses the previously focused element', async () => {
-            jasmine.attachToDOM(workspaceElement)
-            atom.workspace.getActivePane().destroy()
+          const [leftPane, rightPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
+          expect(atom.workspace.getActivePane()).toBe(leftPane)
+          expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
+        })
 
-            const inputView = document.createElement('input')
-            workspaceElement.appendChild(inputView)
-            inputView.focus()
+        it('opens the path by splitting the active editor right', async () => {
+          expect(atom.workspace.getCenter().getPanes().length).toBe(1)
+          let filePath = null
 
-            await projectView.toggle()
+          await bufferView.toggle();
 
-            expect(projectView.element.parentElement).toBeDefined()
-            expect(projectView.selectListView.refs.queryEditor.element).toHaveFocus()
-            projectView.cancel()
-            expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
-            expect(inputView).toHaveFocus()
-          })
-        )
-      })
-    )
+          ({filePath} = bufferView.selectListView.getSelectedItem())
+          atom.commands.dispatch(bufferView.element, 'pane:split-right')
 
-    describe('cached file paths', () => {
-      beforeEach(() => {
-        spyOn(PathLoader, 'startTask').andCallThrough()
-        spyOn(atom.workspace, 'getTextEditors').andCallThrough()
-      })
+          await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
 
-      it('caches file paths after first time', async () => {
-        await projectView.toggle()
+          await conditionPromise(() => atom.workspace.getActiveTextEditor())
 
-        await waitForPathsToDisplay(projectView)
+          const [leftPane, rightPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
+          expect(atom.workspace.getActivePane()).toBe(rightPane)
+          expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
+        })
 
-        expect(PathLoader.startTask).toHaveBeenCalled()
-        PathLoader.startTask.reset()
+        it('opens the path by splitting the active editor up', async () => {
+          expect(atom.workspace.getCenter().getPanes().length).toBe(1)
+          let filePath = null
 
-        await projectView.toggle()
+          await bufferView.toggle();
 
-        await projectView.toggle()
+          ({filePath} = bufferView.selectListView.getSelectedItem())
+          atom.commands.dispatch(bufferView.element, 'pane:split-up')
 
-        await waitForPathsToDisplay(projectView)
+          await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
 
-        expect(PathLoader.startTask).not.toHaveBeenCalled()
-      })
+          await conditionPromise(() => atom.workspace.getActiveTextEditor())
 
-      it("doesn't cache buffer paths", async () => {
-        await bufferView.toggle()
+          const [topPane, bottomPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
+          expect(atom.workspace.getActivePane()).toBe(topPane)
+          expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
+        })
 
-        await waitForPathsToDisplay(bufferView)
+        it('opens the path by splitting the active editor down', async () => {
+          expect(atom.workspace.getCenter().getPanes().length).toBe(1)
+          let filePath = null
 
-        expect(atom.workspace.getTextEditors).toHaveBeenCalled()
-        atom.workspace.getTextEditors.reset()
+          await bufferView.toggle();
 
-        await bufferView.toggle()
+          ({filePath} = bufferView.selectListView.getSelectedItem())
+          atom.commands.dispatch(bufferView.element, 'pane:split-down')
 
-        await bufferView.toggle()
+          await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
 
-        await waitForPathsToDisplay(bufferView)
+          await conditionPromise(() => atom.workspace.getActiveTextEditor())
 
-        expect(atom.workspace.getTextEditors).toHaveBeenCalled()
+          const [topPane, bottomPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
+          expect(atom.workspace.getActivePane()).toBe(bottomPane)
+          expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
+        })
       })
 
-      it('busts the cache when the window gains focus', async () => {
-        await projectView.toggle()
-
-        await waitForPathsToDisplay(projectView)
-
-        expect(PathLoader.startTask).toHaveBeenCalled()
-        PathLoader.startTask.reset()
-        window.dispatchEvent(new CustomEvent('focus'))
-        await projectView.toggle()
-
-        await projectView.toggle()
-
-        expect(PathLoader.startTask).toHaveBeenCalled()
-      })
-
-      it('busts the cache when the project path changes', async () => {
-        await projectView.toggle()
-
-        await waitForPathsToDisplay(projectView)
-
-        expect(PathLoader.startTask).toHaveBeenCalled()
-        PathLoader.startTask.reset()
-        atom.project.setPaths([temp.mkdirSync('atom')])
-
-        await projectView.toggle()
-
-        await projectView.toggle()
-
-        expect(PathLoader.startTask).toHaveBeenCalled()
-        expect(projectView.element.querySelectorAll('li').length).toBe(0)
-      })
-
-      describe('the initial load paths task started during package activation', () => {
+      describe('when the query contains a colon', () => {
         beforeEach(async () => {
-          fuzzyFinder.projectView.destroy()
-          fuzzyFinder.projectView = null
-          fuzzyFinder.startLoadPathsTask()
+          jasmine.attachToDOM(workspaceElement)
+          expect(atom.workspace.panelForItem(projectView)).toBeNull()
 
-          await conditionPromise(() => fuzzyFinder.projectPaths)
+          await atom.workspace.open('sample.txt')
+
+          const [editor1, editor2] = atom.workspace.getTextEditors()
+          editor1.setCursorBufferPosition([8, 3])
+          expect(atom.workspace.getActiveTextEditor()).toBe(editor2)
+          expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
         })
 
-        it('passes the indexed paths into the project view when it is created', () => {
-          const {projectPaths} = fuzzyFinder
-          expect(projectPaths.length).toBe(19)
-          projectView = fuzzyFinder.createProjectView()
-          expect(projectView.paths).toBe(projectPaths)
-          expect(projectView.reloadPaths).toBe(false)
+        describe('when the colon is followed by numbers', () => {
+          describe('when the numbers are not followed by another colon', () => {
+            describe('when the filter text has a file path', () => {
+              it('opens the selected path to that line number', async () => {
+                const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+                await bufferView.toggle()
+
+                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+                bufferView.selectListView.refs.queryEditor.setText('sample.js:4')
+
+                await getOrScheduleUpdatePromise()
+
+                const {filePath} = bufferView.selectListView.getSelectedItem()
+                expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+
+                spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
+                atom.commands.dispatch(bufferView.element, 'core:confirm')
+
+                await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+
+                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+                expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
+              })
+            })
+
+            describe("when the filter text doesn't have a file path", () => {
+              it('moves the cursor in the active editor to that line number', async () => {
+                const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+                await atom.workspace.open('sample.js')
+
+                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+                await bufferView.toggle()
+
+                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+                bufferView.selectListView.refs.queryEditor.insertText(':4')
+
+                await getOrScheduleUpdatePromise()
+
+                expect(bufferView.element.querySelectorAll('li').length).toBe(0)
+                spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
+                atom.commands.dispatch(bufferView.element, 'core:confirm')
+
+                await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+
+                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+                expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
+              })
+            })
+          })
+
+          describe('when the numbers are followed by another colon', () => {
+            describe('when the colon is followed by more numbers', () => {
+              describe('when the filter text has a file path', () => {
+                it('opens the selected path to that line number and column', async () => {
+                  const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+                  await bufferView.toggle()
+
+                  expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+                  bufferView.selectListView.refs.queryEditor.setText('sample.js:4:6')
+
+                  await getOrScheduleUpdatePromise()
+
+                  const {filePath} = bufferView.selectListView.getSelectedItem()
+                  expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+
+                  spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
+                  atom.commands.dispatch(bufferView.element, 'core:confirm')
+
+                  await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+
+                  expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+                  expect(editor1.getCursorBufferPosition()).toEqual([3, 6])
+                })
+              })
+
+              describe("when the filter text doesn't have a file path", () => {
+                it('moves the cursor in the active editor to that line number and column', async () => {
+                  const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+                  await atom.workspace.open('sample.js')
+
+                  expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+                  await bufferView.toggle()
+
+                  expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+                  bufferView.selectListView.refs.queryEditor.insertText(':4:6')
+
+                  await getOrScheduleUpdatePromise()
+
+                  expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(
+                    'Jump to line and column in active editor'
+                  )
+                  expect(bufferView.element.querySelectorAll('li').length).toBe(0)
+                  spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
+                  atom.commands.dispatch(bufferView.element, 'core:confirm')
+
+                  await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+
+                  expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+                  expect(editor1.getCursorBufferPosition()).toEqual([3, 6])
+                })
+              })
+            })
+
+            describe('when the colon is not followed by more numbers', () => {
+              describe('when the filter text has a file path', () => {
+                it('opens the file, jumps to the first character of the line and does not throw an error', async () => {
+                  const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+                  await bufferView.toggle()
+
+                  expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+                  bufferView.selectListView.refs.queryEditor.setText('sample.js:5:a')
+
+                  await getOrScheduleUpdatePromise()
+
+                  const {filePath} = bufferView.selectListView.getSelectedItem()
+                  expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
+
+                  spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
+                  atom.commands.dispatch(bufferView.element, 'core:confirm')
+
+                  await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+
+                  expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+                  expect(editor1.getCursorBufferPosition()).toEqual([4, 4])
+                })
+              })
+
+              describe("when the filter text doesn't have a file path", () => {
+                it('jumps to the first character of the line and does not throw an error', async () => {
+                  const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+
+                  await atom.workspace.open('sample.js')
+
+                  expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+                  await bufferView.toggle()
+
+                  expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+                  bufferView.selectListView.refs.queryEditor.setText(':5:a')
+
+                  await getOrScheduleUpdatePromise()
+
+                  spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
+                  atom.commands.dispatch(bufferView.element, 'core:confirm')
+
+                  await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+
+                  expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+                  expect(editor1.getCursorBufferPosition()).toEqual([4, 4])
+                })
+              })
+            })
+          })
         })
 
-        it('busts the cached paths when the project paths change', () => {
-          atom.project.setPaths([])
-
-          const {projectPaths} = fuzzyFinder
-          expect(projectPaths).toBe(null)
-
-          projectView = fuzzyFinder.createProjectView()
-          expect(projectView.paths).toBe(null)
-          expect(projectView.reloadPaths).toBe(true)
-        })
-      })
-    })
-
-    describe('opening a path into a split', () => {
-      it('opens the path by splitting the active editor left', async () => {
-        expect(atom.workspace.getCenter().getPanes().length).toBe(1)
-        let filePath = null
-
-        await bufferView.toggle();
-
-        ({filePath} = bufferView.selectListView.getSelectedItem())
-        atom.commands.dispatch(bufferView.element, 'pane:split-left')
-
-        await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
-
-        await conditionPromise(() => atom.workspace.getActiveTextEditor())
-
-        const [leftPane, rightPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
-        expect(atom.workspace.getActivePane()).toBe(leftPane)
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
-      })
-
-      it('opens the path by splitting the active editor right', async () => {
-        expect(atom.workspace.getCenter().getPanes().length).toBe(1)
-        let filePath = null
-
-        await bufferView.toggle();
-
-        ({filePath} = bufferView.selectListView.getSelectedItem())
-        atom.commands.dispatch(bufferView.element, 'pane:split-right')
-
-        await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
-
-        await conditionPromise(() => atom.workspace.getActiveTextEditor())
-
-        const [leftPane, rightPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
-        expect(atom.workspace.getActivePane()).toBe(rightPane)
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
-      })
-
-      it('opens the path by splitting the active editor up', async () => {
-        expect(atom.workspace.getCenter().getPanes().length).toBe(1)
-        let filePath = null
-
-        await bufferView.toggle();
-
-        ({filePath} = bufferView.selectListView.getSelectedItem())
-        atom.commands.dispatch(bufferView.element, 'pane:split-up')
-
-        await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
-
-        await conditionPromise(() => atom.workspace.getActiveTextEditor())
-
-        const [topPane, bottomPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
-        expect(atom.workspace.getActivePane()).toBe(topPane)
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
-      })
-
-      it('opens the path by splitting the active editor down', async () => {
-        expect(atom.workspace.getCenter().getPanes().length).toBe(1)
-        let filePath = null
-
-        await bufferView.toggle();
-
-        ({filePath} = bufferView.selectListView.getSelectedItem())
-        atom.commands.dispatch(bufferView.element, 'pane:split-down')
-
-        await conditionPromise(() => atom.workspace.getCenter().getPanes().length === 2)
-
-        await conditionPromise(() => atom.workspace.getActiveTextEditor())
-
-        const [topPane, bottomPane] = atom.workspace.getCenter().getPanes() // eslint-disable-line no-unused-vars
-        expect(atom.workspace.getActivePane()).toBe(bottomPane)
-        expect(atom.workspace.getActiveTextEditor().getPath()).toBe(atom.project.getDirectories()[0].resolve(filePath))
-      })
-    })
-
-    describe('when the query contains a colon', () => {
-      beforeEach(async () => {
-        jasmine.attachToDOM(workspaceElement)
-        expect(atom.workspace.panelForItem(projectView)).toBeNull()
-
-        await atom.workspace.open('sample.txt')
-
-        const [editor1, editor2] = atom.workspace.getTextEditors()
-        editor1.setCursorBufferPosition([8, 3])
-        expect(atom.workspace.getActiveTextEditor()).toBe(editor2)
-        expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
-      })
-
-      describe('when the colon is followed by numbers', () => {
-        describe('when the numbers are not followed by another colon', () => {
+        describe('when the colon is not followed by numbers', () => {
           describe('when the filter text has a file path', () => {
-            it('opens the selected path to that line number', async () => {
+            it('opens the file and does not throw an error', async () => {
               const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
               await bufferView.toggle()
 
               expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-              bufferView.selectListView.refs.queryEditor.setText('sample.js:4')
+              bufferView.selectListView.refs.queryEditor.setText('sample.js:a')
 
               await getOrScheduleUpdatePromise()
 
@@ -876,12 +1036,12 @@ describe('FuzzyFinder', () => {
               await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
               expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-              expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
+              expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
             })
           })
 
           describe("when the filter text doesn't have a file path", () => {
-            it('moves the cursor in the active editor to that line number', async () => {
+            it('shows an error and does not move the cursor', async () => {
               const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
               await atom.workspace.open('sample.js')
@@ -891,9 +1051,11 @@ describe('FuzzyFinder', () => {
               await bufferView.toggle()
 
               expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-              bufferView.selectListView.refs.queryEditor.insertText(':4')
+              bufferView.selectListView.refs.queryEditor.setText('::')
 
               await getOrScheduleUpdatePromise()
+
+              expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual('Invalid line number')
 
               expect(bufferView.element.querySelectorAll('li').length).toBe(0)
               spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
@@ -902,147 +1064,156 @@ describe('FuzzyFinder', () => {
               await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
               expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-              expect(editor1.getCursorBufferPosition()).toEqual([3, 4])
-            })
-          })
-        })
-
-        describe('when the numbers are followed by another colon', () => {
-          describe('when the colon is followed by more numbers', () => {
-            describe('when the filter text has a file path', () => {
-              it('opens the selected path to that line number and column', async () => {
-                const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-
-                await bufferView.toggle()
-
-                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-                bufferView.selectListView.refs.queryEditor.setText('sample.js:4:6')
-
-                await getOrScheduleUpdatePromise()
-
-                const {filePath} = bufferView.selectListView.getSelectedItem()
-                expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
-
-                spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-                atom.commands.dispatch(bufferView.element, 'core:confirm')
-
-                await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
-
-                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-                expect(editor1.getCursorBufferPosition()).toEqual([3, 6])
-              })
+              expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
             })
 
-            describe("when the filter text doesn't have a file path", () => {
-              it('moves the cursor in the active editor to that line number and column', async () => {
-                const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+            it('updates the message when the error gets resolved', async () => {
+              const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
-                await atom.workspace.open('sample.js')
+              const emptyMessage = 'Jump to line in active editor'
+              const errorMessage = 'Invalid line number'
 
-                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+              await atom.workspace.open('sample.js')
 
-                await bufferView.toggle()
+              expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
 
-                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-                bufferView.selectListView.refs.queryEditor.insertText(':4:6')
+              await bufferView.toggle()
 
-                await getOrScheduleUpdatePromise()
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
 
-                expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(
-                  'Jump to line and column in active editor'
-                )
-                expect(bufferView.element.querySelectorAll('li').length).toBe(0)
-                spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-                atom.commands.dispatch(bufferView.element, 'core:confirm')
+              bufferView.selectListView.refs.queryEditor.setText(':42')
+              await getOrScheduleUpdatePromise()
+              expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
+              expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
 
-                await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+              bufferView.selectListView.refs.queryEditor.setText(':42a')
+              await getOrScheduleUpdatePromise()
+              expect(bufferView.selectListView.refs.emptyMessage).toBeUndefined()
+              expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
 
-                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-                expect(editor1.getCursorBufferPosition()).toEqual([3, 6])
-              })
-            })
-          })
-
-          describe('when the colon is not followed by more numbers', () => {
-            describe('when the filter text has a file path', () => {
-              it('opens the file, jumps to the first character of the line and does not throw an error', async () => {
-                const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-
-                await bufferView.toggle()
-
-                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-                bufferView.selectListView.refs.queryEditor.setText('sample.js:5:a')
-
-                await getOrScheduleUpdatePromise()
-
-                const {filePath} = bufferView.selectListView.getSelectedItem()
-                expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
-
-                spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-                atom.commands.dispatch(bufferView.element, 'core:confirm')
-
-                await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
-
-                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-                expect(editor1.getCursorBufferPosition()).toEqual([4, 4])
-              })
+              bufferView.selectListView.refs.queryEditor.setText(':42')
+              await getOrScheduleUpdatePromise()
+              expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
+              expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
             })
 
-            describe("when the filter text doesn't have a file path", () => {
-              it('jumps to the first character of the line and does not throw an error', async () => {
-                const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
+            it('shows a specific error message when the column is invalid', async () => {
+              const [editor1] = atom.workspace.getTextEditors()
+              const errorMessage = 'Invalid column number'
 
-                await atom.workspace.open('sample.js')
+              await atom.workspace.open('sample.js')
 
-                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+              expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
 
-                await bufferView.toggle()
+              await bufferView.toggle()
 
-                expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-                bufferView.selectListView.refs.queryEditor.setText(':5:a')
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
 
-                await getOrScheduleUpdatePromise()
+              bufferView.selectListView.refs.queryEditor.setText(':42:12a')
+              await getOrScheduleUpdatePromise()
+              expect(bufferView.selectListView.refs.emptyMessage).toBeUndefined()
+              expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
+            })
 
-                spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-                atom.commands.dispatch(bufferView.element, 'core:confirm')
+            it('shows a more specific message when jumping to line and column', async () => {
+              const [editor1] = atom.workspace.getTextEditors()
+              const emptyColumnMessage = 'Jump to line and column in active editor'
 
-                await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
+              await atom.workspace.open('sample.js')
 
-                expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-                expect(editor1.getCursorBufferPosition()).toEqual([4, 4])
-              })
+              expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
+
+              await bufferView.toggle()
+
+              expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+
+              bufferView.selectListView.refs.queryEditor.setText(':42:')
+              await getOrScheduleUpdatePromise()
+              expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyColumnMessage)
+
+              bufferView.selectListView.refs.queryEditor.setText(':42:12')
+              await getOrScheduleUpdatePromise()
+              expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyColumnMessage)
             })
           })
         })
       })
 
-      describe('when the colon is not followed by numbers', () => {
-        describe('when the filter text has a file path', () => {
-          it('opens the file and does not throw an error', async () => {
-            const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-            bufferView.selectListView.refs.queryEditor.setText('sample.js:a')
-
-            await getOrScheduleUpdatePromise()
-
-            const {filePath} = bufferView.selectListView.getSelectedItem()
-            expect(atom.project.getDirectories()[0].resolve(filePath)).toBe(editor1.getPath())
-
-            spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-            atom.commands.dispatch(bufferView.element, 'core:confirm')
-
-            await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
-
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-            expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
-          })
+      describe('match highlighting', () => {
+        beforeEach(async () => {
+          jasmine.attachToDOM(workspaceElement)
+          await bufferView.toggle()
         })
 
-        describe("when the filter text doesn't have a file path", () => {
-          it('shows an error and does not move the cursor', async () => {
+        it('highlights an exact match', async () => {
+          bufferView.selectListView.refs.queryEditor.setText('sample.js')
+
+          await getOrScheduleUpdatePromise()
+
+          const resultView = bufferView.element.querySelector('li')
+          const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+          const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+          expect(primaryMatches.length).toBe(1)
+          expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('sample.js')
+          // Use `toBeGreaterThan` because dir may have some characters in it
+          expect(secondaryMatches.length).toBeGreaterThan(0)
+          expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample.js')
+        })
+
+        it('highlights a partial match', async () => {
+          bufferView.selectListView.refs.queryEditor.setText('sample')
+
+          await getOrScheduleUpdatePromise()
+
+          const resultView = bufferView.element.querySelector('li')
+          const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+          const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+          expect(primaryMatches.length).toBe(1)
+          expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('sample')
+          // Use `toBeGreaterThan` because dir may have some characters in it
+          expect(secondaryMatches.length).toBeGreaterThan(0)
+          expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample')
+        })
+
+        it('highlights multiple matches in the file name', async () => {
+          bufferView.selectListView.refs.queryEditor.setText('samplejs')
+
+          await getOrScheduleUpdatePromise()
+
+          const resultView = bufferView.element.querySelector('li')
+          const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+          const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+          expect(primaryMatches.length).toBe(2)
+          expect(primaryMatches[0].textContent).toBe('sample')
+          expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('js')
+          // Use `toBeGreaterThan` because dir may have some characters in it
+          expect(secondaryMatches.length).toBeGreaterThan(1)
+          expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('js')
+        })
+
+        it('highlights matches in the directory and file name', async () => {
+          spyOn(bufferView, 'projectRelativePathsForFilePaths').andCallFake((paths) => paths)
+          bufferView.selectListView.refs.queryEditor.setText('root-dirsample')
+
+          await bufferView.setItems([
+            {
+              filePath: '/test/root-dir1/sample.js',
+              label: 'root-dir1/sample.js'
+            }
+          ])
+
+          const resultView = bufferView.element.querySelector('li')
+          const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
+          const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
+          expect(primaryMatches.length).toBe(1)
+          expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('sample')
+          expect(secondaryMatches.length).toBe(2)
+          expect(secondaryMatches[0].textContent).toBe('root-dir')
+          expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample')
+        })
+
+        describe('when splitting panes', () => {
+          it('opens the selected path to that line number in a new pane', async () => {
             const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
 
             await atom.workspace.open('sample.js')
@@ -1052,305 +1223,94 @@ describe('FuzzyFinder', () => {
             await bufferView.toggle()
 
             expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-            bufferView.selectListView.refs.queryEditor.setText('::')
+            bufferView.selectListView.refs.queryEditor.insertText(':4')
 
             await getOrScheduleUpdatePromise()
-
-            expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual('Invalid line number')
 
             expect(bufferView.element.querySelectorAll('li').length).toBe(0)
             spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-            atom.commands.dispatch(bufferView.element, 'core:confirm')
+            atom.commands.dispatch(bufferView.element, 'pane:split-left')
 
             await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
 
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-            expect(editor1.getCursorBufferPosition()).toEqual([8, 3])
-          })
-
-          it('updates the message when the error gets resolved', async () => {
-            const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-
-            const emptyMessage = 'Jump to line in active editor'
-            const errorMessage = 'Invalid line number'
-
-            await atom.workspace.open('sample.js')
-
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-
-            bufferView.selectListView.refs.queryEditor.setText(':42')
-            await getOrScheduleUpdatePromise()
-            expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
-            expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
-
-            bufferView.selectListView.refs.queryEditor.setText(':42a')
-            await getOrScheduleUpdatePromise()
-            expect(bufferView.selectListView.refs.emptyMessage).toBeUndefined()
-            expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
-
-            bufferView.selectListView.refs.queryEditor.setText(':42')
-            await getOrScheduleUpdatePromise()
-            expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyMessage)
-            expect(bufferView.selectListView.refs.errorMessage).toBeUndefined()
-          })
-
-          it('shows a specific error message when the column is invalid', async () => {
-            const [editor1] = atom.workspace.getTextEditors()
-            const errorMessage = 'Invalid column number'
-
-            await atom.workspace.open('sample.js')
-
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-
-            bufferView.selectListView.refs.queryEditor.setText(':42:12a')
-            await getOrScheduleUpdatePromise()
-            expect(bufferView.selectListView.refs.emptyMessage).toBeUndefined()
-            expect(bufferView.selectListView.refs.errorMessage.innerText).toEqual(errorMessage)
-          })
-
-          it('shows a more specific message when jumping to line and column', async () => {
-            const [editor1] = atom.workspace.getTextEditors()
-            const emptyColumnMessage = 'Jump to line and column in active editor'
-
-            await atom.workspace.open('sample.js')
-
-            expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-
-            await bufferView.toggle()
-
-            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-
-            bufferView.selectListView.refs.queryEditor.setText(':42:')
-            await getOrScheduleUpdatePromise()
-            expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyColumnMessage)
-
-            bufferView.selectListView.refs.queryEditor.setText(':42:12')
-            await getOrScheduleUpdatePromise()
-            expect(bufferView.selectListView.refs.emptyMessage.innerText).toEqual(emptyColumnMessage)
+            expect(atom.workspace.getActiveTextEditor()).not.toBe(editor1)
+            expect(atom.workspace.getActiveTextEditor().getPath()).toBe(editor1.getPath())
+            expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual([3, 4])
           })
         })
       })
-    })
 
-    describe('match highlighting', () => {
-      beforeEach(async () => {
-        jasmine.attachToDOM(workspaceElement)
-        await bufferView.toggle()
-      })
+      describe('preserve last search', () => {
+        it('does not preserve last search by default', async () => {
+          await projectView.toggle()
 
-      it('highlights an exact match', async () => {
-        bufferView.selectListView.refs.queryEditor.setText('sample.js')
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+          bufferView.selectListView.refs.queryEditor.insertText('this should not show up next time we open finder')
 
-        await getOrScheduleUpdatePromise()
+          await projectView.toggle()
 
-        const resultView = bufferView.element.querySelector('li')
-        const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
-        const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe(1)
-        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('sample.js')
-        // Use `toBeGreaterThan` because dir may have some characters in it
-        expect(secondaryMatches.length).toBeGreaterThan(0)
-        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample.js')
-      })
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
 
-      it('highlights a partial match', async () => {
-        bufferView.selectListView.refs.queryEditor.setText('sample')
+          await projectView.toggle()
 
-        await getOrScheduleUpdatePromise()
-
-        const resultView = bufferView.element.querySelector('li')
-        const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
-        const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe(1)
-        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('sample')
-        // Use `toBeGreaterThan` because dir may have some characters in it
-        expect(secondaryMatches.length).toBeGreaterThan(0)
-        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample')
-      })
-
-      it('highlights multiple matches in the file name', async () => {
-        bufferView.selectListView.refs.queryEditor.setText('samplejs')
-
-        await getOrScheduleUpdatePromise()
-
-        const resultView = bufferView.element.querySelector('li')
-        const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
-        const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe(2)
-        expect(primaryMatches[0].textContent).toBe('sample')
-        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('js')
-        // Use `toBeGreaterThan` because dir may have some characters in it
-        expect(secondaryMatches.length).toBeGreaterThan(1)
-        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('js')
-      })
-
-      it('highlights matches in the directory and file name', async () => {
-        spyOn(bufferView, 'projectRelativePathsForFilePaths').andCallFake((paths) => paths)
-        bufferView.selectListView.refs.queryEditor.setText('root-dirsample')
-
-        await bufferView.setItems([
-          {
-            filePath: '/test/root-dir1/sample.js',
-            label: 'root-dir1/sample.js'
-          }
-        ])
-
-        const resultView = bufferView.element.querySelector('li')
-        const primaryMatches = resultView.querySelectorAll('.primary-line .character-match')
-        const secondaryMatches = resultView.querySelectorAll('.secondary-line .character-match')
-        expect(primaryMatches.length).toBe(1)
-        expect(primaryMatches[primaryMatches.length - 1].textContent).toBe('sample')
-        expect(secondaryMatches.length).toBe(2)
-        expect(secondaryMatches[0].textContent).toBe('root-dir')
-        expect(secondaryMatches[secondaryMatches.length - 1].textContent).toBe('sample')
-      })
-
-      describe('when splitting panes', () => {
-        it('opens the selected path to that line number in a new pane', async () => {
-          const [editor1, editor2] = atom.workspace.getTextEditors() // eslint-disable-line no-unused-vars
-
-          await atom.workspace.open('sample.js')
-
-          expect(atom.workspace.getActiveTextEditor()).toBe(editor1)
-
-          await bufferView.toggle()
-
-          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-          bufferView.selectListView.refs.queryEditor.insertText(':4')
-
-          await getOrScheduleUpdatePromise()
-
-          expect(bufferView.element.querySelectorAll('li').length).toBe(0)
-          spyOn(bufferView, 'moveToCaretPosition').andCallThrough()
-          atom.commands.dispatch(bufferView.element, 'pane:split-left')
-
-          await conditionPromise(() => bufferView.moveToCaretPosition.callCount > 0)
-
-          expect(atom.workspace.getActiveTextEditor()).not.toBe(editor1)
-          expect(atom.workspace.getActiveTextEditor().getPath()).toBe(editor1.getPath())
-          expect(atom.workspace.getActiveTextEditor().getCursorBufferPosition()).toEqual([3, 4])
-        })
-      })
-    })
-
-    describe('preserve last search', () => {
-      it('does not preserve last search by default', async () => {
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
-        bufferView.selectListView.refs.queryEditor.insertText('this should not show up next time we open finder')
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
-        expect(projectView.selectListView.getQuery()).toBe('')
-      })
-
-      it('preserves last search when the config is set', async () => {
-        atom.config.set('fuzzy-finder.preserveLastSearch', true)
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
-        projectView.selectListView.refs.queryEditor.insertText('this should show up next time we open finder')
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
-        expect(projectView.selectListView.getQuery()).toBe('this should show up next time we open finder')
-        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('this should show up next time we open finder')
-      })
-    })
-
-    describe('prefill query from selection', () => {
-      it('should not be enabled by default', async () => {
-        await atom.workspace.open()
-
-        atom.workspace.getActiveTextEditor().setText('sample.txt')
-        atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
-        expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe('sample.txt')
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
-        expect(projectView.selectListView.getQuery()).toBe('')
-        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('')
-      })
-
-      it('takes selection from active editor and prefills query with it', async () => {
-        atom.config.set('fuzzy-finder.prefillFromSelection', true)
-
-        await atom.workspace.open()
-
-        atom.workspace.getActiveTextEditor().setText('sample.txt')
-        atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
-        expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe('sample.txt')
-
-        await projectView.toggle()
-
-        expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
-        expect(projectView.selectListView.getQuery()).toBe('sample.txt')
-        expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('sample.txt')
-      })
-    })
-
-    describe('default file icons', () => {
-      it('shows a text icon for text-based formats', async () => {
-        await atom.workspace.open('sample.js')
-
-        await bufferView.toggle()
-
-        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-        bufferView.selectListView.refs.queryEditor.insertText('js')
-
-        await getOrScheduleUpdatePromise()
-
-        const firstResult = bufferView.element.querySelector('li .primary-line')
-        expect(DefaultFileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-text')
-      })
-
-      it('shows an image icon for graphic formats', async () => {
-        await atom.workspace.open('sample.gif')
-
-        await bufferView.toggle()
-
-        expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-        bufferView.selectListView.refs.queryEditor.insertText('gif')
-
-        await getOrScheduleUpdatePromise()
-
-        const firstResult = bufferView.element.querySelector('li .primary-line')
-        expect(DefaultFileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-media')
-      })
-    })
-
-    describe('icon services', () => {
-      describe('atom.file-icons', () => {
-        it('has a default handler', () => {
-          expect(getIconServices().fileIcons).toBe(DefaultFileIcons)
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+          expect(projectView.selectListView.getQuery()).toBe('')
         })
 
-        it('allows services to replace the default handler', async () => {
-          const provider = {iconClassForPath: () => 'foo bar'}
-          const disposable = atom.packages.serviceHub.provide('atom.file-icons', '1.0.0', provider)
-          expect(getIconServices().fileIcons).toBe(provider)
+        it('preserves last search when the config is set', async () => {
+          atom.config.set('fuzzy-finder.preserveLastSearch', true)
 
+          await projectView.toggle()
+
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+          projectView.selectListView.refs.queryEditor.insertText('this should show up next time we open finder')
+
+          await projectView.toggle()
+
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(false)
+
+          await projectView.toggle()
+
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+          expect(projectView.selectListView.getQuery()).toBe('this should show up next time we open finder')
+          expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('this should show up next time we open finder')
+        })
+      })
+
+      describe('prefill query from selection', () => {
+        it('should not be enabled by default', async () => {
+          await atom.workspace.open()
+
+          atom.workspace.getActiveTextEditor().setText('sample.txt')
+          atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
+          expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe('sample.txt')
+
+          await projectView.toggle()
+
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+          expect(projectView.selectListView.getQuery()).toBe('')
+          expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('')
+        })
+
+        it('takes selection from active editor and prefills query with it', async () => {
+          atom.config.set('fuzzy-finder.prefillFromSelection', true)
+
+          await atom.workspace.open()
+
+          atom.workspace.getActiveTextEditor().setText('sample.txt')
+          atom.workspace.getActiveTextEditor().setSelectedBufferRange([[0, 0], [0, 10]])
+          expect(atom.workspace.getActiveTextEditor().getSelectedText()).toBe('sample.txt')
+
+          await projectView.toggle()
+
+          expect(atom.workspace.panelForItem(projectView).isVisible()).toBe(true)
+          expect(projectView.selectListView.getQuery()).toBe('sample.txt')
+          expect(projectView.selectListView.refs.queryEditor.getSelectedText()).toBe('sample.txt')
+        })
+      })
+
+      describe('default file icons', () => {
+        it('shows a text icon for text-based formats', async () => {
           await atom.workspace.open('sample.js')
 
           await bufferView.toggle()
@@ -1361,210 +1321,262 @@ describe('FuzzyFinder', () => {
           await getOrScheduleUpdatePromise()
 
           const firstResult = bufferView.element.querySelector('li .primary-line')
-          expect(firstResult).toBeDefined()
-          expect(firstResult.className).toBe('primary-line file icon foo bar')
-          disposable.dispose()
-          expect(getIconServices().fileIcons).toBe(DefaultFileIcons)
+          expect(DefaultFileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-text')
+        })
+
+        it('shows an image icon for graphic formats', async () => {
+          await atom.workspace.open('sample.gif')
+
+          await bufferView.toggle()
+
+          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+          bufferView.selectListView.refs.queryEditor.insertText('gif')
+
+          await getOrScheduleUpdatePromise()
+
+          const firstResult = bufferView.element.querySelector('li .primary-line')
+          expect(DefaultFileIcons.iconClassForPath(firstResult.dataset.path)).toBe('icon-file-media')
         })
       })
 
-      describe('file-icons.element-icons', () => {
-        it('has no default handler', () => {
-          expect(getIconServices().elementIcons).toBe(null)
+      describe('icon services', () => {
+        describe('atom.file-icons', () => {
+          it('has a default handler', () => {
+            expect(getIconServices().fileIcons).toBe(DefaultFileIcons)
+          })
+
+          it('allows services to replace the default handler', async () => {
+            const provider = {iconClassForPath: () => 'foo bar'}
+            const disposable = atom.packages.serviceHub.provide('atom.file-icons', '1.0.0', provider)
+            expect(getIconServices().fileIcons).toBe(provider)
+
+            await atom.workspace.open('sample.js')
+
+            await bufferView.toggle()
+
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.insertText('js')
+
+            await getOrScheduleUpdatePromise()
+
+            const firstResult = bufferView.element.querySelector('li .primary-line')
+            expect(firstResult).toBeDefined()
+            expect(firstResult.className).toBe('primary-line file icon foo bar')
+            disposable.dispose()
+            expect(getIconServices().fileIcons).toBe(DefaultFileIcons)
+          })
         })
 
-        it('uses the element-icon service if available', async () => {
-          const provider = element => {
-            element.classList.add('foo', 'bar')
-            return new Disposable(() => {
-              element.classList.remove('foo', 'bar')
+        describe('file-icons.element-icons', () => {
+          it('has no default handler', () => {
+            expect(getIconServices().elementIcons).toBe(null)
+          })
+
+          it('uses the element-icon service if available', async () => {
+            const provider = element => {
+              element.classList.add('foo', 'bar')
+              return new Disposable(() => {
+                element.classList.remove('foo', 'bar')
+              })
+            }
+            const disposable = atom.packages.serviceHub.provide('file-icons.element-icons', '1.0.0', provider)
+            expect(getIconServices().elementIcons).toBe(provider)
+
+            await atom.workspace.open('sample.js')
+
+            await bufferView.toggle()
+
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.insertText('js')
+
+            await getOrScheduleUpdatePromise()
+
+            const firstResult = bufferView.element.querySelector('li .primary-line')
+            expect(firstResult).toBeDefined()
+            expect(firstResult.className).toBe('primary-line file icon foo bar')
+            disposable.dispose()
+            expect(getIconServices().elementIcons).toBe(null)
+            expect(firstResult.classList).not.toBe('primary-line file icon foo bar')
+          })
+        })
+
+        describe('when both services are provided', () => {
+          it('gives priority to the element-icon service', async () => {
+            const basicProvider = {iconClassForPath: () => 'foo'}
+            const elementProvider = element => {
+              element.classList.add('bar')
+              return new Disposable(() => {
+                element.classList.remove('bar')
+              })
+            }
+            spyOn(basicProvider, 'iconClassForPath').andCallThrough()
+            atom.packages.serviceHub.provide('atom.file-icons', '1.0.0', basicProvider)
+            atom.packages.serviceHub.provide('file-icons.element-icons', '1.0.0', elementProvider)
+            expect(getIconServices().fileIcons).toBe(basicProvider)
+            expect(getIconServices().elementIcons).toBe(elementProvider)
+
+            await atom.workspace.open('sample.js')
+
+            await bufferView.toggle()
+
+            expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
+            bufferView.selectListView.refs.queryEditor.insertText('js')
+
+            await getOrScheduleUpdatePromise()
+
+            const firstResult = bufferView.element.querySelector('li .primary-line')
+            expect(firstResult).toBeDefined()
+            expect(firstResult.className).toBe('primary-line file icon bar')
+            expect(basicProvider.iconClassForPath).not.toHaveBeenCalled()
+          })
+        })
+      })
+
+      describe('Git integration', () => {
+        let projectPath, gitRepository, gitDirectory
+
+        beforeEach(() => {
+          projectPath = atom.project.getDirectories()[0].resolve('git/working-dir')
+          fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+          atom.project.setPaths([rootDir2, projectPath])
+
+          gitDirectory = atom.project.getDirectories()[1]
+          gitRepository = atom.project.getRepositories()[1]
+
+          waitsFor(done => gitRepository.onDidChangeStatuses(done))
+        })
+
+        describe('git-status-finder behavior', () => {
+          let originalPath, newPath
+
+          beforeEach(async () => {
+            jasmine.attachToDOM(workspaceElement)
+
+            await atom.workspace.open(path.join(projectPath, 'a.txt'))
+
+            const editor = atom.workspace.getActiveTextEditor()
+            originalPath = editor.getPath()
+            fs.writeFileSync(originalPath, 'making a change for the better')
+            gitRepository.getPathStatus(originalPath)
+
+            newPath = atom.project.getDirectories()[1].resolve('newsample.js')
+            fs.writeFileSync(newPath, '')
+            gitRepository.getPathStatus(newPath)
+          })
+
+          it('displays all new and modified paths', async () => {
+            expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
+            await gitStatusView.toggle()
+
+            expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe(true)
+            expect(gitStatusView.element.querySelectorAll('.file').length).toBe(4)
+            expect(gitStatusView.element.querySelectorAll('.status.status-modified').length).toBe(1)
+            expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe(3)
+          })
+        })
+
+        describe('status decorations', () => {
+          let originalPath, editor, newPath
+
+          beforeEach(async () => {
+            jasmine.attachToDOM(workspaceElement)
+
+            await atom.workspace.open(path.join(projectPath, 'a.txt'))
+
+            editor = atom.workspace.getActiveTextEditor()
+            originalPath = editor.getPath()
+            newPath = gitDirectory.resolve('newsample.js')
+            fs.writeFileSync(newPath, '')
+            fs.writeFileSync(originalPath, 'a change')
+          })
+
+          describe('when a modified file is shown in the list', () =>
+            it('displays the modified icon', async () => {
+              gitRepository.getPathStatus(editor.getPath())
+
+              await bufferView.toggle()
+
+              expect(bufferView.element.querySelectorAll('.status.status-modified').length).toBe(1)
+              expect(bufferView.element.querySelector('.status.status-modified').closest('li').querySelector('.file').textContent).toBe('a.txt')
             })
-          }
-          const disposable = atom.packages.serviceHub.provide('file-icons.element-icons', '1.0.0', provider)
-          expect(getIconServices().elementIcons).toBe(provider)
+          )
 
-          await atom.workspace.open('sample.js')
+          describe('when a new file is shown in the list', () =>
+            it('displays the new icon', async () => {
+              await atom.workspace.open(path.join(projectPath, 'newsample.js'))
 
-          await bufferView.toggle()
+              gitRepository.getPathStatus(editor.getPath())
 
-          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-          bufferView.selectListView.refs.queryEditor.insertText('js')
+              await bufferView.toggle()
 
-          await getOrScheduleUpdatePromise()
-
-          const firstResult = bufferView.element.querySelector('li .primary-line')
-          expect(firstResult).toBeDefined()
-          expect(firstResult.className).toBe('primary-line file icon foo bar')
-          disposable.dispose()
-          expect(getIconServices().elementIcons).toBe(null)
-          expect(firstResult.classList).not.toBe('primary-line file icon foo bar')
-        })
-      })
-
-      describe('when both services are provided', () => {
-        it('gives priority to the element-icon service', async () => {
-          const basicProvider = {iconClassForPath: () => 'foo'}
-          const elementProvider = element => {
-            element.classList.add('bar')
-            return new Disposable(() => {
-              element.classList.remove('bar')
+              expect(bufferView.element.querySelectorAll('.status.status-added').length).toBe(1)
+              expect(bufferView.element.querySelector('.status.status-added').closest('li').querySelector('.file').textContent).toBe('newsample.js')
             })
-          }
-          spyOn(basicProvider, 'iconClassForPath').andCallThrough()
-          atom.packages.serviceHub.provide('atom.file-icons', '1.0.0', basicProvider)
-          atom.packages.serviceHub.provide('file-icons.element-icons', '1.0.0', elementProvider)
-          expect(getIconServices().fileIcons).toBe(basicProvider)
-          expect(getIconServices().elementIcons).toBe(elementProvider)
-
-          await atom.workspace.open('sample.js')
-
-          await bufferView.toggle()
-
-          expect(atom.workspace.panelForItem(bufferView).isVisible()).toBe(true)
-          bufferView.selectListView.refs.queryEditor.insertText('js')
-
-          await getOrScheduleUpdatePromise()
-
-          const firstResult = bufferView.element.querySelector('li .primary-line')
-          expect(firstResult).toBeDefined()
-          expect(firstResult.className).toBe('primary-line file icon bar')
-          expect(basicProvider.iconClassForPath).not.toHaveBeenCalled()
-        })
-      })
-    })
-
-    describe('Git integration', () => {
-      let projectPath, gitRepository, gitDirectory
-
-      beforeEach(() => {
-        projectPath = atom.project.getDirectories()[0].resolve('git/working-dir')
-        fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
-        atom.project.setPaths([rootDir2, projectPath])
-
-        gitDirectory = atom.project.getDirectories()[1]
-        gitRepository = atom.project.getRepositories()[1]
-
-        waitsFor(done => gitRepository.onDidChangeStatuses(done))
-      })
-
-      describe('git-status-finder behavior', () => {
-        let originalPath, newPath
-
-        beforeEach(async () => {
-          jasmine.attachToDOM(workspaceElement)
-
-          await atom.workspace.open(path.join(projectPath, 'a.txt'))
-
-          const editor = atom.workspace.getActiveTextEditor()
-          originalPath = editor.getPath()
-          fs.writeFileSync(originalPath, 'making a change for the better')
-          gitRepository.getPathStatus(originalPath)
-
-          newPath = atom.project.getDirectories()[1].resolve('newsample.js')
-          fs.writeFileSync(newPath, '')
-          gitRepository.getPathStatus(newPath)
+          )
         })
 
-        it('displays all new and modified paths', async () => {
-          expect(atom.workspace.panelForItem(gitStatusView)).toBeNull()
-          await gitStatusView.toggle()
+        describe('when core.excludeVcsIgnoredPaths is set to true', () => {
+          beforeEach(() => atom.config.set('core.excludeVcsIgnoredPaths', true))
 
-          expect(atom.workspace.panelForItem(gitStatusView).isVisible()).toBe(true)
-          expect(gitStatusView.element.querySelectorAll('.file').length).toBe(4)
-          expect(gitStatusView.element.querySelectorAll('.status.status-modified').length).toBe(1)
-          expect(gitStatusView.element.querySelectorAll('.status.status-added').length).toBe(3)
-        })
-      })
+          describe("when the project's path is the repository's working directory", () => {
+            beforeEach(() => {
+              const ignoreFile = path.join(projectPath, '.gitignore')
+              fs.writeFileSync(ignoreFile, 'ignored.txt')
 
-      describe('status decorations', () => {
-        let originalPath, editor, newPath
+              const ignoredFile = path.join(projectPath, 'ignored.txt')
+              fs.writeFileSync(ignoredFile, 'ignored text')
+            })
 
-        beforeEach(async () => {
-          jasmine.attachToDOM(workspaceElement)
+            it('excludes paths that are git ignored', async () => {
+              await projectView.toggle()
 
-          await atom.workspace.open(path.join(projectPath, 'a.txt'))
+              await waitForPathsToDisplay(projectView)
 
-          editor = atom.workspace.getActiveTextEditor()
-          originalPath = editor.getPath()
-          newPath = gitDirectory.resolve('newsample.js')
-          fs.writeFileSync(newPath, '')
-          fs.writeFileSync(originalPath, 'a change')
-        })
-
-        describe('when a modified file is shown in the list', () =>
-          it('displays the modified icon', async () => {
-            gitRepository.getPathStatus(editor.getPath())
-
-            await bufferView.toggle()
-
-            expect(bufferView.element.querySelectorAll('.status.status-modified').length).toBe(1)
-            expect(bufferView.element.querySelector('.status.status-modified').closest('li').querySelector('.file').textContent).toBe('a.txt')
-          })
-        )
-
-        describe('when a new file is shown in the list', () =>
-          it('displays the new icon', async () => {
-            await atom.workspace.open(path.join(projectPath, 'newsample.js'))
-
-            gitRepository.getPathStatus(editor.getPath())
-
-            await bufferView.toggle()
-
-            expect(bufferView.element.querySelectorAll('.status.status-added').length).toBe(1)
-            expect(bufferView.element.querySelector('.status.status-added').closest('li').querySelector('.file').textContent).toBe('newsample.js')
-          })
-        )
-      })
-
-      describe('when core.excludeVcsIgnoredPaths is set to true', () => {
-        beforeEach(() => atom.config.set('core.excludeVcsIgnoredPaths', true))
-
-        describe("when the project's path is the repository's working directory", () => {
-          beforeEach(() => {
-            const ignoreFile = path.join(projectPath, '.gitignore')
-            fs.writeFileSync(ignoreFile, 'ignored.txt')
-
-            const ignoredFile = path.join(projectPath, 'ignored.txt')
-            fs.writeFileSync(ignoredFile, 'ignored text')
+              expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('ignored.txt'))).not.toBeDefined()
+            })
           })
 
-          it('excludes paths that are git ignored', async () => {
-            await projectView.toggle()
+          describe("when the project's path is a subfolder of the repository's working directory", () => {
+            beforeEach(() => {
+              atom.project.setPaths([gitDirectory.resolve('dir')])
+              const ignoreFile = path.join(projectPath, '.gitignore')
+              fs.writeFileSync(ignoreFile, 'b.txt')
+            })
 
-            await waitForPathsToDisplay(projectView)
+            if (useRipGrep) {
+              it('does excludes paths that are git ignored', async () => {
+                fs.writeFileSync(path.join(projectPath, 'dir', 'a.txt'), 'something')
 
-            expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('ignored.txt'))).not.toBeDefined()
-          })
-        })
+                await projectView.toggle()
 
-        describe("when the project's path is a subfolder of the repository's working directory", () => {
-          beforeEach(() => {
-            atom.project.setPaths([gitDirectory.resolve('dir')])
-            const ignoreFile = path.join(projectPath, '.gitignore')
-            fs.writeFileSync(ignoreFile, 'b.txt')
-          })
+                await waitForPathsToDisplay(projectView)
 
-          it('does not exclude paths that are git ignored', async () => {
-            await projectView.toggle()
+                expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('b.txt'))).not.toBeDefined()
+              })
+            } else {
+              it('does not exclude paths that are git ignored', async () => {
+                await projectView.toggle()
 
-            await waitForPathsToDisplay(projectView)
+                await waitForPathsToDisplay(projectView)
 
-            expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('b.txt'))).toBeDefined()
-          })
-        })
-
-        describe('when the .gitignore matches parts of the path to the root folder', () => {
-          beforeEach(() => {
-            const ignoreFile = path.join(projectPath, '.gitignore')
-            fs.writeFileSync(ignoreFile, path.basename(projectPath))
+                expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('b.txt'))).toBeDefined()
+              })
+            }
           })
 
-          it('only applies the .gitignore patterns to relative paths within the root folder', async () => {
-            await projectView.toggle()
+          describe('when the .gitignore matches parts of the path to the root folder', () => {
+            beforeEach(() => {
+              const ignoreFile = path.join(projectPath, '.gitignore')
+              fs.writeFileSync(ignoreFile, path.basename(projectPath))
+            })
 
-            await waitForPathsToDisplay(projectView)
+            it('only applies the .gitignore patterns to relative paths within the root folder', async () => {
+              await projectView.toggle()
 
-            expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('file.txt'))).toBeDefined()
+              await waitForPathsToDisplay(projectView)
+
+              expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('file.txt'))).toBeDefined()
+            })
           })
         })
       })
