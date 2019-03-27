@@ -13,6 +13,7 @@
     "fuzzaldrin-plus": "^0.6.0",
     "humanize-plus": "~1.8.2",
     "minimatch": "~3.0.3",
+    "nuclide-prebuilt-libs": "^0.5.7",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0",
     "vscode-ripgrep": "^1.2.5",
