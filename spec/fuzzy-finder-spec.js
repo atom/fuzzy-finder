@@ -97,6 +97,7 @@ describe('FuzzyFinder', () => {
     [false, 'standard'],
     [true, 'standard'],
     [false, 'alternate']
+    [false, 'fast']
   ]
 
   for (const [useRipGrep, scoringSystem] of testPermutations ) {

@@ -11,6 +11,7 @@
     "fs-plus": "^3.0.0",
     "fuzzaldrin": "^2.0",
     "fuzzaldrin-plus": "^0.6.0",
+    "fuzzy-native": "^0.6.3",
     "humanize-plus": "~1.8.2",
     "minimatch": "~3.0.3",
     "temp": "~0.8.1",
@@ -80,10 +81,11 @@
     "scoringSystem": {
       "type": "string",
       "default": "alternate",
-      "description": "Scoring system to use. \"standard\" is the system used by other modals in Atom. \"alternate\" is an improved scoring system. Default: \"alternate\"",
+      "description": "Scoring system to use. \"standard\" is the system used by other modals in Atom. \"alternate\" is an improved scoring system. \"fast\" is a much faster system, specially suitable for large projects. Default: \"alternate\"",
       "enum": [
         "standard",
-        "alternate"
+        "alternate",
+        "fast"
       ]
     },
     "useRipGrep": {
