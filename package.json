@@ -77,10 +77,14 @@
       "default": false,
       "description": "Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened."
     },
-    "useAlternateScoring": {
-      "type": "boolean",
-      "default": true,
-      "description": "Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)"
+    "scoringSystem": {
+      "type": "string",
+      "default": "alternate",
+      "description": "Scoring system to use. \"standard\" is the system used by other modals in Atom. \"alternate\" is an improved scoring system. Default: \"alternate\"",
+      "enum": [
+        "standard",
+        "alternate"
+      ]
     },
     "useRipGrep": {
       "type": "boolean",
