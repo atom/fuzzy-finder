@@ -94,13 +94,13 @@ describe('FuzzyFinder', () => {
   }
 
   const testPermutations = [
-    [false, 'standard'],
-    [true, 'standard'],
-    [false, 'alternate']
-    [false, 'fast']
+    [ false, 'standard' ],
+    [ true, 'standard' ],
+    [ false, 'alternate' ],
+    [ false, 'fast' ]
   ]
 
-  for (const [useRipGrep, scoringSystem] of testPermutations ) {
+  for (const [useRipGrep, scoringSystem] of testPermutations) {
     describe(`file-finder behavior (ripgrep=${useRipGrep}, scoringSystem=${scoringSystem})`, () => {
       beforeEach(async () => {
         projectView = fuzzyFinder.createProjectView()
