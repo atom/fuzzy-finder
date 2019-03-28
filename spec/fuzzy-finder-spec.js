@@ -71,6 +71,12 @@ describe('FuzzyFinder', () => {
     return conditionPromise(() => fuzzyFinderView.element.querySelectorAll('li').length > 0)
   }
 
+  async function waitForReCrawlerToFinish (fuzzyFinderView) {
+    return conditionPromise(
+      () => !fuzzyFinderView.element.querySelector('.loading .loading-message')
+    )
+  }
+
   function eachFilePath (dirPaths, fn) {
     for (let dirPath of dirPaths) {
       wrench.readdirSyncRecursive(dirPath).filter((filePath) => {
@@ -734,6 +740,9 @@ describe('FuzzyFinder', () => {
           await projectView.toggle()
 
           expect(PathLoader.startTask).toHaveBeenCalled()
+
+          await waitForReCrawlerToFinish(projectView)
+
           expect(projectView.element.querySelectorAll('li').length).toBe(0)
         })
 
