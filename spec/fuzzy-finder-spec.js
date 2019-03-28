@@ -60,7 +60,6 @@ describe('FuzzyFinder', () => {
 
     const pack = await atom.packages.activatePackage('fuzzy-finder')
     fuzzyFinder = pack.mainModule
-    projectView = fuzzyFinder.createProjectView()
     bufferView = fuzzyFinder.createBufferView()
     gitStatusView = fuzzyFinder.createGitStatusView()
 
@@ -74,6 +73,12 @@ describe('FuzzyFinder', () => {
   async function waitForReCrawlerToFinish (fuzzyFinderView) {
     return conditionPromise(
       () => !fuzzyFinderView.element.querySelector('.loading .loading-message')
+    )
+  }
+
+  function waitForInitialCrawlerToFinish (fuzzyFinder) {
+    return new Promise(
+      resolve => fuzzyFinder.loadPathsTask.on('task:completed', () => resolve())
     )
   }
 
@@ -91,6 +96,8 @@ describe('FuzzyFinder', () => {
   for (const useRipGrep of [false, true]) {
     describe(`file-finder behavior (ripgrep=${useRipGrep})`, () => {
       beforeEach(async () => {
+        projectView = fuzzyFinder.createProjectView()
+
         atom.config.set('fuzzy-finder.useRipGrep', useRipGrep)
         sinon.stub(os, 'cpus').returns({length: 1})
 
@@ -1644,4 +1651,28 @@ describe('FuzzyFinder', () => {
       })
     })
   }
+
+  it('shows all files for the current project once the initial crawler has finished', async () => {
+    await waitForInitialCrawlerToFinish(fuzzyFinder)
+
+    projectView = fuzzyFinder.createProjectView()
+    jasmine.attachToDOM(workspaceElement)
+
+    await projectView.selectListView.update({maxResults: null})
+    await projectView.toggle()
+
+    expect(projectView.element.querySelector('.loading')).not.toBeVisible()
+
+    await waitForPathsToDisplay(projectView)
+
+    eachFilePath([rootDir1, rootDir2], (filePath) => {
+      const item = Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes(filePath))
+      expect(item).toExist()
+      const nameDiv = item.querySelector('div:first-child')
+      expect(nameDiv.dataset.name).toBe(path.basename(filePath))
+      expect(nameDiv.textContent).toBe(path.basename(filePath))
+    })
+
+    expect(projectView.element.querySelector('.loading')).not.toBeVisible()
+  })
 })
