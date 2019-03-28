@@ -93,11 +93,18 @@ describe('FuzzyFinder', () => {
     }
   }
 
-  for (const useRipGrep of [false, true]) {
-    describe(`file-finder behavior (ripgrep=${useRipGrep})`, () => {
+  const testPermutations = [
+    [false, 'standard'],
+    [true, 'standard'],
+    [false, 'alternate']
+  ]
+
+  for (const [useRipGrep, scoringSystem] of testPermutations ) {
+    describe(`file-finder behavior (ripgrep=${useRipGrep}, scoringSystem=${scoringSystem})`, () => {
       beforeEach(async () => {
         projectView = fuzzyFinder.createProjectView()
 
+        atom.config.set('fuzzy-finder.scoringSystem', scoringSystem)
         atom.config.set('fuzzy-finder.useRipGrep', useRipGrep)
         sinon.stub(os, 'cpus').returns({length: 1})
 
