@@ -1222,8 +1222,8 @@ describe('FuzzyFinder', () => {
 
           await bufferView.setItems([
             {
-              filePath: '/test/root-dir1/sample.js',
-              label: 'root-dir1/sample.js'
+              filePath: path.join('test', 'root-dir1', 'sample.js'),
+              label: path.join('root-dir1', 'sample.js')
             }
           ])
 
