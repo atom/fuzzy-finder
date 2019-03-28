@@ -1,6 +1,8 @@
 const {it, fit, ffit, fffit, beforeEach, afterEach, conditionPromise} = require('./async-spec-helpers')  // eslint-disable-line no-unused-vars
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
+const sinon = require('sinon')
 const temp = require('temp').track()
 const ProjectView = require('../lib/project-view')
 const ReporterProxy = require('../lib/reporter-proxy')
@@ -10,6 +12,13 @@ const metricsReporter = new ReporterProxy()
 describe('ProjectView', () => {
   beforeEach(() => {
     jasmine.useRealClock()
+
+    // Limit concurrency on the crawler to avoid indeterminism.
+    sinon.stub(os, 'cpus').returns({length: 1})
+  })
+
+  afterEach(() => {
+    os.cpus.restore()
   })
 
   it('includes remote editors when teletype is enabled', async () => {
