@@ -1666,22 +1666,26 @@ describe('FuzzyFinder', () => {
 
               disposable = fuzzyFinderPackage.consumeMetricsReporter(reporterStub)
 
+              await projectView.toggle()
+              await waitForPathsToDisplay(projectView)
+
               // After setting the reporter it may receive some old events from previous tests
               // that we want to discard.
               reporterStub.addTiming.reset()
 
-              await projectView.toggle()
-
-              await waitForPathsToDisplay(projectView)
-
               projectView.selectListView.refs.queryEditor.setText('anything')
-
               await getOrScheduleUpdatePromise()
 
               expect(reporterStub.addTiming.lastCall.args[0]).toEqual('fuzzy-finder-v1')
               expect(reporterStub.addTiming.lastCall.args[2]).toEqual(
                 {ec: 'time-to-filter', el: scoringSystem, ev: 5}
               )
+
+              // Check that events are throttled
+              await projectView.selectListView.refs.queryEditor.setText('anything else')
+              await getOrScheduleUpdatePromise()
+
+              expect(reporterStub.addTiming.getCalls().length).toBe(1)
             })
           }
         })
