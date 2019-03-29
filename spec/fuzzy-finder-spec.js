@@ -93,11 +93,19 @@ describe('FuzzyFinder', () => {
     }
   }
 
-  for (const useRipGrep of [false, true]) {
-    describe(`file-finder behavior (ripgrep=${useRipGrep})`, () => {
+  const testPermutations = [
+    [ false, 'standard' ],
+    [ true, 'standard' ],
+    [ false, 'alternate' ],
+    [ false, 'fast' ]
+  ]
+
+  for (const [useRipGrep, scoringSystem] of testPermutations) {
+    describe(`file-finder behavior (ripgrep=${useRipGrep}, scoringSystem=${scoringSystem})`, () => {
       beforeEach(async () => {
         projectView = fuzzyFinder.createProjectView()
 
+        atom.config.set('fuzzy-finder.scoringSystem', scoringSystem)
         atom.config.set('fuzzy-finder.useRipGrep', useRipGrep)
         sinon.stub(os, 'cpus').returns({length: 1})
 
@@ -1214,8 +1222,8 @@ describe('FuzzyFinder', () => {
 
           await bufferView.setItems([
             {
-              filePath: '/test/root-dir1/sample.js',
-              label: 'root-dir1/sample.js'
+              filePath: path.join('test', 'root-dir1', 'sample.js'),
+              label: path.join('root-dir1', 'sample.js')
             }
           ])
 

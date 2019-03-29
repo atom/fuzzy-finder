@@ -11,6 +11,7 @@
     "fs-plus": "^3.0.0",
     "fuzzaldrin": "^2.0",
     "fuzzaldrin-plus": "^0.6.0",
+    "@atom/fuzzy-native": "^0.7.0",
     "humanize-plus": "~1.8.2",
     "minimatch": "~3.0.3",
     "temp": "~0.8.1",
@@ -77,10 +78,15 @@
       "default": false,
       "description": "Remember the typed query when closing the fuzzy finder and use that as the starting query next time the fuzzy finder is opened."
     },
-    "useAlternateScoring": {
-      "type": "boolean",
-      "default": true,
-      "description": "Use an alternative scoring approach which prefers run of consecutive characters, acronyms and start of words. (Experimental)"
+    "scoringSystem": {
+      "type": "string",
+      "default": "alternate",
+      "description": "Scoring system to use. \"standard\" is the system used by other modals in Atom. \"alternate\" is an improved scoring system. \"fast\" is a much faster system, specially suitable for large projects. Default: \"alternate\"",
+      "enum": [
+        "standard",
+        "alternate",
+        "fast"
+      ]
     },
     "useRipGrep": {
       "type": "boolean",
