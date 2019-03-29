@@ -19,6 +19,17 @@ Currently the Fuzzy finder does not log any counter events.
   | `el` | Crawler type (`ripgrep` or `fs`)
   | `ev` | Number of crawled files
 
+#### Time to filter results
+
+* **eventType**: `fuzzy-finder-v1`
+* **metadata**
+
+  | field | value |
+  |-------|-------|
+  | `ec` | `time-to-filter`
+  | `el` | Scoring system (`alternate` or `fast`)
+  | `ev` | Number of items in the list
+
 ## Standard events
 
 Currently the Fuzzy Finder does not log any standard events.

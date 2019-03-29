@@ -1655,6 +1655,35 @@ describe('FuzzyFinder', () => {
               {ec: 'time-to-crawl', el: useRipGrep ? 'ripgrep' : 'fs', ev: 5}
             )
           })
+
+          // We're not logging events when using the standard scoring system (since that one
+          // is not controlled by the fuzzy-finder).
+          if (scoringSystem !== 'standard') {
+            it('logs the filtering time', async () => {
+              const reporterStub = {
+                addTiming: sinon.spy()
+              }
+
+              disposable = fuzzyFinderPackage.consumeMetricsReporter(reporterStub)
+
+              // After setting the reporter it may receive some old events from previous tests
+              // that we want to discard.
+              reporterStub.addTiming.reset()
+
+              await projectView.toggle()
+
+              await waitForPathsToDisplay(projectView)
+
+              projectView.selectListView.refs.queryEditor.setText('anything')
+
+              await getOrScheduleUpdatePromise()
+
+              expect(reporterStub.addTiming.lastCall.args[0]).toEqual('fuzzy-finder-v1')
+              expect(reporterStub.addTiming.lastCall.args[2]).toEqual(
+                {ec: 'time-to-filter', el: scoringSystem, ev: 5}
+              )
+            })
+          }
         })
       })
     })
