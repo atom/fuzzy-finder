@@ -1468,7 +1468,9 @@ describe('FuzzyFinder', () => {
           gitDirectory = atom.project.getDirectories()[1]
           gitRepository = atom.project.getRepositories()[1]
 
-          waitsFor(done => gitRepository.onDidChangeStatuses(done))
+          return new Promise(
+            resolve => gitRepository.onDidChangeStatuses(resolve)
+          )
         })
 
         describe('git-status-finder behavior', () => {
