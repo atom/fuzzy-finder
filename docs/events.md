@@ -4,7 +4,16 @@ This document specifies all the data (along with the format) which gets sent fro
 
 ## Counters
 
-Currently the Fuzzy finder does not log any counter events.
+| counter name | description |
+|-------|-------|
+| `show-enable-prompt` | Number of times the prompt to enable fast mode is shown |
+| `click-enable-prompt` | Number of clicks on the enable fast mode prompt |
+| `confirm-enable-prompt` | Number of confirmations on the enable fast mode notification |
+| `cancel-enable-prompt` | Number of cancels on the enable fast mode prompt |
+| `show-disable-prompt` | Number of times the prompt to disable fast mode is shown |
+| `click-disable-prompt` | Number of clicks on the disable fast mode prompt |
+| `confirm-disable-prompt` | Number of confirmations on the disable fast mode notification |
+| `cancel-disable-prompt` | Number of cancels on the disable fast mode prompt |
 
 ## Timing events
 
