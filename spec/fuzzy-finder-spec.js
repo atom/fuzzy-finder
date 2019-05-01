@@ -93,6 +93,15 @@ describe('FuzzyFinder', () => {
     }
   }
 
+  function parseResults (elementContainer) {
+    return Array.from(elementContainer.querySelectorAll('li')).map(
+      element => ({
+        label: element.querySelector('.primary-line').textContent,
+        description: element.querySelector('.secondary-line').textContent
+      })
+    )
+  }
+
   const testPermutations = [
     [ false, 'standard' ],
     [ true, 'standard' ],
@@ -350,6 +359,44 @@ describe('FuzzyFinder', () => {
             await waitForPathsToDisplay(projectView)
 
             expect(Array.from(projectView.element.querySelectorAll('li')).filter(a => a.textContent.includes('child-file.txt')).length).toBe(1)
+          })
+
+          it('Return all the results if they have the same relative path across multiple root folders', async () => {
+            fs.writeFileSync(path.join(rootDir1, 'whatever.js'), 'stuff')
+            fs.writeFileSync(path.join(rootDir2, 'whatever.js'), 'stuff')
+
+            await projectView.toggle()
+            await waitForPathsToDisplay(projectView)
+
+            await projectView.selectListView.refs.queryEditor.setText('whatever.js')
+            await getOrScheduleUpdatePromise()
+
+            expect(parseResults(projectView.element)).toEqual([
+              {label: 'whatever.js', description: path.join('root-dir1', 'whatever.js')},
+              {label: 'whatever.js', description: path.join('root-dir2', 'whatever.js')}
+            ])
+          })
+
+          it('Return all the results if they have the same relative path across multiple root folders with the same name', async () => {
+            const ancestorDir = fs.realpathSync(temp.mkdirSync())
+            const rootDir3 = path.join(ancestorDir, 'root-dir1')
+            fs.mkdirSync(rootDir3)
+
+            fs.writeFileSync(path.join(rootDir1, 'whatever.js'), 'stuff')
+            fs.writeFileSync(path.join(rootDir3, 'whatever.js'), 'stuff')
+
+            atom.project.addPath(rootDir3)
+
+            await projectView.toggle()
+            await waitForPathsToDisplay(projectView)
+
+            await projectView.selectListView.refs.queryEditor.setText('whatever.js')
+            await getOrScheduleUpdatePromise()
+
+            expect(parseResults(projectView.element)).toEqual([
+              {label: 'whatever.js', description: path.join('root-dir1', 'whatever.js')},
+              {label: 'whatever.js', description: path.join('root-dir1', 'whatever.js')}
+            ])
           })
         })
 
