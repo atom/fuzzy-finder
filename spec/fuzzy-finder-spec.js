@@ -361,7 +361,7 @@ describe('FuzzyFinder', () => {
             expect(Array.from(projectView.element.querySelectorAll('li')).filter(a => a.textContent.includes('child-file.txt')).length).toBe(1)
           })
 
-          it('Return all the results if they have the same relative path across multiple root folders', async () => {
+          it('returns all the results if they have the same relative path across multiple root folders', async () => {
             fs.writeFileSync(path.join(rootDir1, 'whatever.js'), 'stuff')
             fs.writeFileSync(path.join(rootDir2, 'whatever.js'), 'stuff')
 
@@ -377,7 +377,7 @@ describe('FuzzyFinder', () => {
             ])
           })
 
-          it('Return all the results if they have the same relative path across multiple root folders with the same name', async () => {
+          it('returns all the results if they have the same relative path across multiple root folders with the same name', async () => {
             const ancestorDir = fs.realpathSync(temp.mkdirSync())
             const rootDir3 = path.join(ancestorDir, 'root-dir1')
             fs.mkdirSync(rootDir3)
