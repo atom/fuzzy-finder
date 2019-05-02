@@ -371,7 +371,10 @@ describe('FuzzyFinder', () => {
             await projectView.selectListView.refs.queryEditor.setText('whatever.js')
             await getOrScheduleUpdatePromise()
 
-            expect(parseResults(projectView.element)).toEqual([
+            // Sort results by path to ensure test is deterministic
+            const results = parseResults(projectView.element)
+              .sort((a, b) => a.description.localeCompare(b.description))
+            expect(results).toEqual([
               {label: 'whatever.js', description: path.join('root-dir1', 'whatever.js')},
               {label: 'whatever.js', description: path.join('root-dir2', 'whatever.js')}
             ])
