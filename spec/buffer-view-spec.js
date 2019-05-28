@@ -5,7 +5,7 @@ const BufferView = require('../lib/buffer-view')
 
 describe('BufferView', () => {
   it('shows the avatar for editors that are remote', async () => {
-    const bufferView = new BufferView()
+    const bufferView = new BufferView({incrementCounter: () => {}})
 
     const localEditor1 = await atom.workspace.open(path.join(temp.path(), 'a'))
     const localEditor2 = await atom.workspace.open(path.join(temp.path(), 'b'))

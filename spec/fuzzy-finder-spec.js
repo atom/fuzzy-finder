@@ -30,10 +30,17 @@ function getOrScheduleUpdatePromise () {
 }
 
 describe('FuzzyFinder', () => {
+  let disposable, reporterStub
   let rootDir1, rootDir2
   let fuzzyFinder, projectView, bufferView, gitStatusView, workspaceElement, fixturesPath
 
   beforeEach(async () => {
+    reporterStub = {
+      addTiming: sinon.spy(),
+      incrementCounter: () => {}
+    }
+    disposable = fuzzyFinderPackage.consumeMetricsReporter(reporterStub)
+
     const ancestorDir = fs.realpathSync(temp.mkdirSync())
     rootDir1 = path.join(ancestorDir, 'root-dir1')
     rootDir2 = path.join(ancestorDir, 'root-dir2')
@@ -64,6 +71,12 @@ describe('FuzzyFinder', () => {
     gitStatusView = fuzzyFinder.createGitStatusView()
 
     jasmine.useRealClock()
+  })
+
+  afterEach(() => {
+    if (disposable) {
+      disposable.dispose()
+    }
   })
 
   async function waitForPathsToDisplay (fuzzyFinderView) {
@@ -1658,21 +1671,7 @@ describe('FuzzyFinder', () => {
         })
 
         describe('logging of metrics events', () => {
-          let disposable
-
-          afterEach(() => {
-            if (disposable) {
-              disposable.dispose()
-            }
-          })
-
           it('logs the crawling time', async () => {
-            const reporterStub = {
-              addTiming: sinon.spy()
-            }
-
-            disposable = fuzzyFinderPackage.consumeMetricsReporter(reporterStub)
-
             // After setting the reporter it may receive some old events from previous tests
             // that we want to discard.
             reporterStub.addTiming.reset()
@@ -1688,10 +1687,6 @@ describe('FuzzyFinder', () => {
           })
 
           it('queues the events until a reporter is set', async () => {
-            const reporterStub = {
-              addTiming: sinon.spy()
-            }
-
             // After setting the reporter it may receive some old events from previous tests
             // that we want to discard.
             reporterStub.addTiming.reset()
