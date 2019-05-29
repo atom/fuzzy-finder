@@ -1657,6 +1657,28 @@ describe('FuzzyFinder', () => {
           })
         })
 
+        describe('when core.excludeVcsIgnoredPaths is set to false', () => {
+          beforeEach(() => atom.config.set('core.excludeVcsIgnoredPaths', false))
+
+          describe("when the project's path is the repository's working directory", () => {
+            beforeEach(() => {
+              const ignoreFile = path.join(projectPath, '.gitignore')
+              fs.writeFileSync(ignoreFile, 'ignored.txt')
+
+              const ignoredFile = path.join(projectPath, 'ignored.txt')
+              fs.writeFileSync(ignoredFile, 'ignored text')
+            })
+
+            it("doesn't exclude paths that are git ignored", async () => {
+              await projectView.toggle()
+
+              await waitForPathsToDisplay(projectView)
+
+              expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('ignored.txt'))).toBeDefined()
+            })
+          })
+        })
+
         describe('logging of metrics events', () => {
           let disposable
 
