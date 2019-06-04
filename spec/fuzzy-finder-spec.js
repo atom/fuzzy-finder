@@ -331,13 +331,15 @@ describe('FuzzyFinder', () => {
           describe('socket files on #darwin or #linux', () => {
             let socketServer, socketPath
 
-            beforeEach(() => {
+            beforeEach(() => new Promise((resolve, reject) => {
               socketServer = net.createServer(() => {})
               socketPath = path.join(rootDir1, 'some.sock')
-              waitsFor(done => socketServer.listen(socketPath, done))
-            })
+              socketServer.on('listening', resolve)
+              socketServer.on('error', reject)
+              socketServer.listen(socketPath)
+            }))
 
-            afterEach(() => socketServer.close())
+            afterEach(() => new Promise(resolve => socketServer.close(resolve)))
 
             it('does not interfere with ability to load files', async () => {
               await projectView.toggle()
