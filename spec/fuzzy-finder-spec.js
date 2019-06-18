@@ -1670,6 +1670,21 @@ describe('FuzzyFinder', () => {
               expect(Array.from(projectView.element.querySelectorAll('li')).find(a => a.textContent.includes('file.txt'))).toBeDefined()
             })
           })
+
+          describe('when core.ignoredNames does not have .git in its glob patterns', () => {
+            beforeEach(() => {
+              atom.config.set('core.ignoredNames', [])
+            })
+
+            it('still ignores .git directory', async () => {
+              await projectView.toggle()
+
+              await waitForPathsToDisplay(projectView)
+
+              expect(Array.from(projectView.element.querySelectorAll('li')).find(a =>
+                a.textContent.includes('HEAD'))).not.toBeDefined()
+            })
+          })
         })
 
         describe('when core.excludeVcsIgnoredPaths is set to false', () => {
