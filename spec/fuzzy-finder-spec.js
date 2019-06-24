@@ -166,10 +166,8 @@ describe('FuzzyFinder', () => {
 
           it('shows all files for the current project and selects the first', async () => {
             jasmine.attachToDOM(workspaceElement)
-
             await projectView.toggle()
 
-            expect(projectView.element.querySelector('.loading').textContent.length).toBeGreaterThan(0)
             await waitForPathsToDisplay(projectView)
 
             eachFilePath([rootDir1, rootDir2], (filePath) => {
