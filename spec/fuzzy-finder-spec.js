@@ -617,7 +617,7 @@ describe('FuzzyFinder', () => {
 
               expect(Array.from(bufferView.element.querySelectorAll('li > div.file')).map(e => e.textContent)).toEqual(['sample.js'])
             })
-        )
+          )
         })
 
         describe('when a path selection is confirmed', () => {
@@ -1772,6 +1772,28 @@ describe('FuzzyFinder', () => {
               expect(reporterStub.addTiming.getCalls().length).toBe(1)
             })
           }
+        })
+      })
+
+      describe('error handling', () => {
+        beforeEach(() => {
+          const junkDirPath = fs.realpathSync(temp.mkdirSync('junk-1'))
+          const brokenFilePath = path.join(junkDirPath, 'delete.txt')
+          fs.writeFileSync(brokenFilePath, 'delete-me')
+
+          for (let i = 0; i < 1000; i++) {
+            fs.symlinkSync(brokenFilePath, atom.project.getDirectories()[0].resolve('broken-symlink-' + i))
+          }
+
+          fs.unlinkSync(brokenFilePath)
+        })
+
+        it('copes with a lot of errors during indexing', async () => {
+          await projectView.toggle()
+
+          await waitForPathsToDisplay(projectView)
+
+          expect(projectView.element.querySelector('.loading')).not.toBeVisible()
         })
       })
     })
