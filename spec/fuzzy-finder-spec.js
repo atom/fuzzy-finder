@@ -1711,7 +1711,7 @@ describe('FuzzyFinder', () => {
           it('logs the crawling time', async () => {
             // After setting the reporter it may receive some old events from previous tests
             // that we want to discard.
-            reporterStub.addTiming.reset()
+            reporterStub.addTiming.resetHistory()
 
             await projectView.toggle()
 
@@ -1726,7 +1726,7 @@ describe('FuzzyFinder', () => {
           it('queues the events until a reporter is set', async () => {
             // After setting the reporter it may receive some old events from previous tests
             // that we want to discard.
-            reporterStub.addTiming.reset()
+            reporterStub.addTiming.resetHistory()
 
             await projectView.toggle()
 
@@ -1755,7 +1755,7 @@ describe('FuzzyFinder', () => {
 
               // After setting the reporter it may receive some old events from previous tests
               // that we want to discard.
-              reporterStub.addTiming.reset()
+              reporterStub.addTiming.resetHistory()
 
               projectView.selectListView.refs.queryEditor.setText('anything')
               await getOrScheduleUpdatePromise()

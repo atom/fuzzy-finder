@@ -20,7 +20,7 @@
     "wrench": "^1.5"
   },
   "devDependencies": {
-    "sinon": "1.17.4",
+    "sinon": "9.0.3",
     "standard": "^10.0.3"
   },
   "standard": {
