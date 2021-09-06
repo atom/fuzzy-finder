@@ -1,0 +1,24 @@
+name: CI
+
+on: [push]
+
+env:
+  CI: true
+  TRAVIS_OS_NAME: "osx"
+
+jobs:
+  Test:
+    strategy:
+      matrix:
+        os: [macos-latest]
+        ATOM_CHANNEL: [beta, stable]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '4'
+    - name: Install linter
+      run: npm i standard
+    - name: Build
+      run: 'curl -s https://raw.githubusercontent.com/atom/ci/master/build-package.sh | sh'
